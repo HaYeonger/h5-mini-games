@@ -1,43 +1,43 @@
-# 玩法速查
+# Gameplay Reference
 
-每个游戏打开首页都有完整规则，这里是速查版。
+Quick reference for each game. Full rules are also shown on every game's home screen.
 
-## 提示词炼金术
+## 1. Prompt Alchemy
 
-接任务，看清任务要求和 token 预算；写提示词，覆盖任务要点；施法，看 AI 输出和完成度。完成度 ≥80 通关（满分 120，超 100 是超神）。token 超出预算，完成度 ×0.85。通关赚顿悟点，解锁 12 种技巧，凑出 combo 有加成。
+Take a task, read its requirements and token budget, then write a prompt that covers the key points. Cast to see the simulated AI's output and your completion score. Score ≥ 80 to clear (max 120; 100+ earns the GODLIKE rank). Exceeding the token budget multiplies completion by 0.85. Cleared tasks award Insight points, spent on a 12-technique skill tree — combine techniques for combo bonuses.
 
-## 失眠
+## 2. Insomnia
 
-一共七个夜晚。念头会一个个冒出来，别点开，干净地放下；困意攒满就睡着了。盯着点心率和呼吸节奏，乱点会扣分。
+Seven nights. Thoughts surface one by one — don't engage them; let each one go cleanly and build Drowsiness until you fall asleep. Keep an eye on heart rate and breathing rhythm; careless taps cost points.
 
-## 凌晨四点的便利店
+## 3. The 4 AM Convenience Store
 
-你是夜班店员，一晚上接待 12 位客人。每位客人三步：观察线索 → 追问 → 回应。回应选得对，心事大减；心事降到 10 以下，客人释然。开店前有 1500 预算买设备，钱花在刀刃上。另外注意自己的体力和困意。
+You're the night-shift clerk; 12 customers visit over the night. Each interaction has three steps: observe the clues, ask follow-up questions, then respond. A good response sharply reduces their worries — bring worries to 10 or below and the customer leaves at peace. You start with a $1,500 budget for store equipment; spend it where it matters. Watch your own stamina and drowsiness too.
 
-## 中年危机模拟器
+## 4. Midlife Crisis Simulator
 
-从 35 岁活到 50 岁，每年碰到几件事，每个选择都有代价。事业、家庭、健康、钱包互相打架，遗憾值攒多了结局会很难看。最后看墓志铭和成就。
+Live from age 35 to 50. Each year brings events, and every choice has a price. Career, family, health, and savings pull against each other; accumulated regret darkens the ending. It all concludes with your epitaph and achievements.
 
-## 已读不回
+## 5. Left on Read
 
-小雨、老妈、阿杰三个人找你聊天，直接打字回，不用选选项。系统会看你每句话的语气，关系有涨有跌。已读不回超过 60 秒，对方会多想。目标：别把天聊死。
+Three contacts — Xiaoyu, Mom, and Ajie — message you, and you reply in free text. There are no preset options: the system reads the tone of every message, and relationships rise or fall accordingly. Leave someone on read for over 60 seconds and they'll start overthinking. Goal: don't kill the conversation.
 
-## CodeReview地狱
+## 6. Code Review Hell
 
-每轮给你一个 PR，找出藏着的 bug 行。技能（高亮、定位）次数有限，省着用。还有屎山模式和线上事故，修得又准又快才能升级。
+Each round deals you a pull request with a hidden bug — find the faulty line. Skills (highlight, locate) have limited uses per PR. Legacy-code mode and live production incidents raise the stakes. Accurate, fast fixes climb the ranks.
 
-## 守住钱包
+## 7. Hold the Wallet
 
-塔防。把"记账""定存""冷静期"这些塔摆好，挡住"直播带货""信用卡账单"这些怪。目标：守住 8 万存款。前 5 波不漏怪还有速战速决奖励。
+Tower defense. Place towers like Ledger, Fixed Deposit, and Cooling-off Period to stop waves of Live Shopping streams and Credit Card Bills. Objective: defend ¥80,000 in savings. Clearing the first five waves without leaks earns a blitz bonus.
 
-## 年会求生
+## 8. Holiday Party Survival
 
-10 轮派对。管好四个条：酒量、清醒、老板好感、人缘。手里的话术牌能在关键时刻打出隐藏选项。目标：体面活到散场，别断片。
+Ten rounds at the office holiday party. Track four meters: alcohol tolerance, composure, boss favor, and popularity. Dialogue cards in hand can unlock hidden high-payoff options at key moments. Objective: leave with dignity — don't black out.
 
-## 租房大冒险·纽约篇
+## 9. Rent Adventure: New York
 
-在纽约待 36 个月：看房、签约、应付房东和室友、打副业、考证，攒够首付就赢。老存档不受影响，新开局才用新规则。
+Thirty-six months across New York City: browse listings, sign leases, deal with landlords and roommates, pick up side gigs, earn certificates. Save enough for the down payment to win. Balance patches apply to new runs only; existing saves are untouched.
 
-## 最后一份外卖
+## 10. The Last Delivery
 
-台风夜送外卖。规划路线省电量，掐着时间送达，顺路可以帮陈奶奶带药。电量、时限、善良值互相牵制，一共 5 种结局。
+Deliver food on a typhoon night. Plan efficient routes to save battery, beat the clock, and decide when to go out of your way — e.g. delivering medicine for Granny Chen. Battery, time limits, and karma pull against each other. Five endings.
