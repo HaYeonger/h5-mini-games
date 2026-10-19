@@ -1,0 +1,1450 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>中年危机模拟器 · 35岁到50岁</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+:root{
+  --bg:#14161c; --panel:#1e222c; --panel2:#262b37; --line:#333a48;
+  --txt:#e8eaf0; --mut:#9aa0ae; --acc:#e8b34b; --red:#e05c5c; --green:#5fc98a; --blue:#5aa9e6; --purple:#a678e0;
+}
+body{background:var(--bg);color:var(--txt);font-family:-apple-system,"PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;min-height:100vh}
+#app{max-width:480px;margin:0 auto;min-height:100vh;display:flex;flex-direction:column;position:relative}
+.screen{padding:16px 16px 32px;display:none;flex:1}
+.screen.on{display:block;animation:fade .25s}
+@keyframes fade{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+h1{font-size:30px;letter-spacing:2px;text-align:center;margin:34px 0 6px}
+.sub{text-align:center;color:var(--mut);font-size:13px;margin-bottom:22px;line-height:1.7}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:16px;margin-bottom:12px}
+.btn{display:block;width:100%;padding:14px;border-radius:12px;border:1px solid var(--line);background:var(--panel2);color:var(--txt);font-size:16px;margin-top:10px;cursor:pointer;text-align:left;line-height:1.5}
+.btn:active{transform:scale(.98)}
+.btn.primary{background:linear-gradient(135deg,#c98f2e,#e8b34b);color:#1a1408;border:none;font-weight:700;text-align:center;font-size:17px}
+.btn.ghost{background:transparent;text-align:center;color:var(--mut)}
+.btn:disabled{opacity:.4}
+.btn small{display:block;color:var(--mut);font-size:12px;margin-top:4px}
+.tag{display:inline-block;font-size:11px;padding:3px 10px;border-radius:20px;border:1px solid var(--acc);color:var(--acc);margin-bottom:10px}
+.evtitle{font-size:20px;font-weight:700;margin-bottom:10px;line-height:1.4}
+.evtext{color:#c9cdd8;font-size:15px;line-height:1.8;margin-bottom:6px}
+/* top HUD */
+#hud{position:sticky;top:0;z-index:20;background:rgba(20,22,28,.96);backdrop-filter:blur(6px);padding:10px 16px 12px;border-bottom:1px solid var(--line)}
+#hud .agerow{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
+#hud .age{font-size:22px;font-weight:800}
+#hud .age small{font-size:12px;color:var(--mut);font-weight:400}
+.bars{display:grid;grid-template-columns:1fr 1fr;gap:6px 12px}
+.bar label{font-size:11px;color:var(--mut);display:flex;justify-content:space-between;margin-bottom:3px}
+.bar .track{height:8px;background:#0f1116;border-radius:6px;overflow:hidden}
+.bar .fill{height:100%;border-radius:6px;transition:width .4s}
+#regretRow{display:flex;justify-content:space-between;margin-top:8px;font-size:12px;color:var(--mut)}
+#regretRow b{color:var(--acc)}
+/* actions */
+#actions{display:flex;gap:8px;margin:12px 0}
+.act{flex:1;background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:10px 4px;font-size:12px;color:var(--txt);cursor:pointer;text-align:center}
+.act small{display:block;color:var(--mut);font-size:10px;margin-top:2px}
+.act:disabled{opacity:.35}
+.act .n{color:var(--acc);font-weight:700}
+/* talent */
+.tbranch{border:1px solid var(--line);border-radius:10px;padding:12px;margin-bottom:10px;background:var(--panel)}
+.tbranch h3{font-size:15px;margin-bottom:6px}
+.tbranch p{font-size:12px;color:var(--mut);line-height:1.6;margin-bottom:8px}
+.tbtn{padding:8px 14px;border-radius:8px;border:1px solid var(--acc);background:transparent;color:var(--acc);font-size:13px;cursor:pointer}
+.tbtn:disabled{opacity:.35;border-color:var(--line);color:var(--mut)}
+.tier{font-size:11px;color:var(--green)}
+/* overlay */
+#overlay{position:fixed;inset:0;background:rgba(8,9,12,.88);display:none;z-index:50;align-items:center;justify-content:center;padding:20px}
+#overlay.on{display:flex}
+#sheet{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:22px;max-width:420px;width:100%;max-height:84vh;overflow-y:auto}
+#sheet h2{font-size:20px;margin-bottom:12px;text-align:center}
+.kv{display:flex;justify-content:space-between;font-size:14px;padding:7px 0;border-bottom:1px dashed var(--line);color:#c9cdd8}
+.howto{margin-bottom:12px}
+.hrow{display:flex;align-items:flex-start;gap:10px;padding:8px 0;border-bottom:1px dashed var(--line);font-size:14px;line-height:1.6}
+.hrow:last-child{border-bottom:none}
+.hic{font-size:18px;flex:none}
+.winline{background:rgba(232,179,75,.1);border:1px solid var(--acc);border-radius:10px;padding:10px 12px;font-size:14px;margin:10px 0;color:var(--acc)}
+.loseline{background:rgba(224,92,92,.08);border:1px solid var(--red);border-radius:10px;padding:10px 12px;font-size:14px;margin:10px 0;color:#ff9d9d}
+.ruledet{margin-top:10px}
+.ruledet summary{font-size:13px;color:var(--mut);cursor:pointer;padding:6px 0}
+.ruledet summary:hover{color:var(--txt)}
+.rdet{font-size:13px;color:var(--mut);line-height:2;padding:6px 0}
+.kv b{font-weight:600}
+.neg{color:var(--red)} .pos{color:var(--green)}
+/* epitaph */
+#epitaph{font-size:19px;line-height:2;text-align:center;padding:26px 10px;color:var(--txt);font-style:normal}
+#epitaph .sig{margin-top:18px;font-size:13px;color:var(--mut)}
+.achv{display:flex;gap:10px;align-items:center;background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:10px 12px;margin-bottom:8px;font-size:13px}
+.achv .em{font-size:22px}
+.achv.lock{opacity:.45}
+.achv small{display:block;color:var(--mut);font-size:11px}
+#toast{position:fixed;left:50%;bottom:90px;transform:translateX(-50%);background:#2a2f3b;border:1px solid var(--acc);color:var(--txt);padding:10px 18px;border-radius:24px;font-size:14px;display:none;z-index:99;white-space:nowrap}
+#topbtns{position:fixed;top:10px;right:12px;z-index:60;display:flex;gap:8px}
+.icobtn{width:34px;height:34px;border-radius:50%;background:var(--panel2);border:1px solid var(--line);color:var(--txt);font-size:15px;cursor:pointer}
+.jiaxun{border:1px dashed var(--acc);border-radius:10px;padding:12px;margin-bottom:8px;font-size:14px;cursor:pointer}
+.jiaxun.sel{border-style:solid;background:#2a2415}
+.jiaxun small{display:block;color:var(--mut);font-size:12px;margin-top:4px}
+.probe{display:inline-block;font-size:11px;color:var(--purple);margin-top:8px}
+.hiddenbox{background:#191423;border:1px solid #4a3a5e;border-radius:10px;padding:10px 12px;font-size:13px;margin-top:10px;color:#d3c2ec}
+footer.note{text-align:center;color:var(--mut);font-size:11px;margin-top:26px;line-height:1.8}
+</style>
+</head>
+<body>
+<div id="app">
+  <div id="topbtns">
+    <button class="icobtn" id="muteBtn" title="声音">🔊</button>
+    <button class="icobtn" id="achvBtn" title="成就">🏆</button>
+    <button class="icobtn" id="langBtn" title="语言/Language">EN</button>
+  </div>
+
+  <!-- HUD -->
+  <div id="hud" style="display:none">
+    <div class="agerow">
+      <div class="age"><span id="hAge">35</span><small><span id="hAgeSuf"> 岁</span> · <span id="hYear">第1年</span></small></div>
+      <div style="font-size:12px;color:var(--mut)"><span id="lbAct">行动点</span> <b id="hAct" style="color:var(--acc)">2</b></div>
+    </div>
+    <div class="bars">
+      <div class="bar"><label><span id="lbTime">⏳ 时间</span><span id="vTime">70</span></label><div class="track"><div class="fill" id="bTime" style="background:var(--blue);width:70%"></div></div></div>
+      <div class="bar"><label><span id="lbHealth">❤️ 健康</span><span id="vHealth">80</span></label><div class="track"><div class="fill" id="bHealth" style="background:var(--green);width:80%"></div></div></div>
+      <div class="bar"><label><span id="lbMoney">💰 钱</span><span id="vMoney">25.0万</span></label><div class="track"><div class="fill" id="bMoney" style="background:var(--acc);width:25%"></div></div></div>
+      <div class="bar"><label><span id="lbFam">🏠 亲情</span><span id="vFam">70</span></label><div class="track"><div class="fill" id="bFam" style="background:var(--purple);width:70%"></div></div></div>
+    </div>
+    <div id="regretRow"><span><span id="lbRegret">😔 遗憾值</span> <b id="vRegret">0</b></span><span id="hTalentPts" style="color:var(--green)"></span></div>
+  </div>
+
+  <!-- START -->
+  <div class="screen on" id="sStart">
+    <h1 id="gameTitle">中年危机模拟器</h1>
+    <div class="sub" id="gameSub">35岁开局，50岁结算。<br>顾此失彼，才是人生。</div>
+    <div class="card" id="jxBox" style="display:none">
+      <div style="font-size:14px;margin-bottom:8px" id="jxBoxLabel">📜 上辈子留下的家训（选一条带入本局，或不带）</div>
+      <div id="jxList"></div>
+    </div>
+    <div class="card">
+      <div class="howto">
+        <div class="hrow"><span class="hic">🃏</span><span id="hw1">每年一张事件卡，<b>三选一</b>，后果明码标价</span></div>
+        <div class="hrow"><span class="hic">⚖️</span><span id="hw2">时间 / 健康 / 钱 / 亲情四项资源，此消彼长</span></div>
+        <div class="hrow"><span class="hic">🕵️</span><span id="hw3">夫妻感情 / 父母健康是<b>隐藏数值</b>，花行动点探查</span></div>
+        <div class="hrow"><span class="hic">📝</span><span id="hw4">35 / 40 / 45岁有固定大考，检验你的选择</span></div>
+      </div>
+      <div class="winline" id="winLine">🏆 <b>此生无悔</b>：终局遗憾值 <b>&lt; 10</b>（极难）</div>
+      <div class="loseline" id="loseLine">💀 <b>提前出局</b>：健康归零会猝死，存款低于 -5万会破产</div>
+      <details class="ruledet"><summary id="ruleSum">📖 详细规则</summary>
+        <div class="rdet" id="ruleDet">
+        · 每年先过事件，再年度结算（领年薪、扣开销、四项自然衰减）<br>
+        · 每年 2 点行动点：带父母体检 / 与伴侣谈心 / 陪孩子<br>
+        · 属性低于 25 会逐年累积遗憾；38 / 43 / 48 岁有"岁月三问"必出事件<br>
+        · 每 3 年（38 / 41 / 44 / 47 岁）领悟 1 点天赋点<br>
+        · 终局按遗憾 / 存款 / 健康 / 亲情生成你的墓志铭，可立为家训传给下一局
+        </div>
+      </details>
+    </div>
+    <button class="btn primary" id="startBtn">开始我 35 岁的人生</button>
+    <button class="btn ghost" id="langBtnStart" style="margin-top:8px">🌐 Switch to English</button>
+    <div class="card" style="margin-top:12px"><div style="font-size:13px;color:var(--mut)" id="bestBox">还没有人活过这一生。</div></div>
+    <footer class="note" id="footNote">单机 H5 · 本地存档 · 原创<br>笑中带泪，谨慎开局</footer>
+  </div>
+
+  <!-- GAME -->
+  <div class="screen" id="sGame">
+    <div id="actions">
+      <button class="act" id="aCheck">🩺 带父母体检<small>探查父母健康</small></button>
+      <button class="act" id="aTalk">💬 与伴侣谈心<small>探查夫妻感情</small></button>
+      <button class="act" id="aKid">🧒 陪孩子<small>亲情+8·埋伏笔</small></button>
+    </div>
+    <div id="probeBox"></div>
+    <div class="card" id="evCard">
+      <span class="tag" id="evTag">职场</span>
+      <div class="evtitle" id="evTitle"></div>
+      <div class="evtext" id="evText"></div>
+      <div id="evOpts"></div>
+    </div>
+    <button class="btn ghost" id="talentBtn">🌳 天赋树 <span id="talentHint"></span></button>
+  </div>
+
+  <!-- END -->
+  <div class="screen" id="sEnd">
+    <h1 style="font-size:24px" id="endTitle">终局结算</h1>
+    <div class="sub" id="endSub"></div>
+    <div class="card"><div id="epitaph"></div></div>
+    <div class="card" id="endStats"></div>
+    <div class="card" id="jxGenBox">
+      <div style="font-size:14px;margin-bottom:8px" id="jxGenLabel">📜 本局凝练出一条家训，可传给下一代：</div>
+      <div class="jiaxun sel" id="jxGen"><b id="jxGenName"></b><small id="jxGenDesc"></small></div>
+      <button class="btn primary" id="saveJxBtn" style="margin-top:8px">立为家训，传下去</button>
+    </div>
+    <button class="btn primary" id="againBtn">再活一次</button>
+    <button class="btn ghost" id="copyBtn">📋 复制墓志铭，分享给朋友</button>
+  </div>
+
+  <div id="overlay"><div id="sheet"></div></div>
+  <div id="toast"></div>
+</div>
+
+<script>
+"use strict";
+/* ============ utils ============ */
+const $=id=>document.getElementById(id);
+const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
+const rnd=(a,b)=>a+Math.random()*(b-a);
+const ri=(a,b)=>Math.floor(rnd(a,b+1));
+const pick=a=>a[Math.floor(Math.random()*a.length)];
+function shuffle(a){a=a.slice();for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a}
+function fmtMoney(v){const neg=v<0;v=Math.abs(v);let s;if(LANG==="en"){s=v>=1000000?(v/1000000).toFixed(1)+"M":(v>=1000?Math.round(v/1000)+"K":Math.round(v)+"");s="¥"+s}else{s=v>=10000?(v/10000).toFixed(1)+"万":Math.round(v)+"元"}return (neg?"-":"")+s}
+function toast(t){const e=$("toast");e.textContent=t;e.style.display="block";clearTimeout(e._t);e._t=setTimeout(()=>e.style.display="none",2200)}
+/* sound */
+let muted=false;
+function beep(f,d){if(muted)return;try{const C=window.AudioContext||window.webkitAudioContext;if(!C)return;const c=beep._c||(beep._c=new C());const o=c.createOscillator(),g=c.createGain();o.type="sine";o.frequency.value=f||440;g.gain.value=.06;o.connect(g);g.connect(c.destination);o.start();g.gain.exponentialRampToValueAtTime(.0001,c.currentTime+(d||.12));o.stop(c.currentTime+(d||.12))}catch(e){}}
+$("muteBtn").onclick=()=>{muted=!muted;$("muteBtn").textContent=muted?"🔇":"🔊"};
+/* storage */
+const LS={get(k,d){try{const v=localStorage.getItem("zhongnian_"+k);return v==null?d:JSON.parse(v)}catch(e){return d}},set(k,v){try{localStorage.setItem("zhongnian_"+k,JSON.stringify(v))}catch(e){}}};
+const I18N={zh:{
+ game_title:"中年危机模拟器",
+ game_sub:"35岁开局，50岁结算。<br>顾此失彼，才是人生。",
+ jx_box_label:"📜 上辈子留下的家训（选一条带入本局，或不带）",
+ jx_none:"不带家训",
+ jx_none_desc:"白手起家，硬核开局",
+ how1:"每年一张事件卡，<b>三选一</b>，后果明码标价",
+ how2:"时间 / 健康 / 钱 / 亲情四项资源，此消彼长",
+ how3:"夫妻感情 / 父母健康是<b>隐藏数值</b>，花行动点探查",
+ how4:"35 / 40 / 45岁有固定大考，检验你的选择",
+ winline:"🏆 <b>此生无悔</b>：终局遗憾值 <b>&lt; 10</b>（极难）",
+ loseline:"💀 <b>提前出局</b>：健康归零会猝死，存款低于 -5万会破产",
+ ruledet_sum:"📖 详细规则",
+ ruledet_body:"· 每年先过事件，再年度结算（领年薪、扣开销、四项自然衰减）<br>· 每年 2 点行动点：带父母体检 / 与伴侣谈心 / 陪孩子<br>· 属性低于 25 会逐年累积遗憾；38 / 43 / 48 岁有“岁月三问”必出事件<br>· 每 3 年（38 / 41 / 44 / 47 岁）领悟 1 点天赋点<br>· 终局按遗憾 / 存款 / 健康 / 亲情生成你的墓志铭，可立为家训传给下一局",
+ start_btn:"开始我 35 岁的人生",
+ best_none:"还没有人活过这一生。",
+ best_line:"最佳纪录：遗憾 {r} · 存款 {m}",
+ best_wuhui:" · 🕊️ 此生无悔达成",
+ footer:"单机 H5 · 本地存档 · 原创<br>笑中带泪，谨慎开局",
+ hud_year:"第{n}年",
+ hud_act:"行动点",
+ age_suffix:" 岁",
+ lb_time:"⏳ 时间",
+ lb_health:"❤️ 健康",
+ lb_money:"💰 钱",
+ lb_fam:"🏠 亲情",
+ lb_regret:"😔 遗憾值",
+ talent_hint:"（有{n}点可用）",
+ act_check:"🩺 带父母体检",
+ act_check_s:"探查父母健康",
+ act_talk:"💬 与伴侣谈心",
+ act_talk_s:"探查夫妻感情",
+ act_kid:"🧒 陪孩子",
+ act_kid_s:"亲情+8·埋伏笔",
+ act_disabled:"行动点用完了，每年结算后恢复2点",
+ probe_parents:"🩺 父母健康：<b>{n}</b>（上次体检）",
+ probe_parents_warn:"⚠️ 偏低！低于25会爆发家庭危机事件",
+ probe_wife:"💬 夫妻感情：<b>{n}</b>（上次谈心）",
+ probe_wife_warn:"⚠️ 感情告急！低于30会爆发婚姻危机事件",
+ h_time:"时间",
+ h_health:"健康",
+ h_money:"钱",
+ h_family:"亲情",
+ h_act:"行动点",
+ h_regret:"😔遗憾",
+ t_start:"35岁，你的人生下半场开始了",
+ t_noact:"行动点用完了",
+ t_notime:"时间不够（需要5点时间）",
+ t_check:"🩺 带父母做了全面体检",
+ t_talk:"💬 和伴侣深谈到半夜",
+ t_kid:"🧒 陪了孩子一整天",
+ t_mompark:"🌳 陪母亲去公园散步",
+ t_talent:"🌳 {n} 升级！",
+ t_achv:"🏆 成就解锁：{n}",
+ t_jx:"📜 家训已立，传给下一代",
+ t_copied:"📋 已复制，去分享吧",
+ t_copyfail:"复制失败，长按手动复制",
+ talent_title:"🌳 天赋树",
+ talent_none:"每3年领悟1点（38/41/44/47岁）<br>当前无可用点数",
+ talent_max:"MAX",
+ talent_up:"花 1 点升级",
+ btn_close:"关闭",
+ achv_title:"🏆 成就",
+ achv_epitaph:"墓志铭收集 {n}/6",
+ achv_epitaph_none:"还没有墓志铭",
+ end_title:"终局结算 · 50岁",
+ end_sub:"你活到了50岁。这本身，就是一种胜利。",
+ death_title:"未尽之局 · 35岁+",
+ death_title_money:"未尽之局 · 破产",
+ death_sub_health:"心脏停在了{n}岁。",
+ death_sub_money:"债务压垮了这个家。",
+ year_title:"当年 · {n}岁",
+ settle_title:"📊 {n}岁 · 年度结算",
+ go_settle:"继续 → 年度结算",
+ go_end:"迎接终局 →",
+ go_next:"进入 {n} 岁 →",
+ stat_time:"⏳ 时间",
+ stat_health:"❤️ 健康",
+ stat_money:"💰 存款",
+ stat_family:"🏠 亲情",
+ stat_regret:"😔 遗憾值",
+ stat_dakao:"⚡ 大考",
+ stat_dakao_v:"{n}/3 妥善",
+ jx_gen_label:"📜 本局凝练出一条家训，可传给下一代：",
+ jx_save:"立为家训，传下去",
+ jx_saved:"已立为家训 ✓",
+ again:"再活一次",
+ copy_btn:"📋 复制墓志铭，分享给朋友",
+ copy_prefix:"我的墓志铭：",
+ d_time:"⏳时间",
+ d_health:"❤️健康",
+ d_money:"💰钱",
+ d_family:"🏠亲情",
+ d_act:"⚡行动点",
+ ys_salary:"💼 年薪",
+ ys_expense:"🧾 开销(房贷+生活）",
+ ys_time:"⏳ 时间",
+ ys_time_v:"忙碌-{n} / 年假+6",
+ ys_health:"❤️ 身体机能",
+ ys_health_v:"-{n}健康",
+ ys_fam:"🏠 聚少离多",
+ ys_fam_v:"-{n}亲情",
+ ys_talent:"🌳 悟了",
+ ys_talent_v:"天赋点 +1",
+ ys_regret:"😔 遗憾",
+ mute_title:"声音",
+ achv_title_btn:"成就",
+ sig_fmt:"—— {age}岁 · {m} · 遗憾{regret}",
+ dakao40_r:"重症监护室住了20天，父亲挺过来了。账单20万，你：值。",
+ dakao45_r:"谈了五次，他才开口。说在学校被孤立过。你心疼得不行，但门，终究是打开了。",
+},en:{
+ game_title:"Midlife Crisis Simulator",
+ game_sub:"Start at 35, settle at 50.<br>You can't have it all — that's life.",
+ jx_box_label:"📜 House rules from a past life (bring one into this run, or none)",
+ jx_none:"No house rules",
+ jx_none_desc:"Start from scratch — hardcore mode",
+ how1:"One event card per year — <b>pick one of three</b>, costs shown upfront",
+ how2:"Four resources — time, health, money, family — rise and fall together",
+ how3:"Marriage & parents' health are <b>hidden stats</b> — spend action points to check them",
+ how4:"Fixed exams at 35 / 40 / 45 put your choices to the test",
+ winline:"🏆 <b>No Regrets</b>: end-game regret <b>&lt; 10</b> (brutal)",
+ loseline:"💀 <b>Early exit</b>: health at zero means sudden death; savings below -¥50K means bankruptcy",
+ ruledet_sum:"📖 Detailed rules",
+ ruledet_body:"· Each year: event first, then year-end settlement (salary in, expenses out, four stats decay)<br>· 2 action points per year: parents' checkup / heart-to-heart / time with kid<br>· Any stat below 25 accrues regret yearly; guaranteed 'Three Questions of Time' events at 38 / 43 / 48<br>· 1 talent point every 3 years (ages 38 / 41 / 44 / 47)<br>· Your epitaph is generated from regret / savings / health / family — set it as a house rule for the next run",
+ start_btn:"Start my life at 35",
+ best_none:"No one has lived this life yet.",
+ best_line:"Best run: regret {r} · savings {m}",
+ best_wuhui:" · 🕊️ No Regrets achieved",
+ footer:"Offline H5 · Local saves · Original<br>Wry and bittersweet — choose wisely",
+ hud_year:"Year {n}",
+ hud_act:"AP",
+ age_suffix:"",
+ lb_time:"⏳ Time",
+ lb_health:"❤️ Health",
+ lb_money:"💰 Money",
+ lb_fam:"🏠 Family",
+ lb_regret:"😔 Regret",
+ talent_hint:"({n} available)",
+ act_check:"🩺 Parents' checkup",
+ act_check_s:"Reveal parents' health",
+ act_talk:"💬 Heart-to-heart",
+ act_talk_s:"Reveal marriage health",
+ act_kid:"🧒 Time with kid",
+ act_kid_s:"Family +8 · plants seeds",
+ act_disabled:"Out of action points — 2 restore after each year's settlement",
+ probe_parents:"🩺 Parents' health: <b>{n}</b> (last checkup)",
+ probe_parents_warn:"⚠️ Low! Below 25 triggers a family crisis",
+ probe_wife:"💬 Marriage: <b>{n}</b> (last heart-to-heart)",
+ probe_wife_warn:"⚠️ Critical! Below 30 triggers a marriage crisis",
+ h_time:"Time",
+ h_health:"Health",
+ h_money:"Money",
+ h_family:"Family",
+ h_act:"AP",
+ h_regret:"😔Regret",
+ t_start:"At 35, the second half of your life begins",
+ t_noact:"Out of action points",
+ t_notime:"Not enough time (needs 5)",
+ t_check:"🩺 Parents got a full checkup",
+ t_talk:"💬 A heart-to-heart till midnight",
+ t_kid:"🧒 A whole day with the kid",
+ t_mompark:"🌳 A park stroll with Mom",
+ t_talent:"🌳 {n} leveled up!",
+ t_achv:"🏆 Achievement unlocked: {n}",
+ t_jx:"📜 House rule set — pass it on",
+ t_copied:"📋 Copied — go share it",
+ t_copyfail:"Copy failed — long-press to copy manually",
+ talent_title:"🌳 Talent Tree",
+ talent_none:"One point every 3 years (ages 38/41/44/47)<br>No points available right now",
+ talent_max:"MAX",
+ talent_up:"Spend 1 point",
+ btn_close:"Close",
+ achv_title:"🏆 Achievements",
+ achv_epitaph:"Epitaphs collected: {n}/6",
+ achv_epitaph_none:"No epitaphs yet",
+ end_title:"Final Reckoning · Age 50",
+ end_sub:"You made it to 50. That alone is a victory.",
+ death_title:"Unfinished · Age 35+",
+ death_title_money:"Unfinished · Bankrupt",
+ death_sub_health:"Your heart stopped at age {n}.",
+ death_sub_money:"Debt crushed this family.",
+ year_title:"That year · age {n}",
+ settle_title:"📊 Age {n} · Year-end settlement",
+ go_settle:"Continue → Year-end settlement",
+ go_end:"Face the finale →",
+ go_next:"On to age {n} →",
+ stat_time:"⏳ Time",
+ stat_health:"❤️ Health",
+ stat_money:"💰 Savings",
+ stat_family:"🏠 Family",
+ stat_regret:"😔 Regret",
+ stat_dakao:"⚡ Exams",
+ stat_dakao_v:"{n}/3 handled well",
+ jx_gen_label:"📜 This run forged a house rule — pass it to the next generation:",
+ jx_save:"Set as house rule",
+ jx_saved:"House rule set ✓",
+ again:"Live again",
+ copy_btn:"📋 Copy epitaph, share with friends",
+ copy_prefix:"My epitaph: ",
+ d_time:"⏳Time",
+ d_health:"❤️Health",
+ d_money:"💰Money",
+ d_family:"🏠Family",
+ d_act:"⚡AP",
+ ys_salary:"💼 Salary",
+ ys_expense:"🧾 Expenses (mortgage + living)",
+ ys_time:"⏳ Time",
+ ys_time_v:"grind -{n} / leave +6",
+ ys_health:"❤️ Body",
+ ys_health_v:"-{n} health",
+ ys_fam:"🏠 Absence",
+ ys_fam_v:"-{n} family",
+ ys_talent:"🌳 Insight",
+ ys_talent_v:"Talent point +1",
+ ys_regret:"😔 Regret",
+ mute_title:"Sound",
+ achv_title_btn:"Achievements",
+ sig_fmt:"— Age {age} · {m} · Regret {regret}",
+ dakao40_r:"Twenty days in the ICU — Dad pulled through. The ¥200,000 bill. You: worth it.",
+ dakao45_r:"It took five talks before he opened up. He'd been isolated at school. Your heart ached — but the door finally opened.",
+}};
+const I18N_EV={
+ "exam35":{tag:"⚡ Age 35 Exam · Layoffs",title:"The Company's 'Graduation' List",text:"An HR meeting invite lands in your inbox. Subject line, four words: 'A quick chat.' At 35, you're the demographic that tops every layoff list. You know there's no dodging this one.",opts:[
+  ["Hustle to prove you belong","Two straight months of overtime — you survive, and even get a small raise. But your checkup report gains two more red arrows."],
+  ["Quietly reach out to headhunters","The headhunter says: 35 is a hurdle, but your résumé can still fetch a good price."],
+  ["Take the severance package, leave with dignity","The day the severance lands, you sleep till noon. Then next month's mortgage bill wipes the smile off your face."],
+ ]},
+ "exam40":{tag:"⚡ Age 40 Exam · A Parent in Crisis",title:"Dad Collapsed at the Market",text:"Mom calls, voice shaking: your dad passed out at the market, the ambulance just took him. The doctor says he needs surgery now — and insurance won't cover the imported stent.",opts:[
+  ["Spare no expense, save him first","The surgery is a success. Dad's first words waking up: 'That must have cost a fortune, huh?'"],
+  ["Use the domestic stent, save half","Dad says the domestic one is fine. You know he's just trying to save you money, which somehow hurts more."],
+  ["Hire a caregiver, go back to work","The caregiver is professional. But Mom calls at night, crying, saying she misses you."],
+ ]},
+ "exam45":{tag:"⚡ Age 45 Exam · Rebellious Teen",title:"The Kid Says: You Just Don't Get Me",text:"Your eighth-grader slams the bedroom door hard enough to rattle the walls. Grades slid from top 50 to 400th. The teacher says he's been hanging out with a rough crowd.",opts:[
+  ["Talk it out, one deep conversation a week","On the third talk, he cries. Says the pressure is crushing him, that he's terrified of disappointing you. The door starts opening."],
+  ["Spare the rod, spoil the child","He stops slamming the door — because he starts climbing out the window instead."],
+  ["Hire a therapist and a tutor","The therapist says: half of the kid's problem is your anxiety, transmitted straight to him."],
+ ]},
+ "exam40b":{tag:"⚡ Age 40 · Tomb-Sweeping Day",title:"The First Tomb-Sweeping Day Without Dad",text:"Since Dad passed, Mom has visibly aged. You go back home for Tomb-Sweeping Day, set out his favorite peanuts at the grave, and sit there a long while.",opts:[
+  ["Stay with Mom for a month","Mom looks a little better. She says: your dad's watching from up there."],
+  ["Move Mom to the city with you","Mom never quite adjusts to the city, but she says: being close to you puts my heart at ease."],
+  ["Send money to show you care","Mom takes the money, but sighs on the phone. You understand: money was never what she wanted."],
+ ]},
+ "e01":{tag:"💼 Career",title:"Headhunter's Call",text:"A headhunter calls: a rival company wants you, 30% raise — but you'd start from zero proving yourself, plus adapt to the always-on grind.",opts:[
+  ["Jump ship, roll the dice","The new salary is higher. But you discover: it's a walled garden everywhere you go."],
+  ["Use the offer to negotiate a raise","Your boss gives you the raise through gritted teeth. You've been added to his little blacklist."],
+  ["Decline — stability wins","You politely decline. That night you help the kid with homework, and for the first time he peels an apple for you."],
+ ]},
+ "e02":{tag:"💼 Career",title:"Layoff Rumors",text:"The department is cutting 20%. Your manager takes you aside: young hires are cheap and obedient, you know what I mean.",opts:[
+  ["Volunteer for the hardest project","The project succeeds; you keep your seat. Cost: three straight weeks of getting home at 2 a.m."],
+  ["Start interviewing in secret","Three interviews, all say you're too expensive. For the first time you seriously calculate your own 'value for money.'"],
+  ["Quiet-quit, let it be","You start leaving on time. The kid says: Dad, you look younger lately."],
+ ]},
+ "e03":{tag:"💼 Career",title:"Promotion Pitch",text:"The director seat is open; you've revised your pitch deck 18 times. Your rival is 32, foreign-educated, with a prettier deck.",opts:[
+  ["Go all out preparing","You get promoted! Big salary bump. At the celebration dinner, you raise a glass to the mirror."],
+  ["Let it be — family matters more","You lose the pitch, but it lands on the kid's birthday — the first one you've ever attended start to finish."],
+  ["Play dirty to edge them out","You win, but now every time you pass the pantry you feel eyes on you."],
+ ]},
+ "e04":{tag:"💼 Career",title:"Side Hustle: Livestreaming",text:"A colleague makes ¥20,000 a month selling stuff on livestreams. You're tempted: two hours after work, how hard could it be?",opts:[
+  ["Go live! Money first","Three months in: ¥40,000 earned — plus a bad neck and a kid full of complaints."],
+  ["Try it for a month","Two weeks in, viewers hold steady in the single digits — including your mom's three accounts."],
+  ["Nah, health is the real capital","You close the streaming tutorial and go for a 5K night run. The wind feels great."],
+ ]},
+ "e05":{tag:"💼 Career",title:"Startup Invitation",text:"Your childhood buddy wants you to co-found a startup: go all in for three years — financial freedom or nothing. You look at the mortgage bill. Your hand shakes.",opts:[
+  ["All in! Swing for the fences","The company folds in month 18. Lesson learned: at middle age, you can't afford to lose."],
+  ["Invest a little, keep the day job","The ¥50,000 evaporates, but the job survives. Lesson: don't throw eggs at rocks."],
+  ["Decline, protect the base","Three years later your buddy drives a Porsche. You look at your e-bike and smile: this is fine too."],
+ ]},
+ "e06":{tag:"💼 Career",title:"Bonus Slashed",text:"The company blames 'tough times': year-end bonus cut from 6 months' pay to 2. The group chat is furious.",opts:[
+  ["Confront the boss","The boss quietly tops yours up. You're now the office 'troublemaker' — and its hero."],
+  ["Swallow it silently","You do the math: nearly ¥100,000 gone. That night you drink a little extra and say nothing."],
+  ["Turn spite into job-hunt fuel","You update your résumé. Sometimes, grievance is the best fuel there is."],
+ ]},
+ "e07":{tag:"💼 Career",title:"New Boss Air-Dropped In",text:"The new boss is five years younger than you. First all-hands: 'We need wolf culture!' You stare at the goji berries in your thermos, lost in thought.",opts:[
+  ["Cozy up, pledge loyalty","You master the jargon — synergy, leverage, deep dives. Your kid asks why you talk so weird lately."],
+  ["Keep your distance, do your job","You don't pick sides, you just deliver. The boss finds you 'lacking passion' — but leaves you alone."],
+  ["Push back: I disagree","You contradict him in front of everyone. Three seconds of silence. You know: there goes the bonus."],
+ ]},
+ "e08":{tag:"💼 Career",title:"Mandatory Certification",text:"New industry rule: no certificate, no license to practice. Studying will peel a layer off you — but it pays a ¥3,000 monthly stipend.",opts:[
+  ["Study full-time for three months","Passed on the first try! Stipend secured. You discover: learning has nothing to do with age."],
+  ["Study casually","Took two attempts, but you passed. That's what counts."],
+  ["Skip it, whatever happens","You get shuffled to a dead-end role with a pay cut. Some hurdles can't be dodged."],
+ ]},
+ "e09":{tag:"🩺 Health",title:"The Checkup Report",text:"Checkup results: fatty liver, nodules, high uric acid. The doctor pushes up his glasses: at your age, take this seriously.",opts:[
+  ["Follow a health plan to the letter","Six months later, half the red arrows are gone. The doctor actually smiles."],
+  ["Take some pills and call it a day","Pills taken, drinking uninterrupted. You call this 'the middle-aged balance.'"],
+  ["File the report in a drawer, next year","The drawer fills with reports you refuse to face — like the life you refuse to face."],
+ ]},
+ "e10":{tag:"🩺 Health",title:"Middle-Age Spread",text:"Last year's pants won't button. The scale says 85 kg. The belly in the mirror looks three months along.",opts:[
+  ["Gym membership! Personal trainer!","Three months, 4 kg down. The trainer says: bro, that discipline doesn't look middle-aged."],
+  ["Brisk walk, one hour a day","Free, slow, steady. You've fallen in love with the morning park."],
+  ["A belly is a sign of prosperity","Your wife says: you're comfier to hug now. You decide: this is the shape of happiness."],
+ ]},
+ "e11":{tag:"🩺 Health",title:"Insomnia",text:"A full week of waking at 3 a.m. sharp, staring at the ceiling: mortgage, kid, parents, work…",opts:[
+  ["See a therapist","The therapist says: your anxiety comes from wanting to control everything. Try letting go, a little."],
+  ["Evening run plus a foot soak","Folk remedy. Works. You've re-learned what 'sleepy' feels like."],
+  ["Tough it out, count sheep","You reach sheep number 3,846. The sheep are asleep. You are not."],
+ ]},
+ "e12":{tag:"🩺 Health",title:"Back Alarm",text:"You bend to pick up a parcel and your lower back goes 'crack.' Doctor: herniated disc. Neglect it and you'll be horizontal for good.",opts:[
+  ["Physio plus core training","Three months later you can climb six floors without stopping. A man's back is his second face."],
+  ["Pain patches and less sitting","The patch smell becomes your new cologne. Colleagues keep their distance."],
+  ["Just endure it","Six months later you can only stand in meetings. Standing's fine, actually — looks energetic."],
+ ]},
+ "e13":{tag:"🩺 Health",title:"Night Running",text:"The neighborhood night-run club is recruiting. Motto: 'Outrun your midlife crisis.' You look at your flip-flops, hesitating.",opts:[
+  ["Join! Rain or shine","Six months later you finish your first half marathon. You cry before the finish line."],
+  ["Run now and then","Three days on, five off — results roughly zero, but the joy is real."],
+  ["Running ruins knees, pass","You choose soda and the couch. Knees saved; belly, not so much."],
+ ]},
+ "e14":{tag:"🩺 Health",title:"Hair Loss",text:"The shower drain clogs — all your hair. Your hairline retreats a little more every year, like the tide going out.",opts:[
+  ["Hair transplant! Turn back time","You look five years younger. You just wince a little at every shampoo now."],
+  ["Own it, shave it all","Bald is cool. The kid says you look like a movie star. You believe him."],
+  ["Try every folk remedy","Ginger rubs, black sesame soup… the hair never came back, but the kitchen smells great."],
+ ]},
+ "e15":{tag:"🏠 Family",title:"Middle-School Entrance Exams",text:"The kid faces middle-school entrance exams, and the bar for the top schools looks sky-high. The neighbor's kid is already in three cram schools.",opts:[
+  ["Enroll in the priciest crash course","The kid gets in. The day the acceptance letter arrives, he hugs you and cries. Worth it."],
+  ["Tutor him yourself, two hours a night","You re-learn math-olympiad problems. He lands a regular school — but your bond has never been stronger."],
+  ["Let nature take its course","He goes to a regular school, and he's happy. But sometimes you wonder: did you hold him back?"],
+ ]},
+ "e16":{tag:"🏠 Family",title:"Mom Wants a Second Grandkid",text:"Mom: one child is too lonely — have another while you're still young! I'll help raise them! You look at your pay stub and your gray hairs.",opts:[
+  ["Answer the call, go for number two","The day the second is born, the whole family cries. Broke, but full of noise."],
+  ["Hold the line: one and done","Mom gives you the silent treatment for a month. But you know: choosing not to have one responsibly is harder than having one carelessly."],
+  ["Deploy the delay tactic: 'we'll see'","'We'll see' lasted three years. Mom stopped asking, and somehow that stings more."],
+ ]},
+ "e17":{tag:"🏠 Family",title:"School-Zone Home",text:"For the kid's schooling, a tiny run-down flat in a top school zone costs twice the price of a new build elsewhere. The agent: buy it, and your kid wins at the starting line.",opts:[
+  ["Grit your teeth and buy","A 30-year mortgage. But school drop-off takes ten minutes now. That time is worth money."],
+  ["Rent near the school instead","You rent by the school and save a fortune. Discovery: you don't have to 'own' everything."],
+  ["Skip it, let be what will be","The kid goes to a regular primary school. He asks: why do others get the good school? You fall silent."],
+ ]},
+ "e18":{tag:"🏠 Family",title:"Wedding Anniversary",text:"Your 15th wedding anniversary — you forgot it completely. Your wife hides a gift behind her back; her eyes shift from hope to disappointment.",opts:[
+  ["Make it up: a makeup trip","On a beach down south, she leans on your shoulder: when we're old, let's come back."],
+  ["Make it up: an expensive gift","Money talks, but she says: what I really wanted was you home earlier."],
+  ["'Anniversaries are just formality'","She doesn't fight. She just sleeps facing away that night. You know: some cracks are silent."],
+ ]},
+ "e19":{tag:"🏠 Family",title:"In-Law Wars",text:"Mom and your wife have a huge fight over parenting styles — one storms back to her hometown, the other holds the kid and cries. You're caught in the middle, pleasing no one.",opts:[
+  ["Hire a nanny, physical separation","Buy peace with money. Expensive, but it works. Midlife wisdom: anything money can solve isn't really a problem."],
+  ["Shuttle diplomacy, talk to each","You talk yourself hoarse. Both give you face. You feel like a diplomat."],
+  ["Blame both sides equally","Now everyone's mad at you. That night you sleep on the couch. It's lumpy."],
+ ]},
+ "e20":{tag:"🏠 Family",title:"Puppy Love",text:"The teacher finds a love letter in the kid's backpack. Eighth grade — hormones at full burn.",opts:[
+  ["Guide openly, set ground rules","You talk till midnight. He says: Dad, you're cooler than I thought. You become 'bros.'"],
+  ["Confiscate the phone, lock it down","He learns to date over a burner phone. You lose, thoroughly."],
+  ["Invite the other parents to dinner","Two families, one awkward dinner, the kids mortified. Puppy love: deceased."],
+ ]},
+ "e21":{tag:"🏠 Family",title:"Parent-Teacher Night",text:"At parent-teacher night, the teacher praises the top ten by name. Your kid isn't mentioned. You squirm on the tiny stool.",opts:[
+  ["Talk to the teacher after","Teacher says: he's kind, just hasn't clicked yet. You decide: kindness counts as excellence too."],
+  ["Pile pressure on at home","The kid cries: I'm already trying so hard. For the first time you realize: your anxiety is killing him."],
+  ["Take him out for a good meal","'One bad test won't collapse the sky.' The kid grins, flashing the gap in his teeth."],
+ ]},
+ "e22":{tag:"🏠 Family",title:"Dad's 70th Birthday",text:"Dad's 70th birthday, relatives all coming. You're debating whether to go big.",opts:[
+  ["Go big! Make it grand","Dad drinks a little too much and grabs your hand: the proudest thing in my life is you."],
+  ["Simple family dinner","No fanfare, but Dad eats with gusto. He says: everyone's here — that's better than anything."],
+  ["Too busy, send a red envelope","Dad accepts it with a polite 'thanks.' You're so courteous with each other, like strangers online."],
+ ]},
+ "e23":{tag:"🏠 Family",title:"Dad Keeps Coughing",text:"On video call, Dad coughs hard but waves it off: old problem, no need for a hospital. Your stomach drops.",opts:[
+  ["Take him to a top hospital now","False alarm — just chronic pharyngitis. But you're glad: going was the only way to be sure."],
+  ["'Drink hot water, get some rest'","Dad says 'sure' and hangs up. You stare at the phone, uneasy."],
+  ["Mail him the best cough medicine","The medicine arrives; Dad's delighted. But you know: medicine is no substitute for a checkup."],
+ ]},
+ "e24":{tag:"👥 Social",title:"Class Reunion",text:"A reunion after ten years apart. The class monitor drives a Porsche; you take a taxi. Your hand shakes a little pushing the door open.",opts:[
+  ["Walk in easy, laugh along","You discover: the most successful are the humblest. It's the anxious middle pack — you included."],
+  ["Flex back, can't lose face","You rent a nice car to arrive in. Returning it the next day, your heart bleeds. Face is expensive."],
+  ["Skip it, save money and peace","You stay home building LEGO with the kid. He says: Dad, you're so happy today. You think: yeah, I am."],
+ ]},
+ "e25":{tag:"👥 Social",title:"Old Classmate Wants a Loan",text:"A classmate you haven't spoken to in ten years asks for ¥50,000: just bridging a gap, next month for sure. You know he said 'next month' three years ago too.",opts:[
+  ["Lend it — friendship is priceless","The money never comes back. ¥50,000 to see someone clearly. Not a bad deal."],
+  ["Lend half, keep some room","He's a bit annoyed, but accepts. Adult dignity: help halfway, hold back halfway."],
+  ["Plead poverty and decline","You say money's tight too. Instant reply: understood. From then on, you drift apart by mutual silent agreement."],
+ ]},
+ "e26":{tag:"💰 Money",title:"Trading Up the Flat",text:"The current place is too small — grandparents and kid squeezed together. A bigger flat means ¥3,000,000 more in loans. You look at the interest rate and inhale sharply.",opts:[
+  ["Upgrade! Do it right once","The new home is bright and roomy; Mom gets her own room. Bigger payments — but more laughter too."],
+  ["Renovate the old place","Open up the balcony, add a tatami nook. Less money, just as much happiness."],
+  ["Make do","The kid does homework at the dining table while grandpa watches TV beside him. You tell yourself: this is life."],
+ ]},
+ "e27":{tag:"💰 Money",title:"Buying a Car",text:"The old car keeps breaking down. Your wife has her eye on a ¥300,000 EV; you think a ¥100,000 gas car runs just fine.",opts:[
+  ["Listen to the wife, buy the nice one","The new car is genuinely great. You just drive with a lighter foot every time you think of the payments."],
+  ["Buy the value pick","The compromise satisfies everyone. The core midlife skill: compromise."],
+  ["Squeeze three more years from the old one","The old car dies again on the elevated highway. That day you swear: next time, new car."],
+ ]},
+ "e28":{tag:"🏠 Family",title:"Family Vacation",text:"The kid says: everyone's been to the beach except me. Your wife digs out a three-year-old travel plan.",opts:[
+  ["Go deluxe, make up for lost time","Five days, 2,000 photos. Years from now you'll still flip through them."],
+  ["Budget trip nearby","A countryside homestay, a stream, roast sweet potatoes. The kid says: best trip ever."],
+  ["'When we can afford it'","'When we can afford it' — five years running. Childhood doesn't wait."],
+ ]},
+ "e29":{tag:"🌿 Life",title:"Fishing",text:"A colleague evangelizes fishing: it cures every worry. You remember sitting by the river as a kid, a whole afternoon at a time.",opts:[
+  ["Dive in! Full gear","Getting skunked is the norm — but those hours by the water, you don't miss anyone."],
+  ["Borrow a rod, try it out","You catch two small crucian carp and release them. Happiness is sometimes that simple."],
+  ["Fishing pays less than overtime","You earn an extra ¥15,000 — and swallow hard looking at friends' catch photos."],
+ ]},
+ "e30":{tag:"🏠 Family",title:"Mom Hurt Square Dancing",text:"Mom twisted her ankle square dancing; the doctor says three months of rest. She can't sit still and sighs all day.",opts:[
+  ["Take leave to be with her, hire help","You binge ten dramas with her. She says: this ankle was worth it."],
+  ["Hire hourly help","The helper is responsible, but Mom keeps saying: I'd rather have my son around."],
+  ["'Rest a few days, you'll be fine'","Mom sneaks back to dancing and the ankle gets worse. Your 'peace of mind' becomes her heartbreak."],
+ ]},
+ "e31":{tag:"🏠 Family",title:"Wife's Overtime Month",text:"Your wife works late for a month straight, collapsing into bed every night. Everything at home lands on you alone.",opts:[
+  ["Step up, make soup","She comes back from a trip and cries in your arms: thank goodness for you. Marriage is taking turns holding the umbrella."],
+  ["Hire help to share the load","Money buys time. You finally get to eat dinner together."],
+  ["Complain: does this family matter?","A huge fight. She says: you think I want overtime? You fall silent. Yeah — who would."],
+ ]},
+ "e32":{tag:"🏠 Family",title:"Kid's Myopia",text:"The kid's myopia hits -4.00. Doctor: less screen time, more outdoors. You look at the tablet in his hands, torn.",opts:[
+  ["Confiscate the tablet, outdoors daily","The prescription stops worsening. The weekend park becomes your new base."],
+  ["Buy the priciest glasses","Expensive glasses, prescription still climbing. Lesson: expensive doesn't mean right."],
+  ["'I was nearsighted as a kid too'","You choose 'heritage.' The kid rolls his eyes: keep that blessing for yourself?"],
+ ]},
+ "e33":{tag:"🏠 Family",title:"Adopting a Stray",text:"The kid carries home a stray cat, eyes sparkling up at you: Dad, can we keep it?",opts:[
+  ["Keep it! New family member","The cat heals the whole family. Dad's greatest daily joy is now arguing with the cat."],
+  ["Trial month first","A month later, nobody can bear to give it up. The 'just trying' law never lies."],
+  ["No, too much trouble","The kid cries all night. For the first time you feel like the villain."],
+ ]},
+ "e34":{tag:"💰 Money",title:"Bull Market",text:"A bull market arrives! Colleagues are all-in and feasting; you stare at your idle savings, fingers itching.",opts:[
+  ["Go all in","Three limit-ups in a row! But you know: money made on luck gets lost on skill."],
+  ["Dollar-cost into index funds","Not thrilling, but steady. You've learned: at middle age, you can't handle the adrenaline."],
+  ["Touch nothing, firmly","The bull market passes you by. You keep your principal — and your sleep."],
+ ]},
+ "e35":{tag:"💰 Money",title:"Wealth Product Blows Up",text:"A wealth-management product you bought just defaulted! ¥200,000 may vanish. The sales rep's phone is already unreachable.",opts:[
+  ["Call the police, fight for it","You recover half. Lesson: high yield always has a high-risk flip side."],
+  ["Eat the loss, tuition paid","¥200,000 buys one lesson: don't touch what you don't understand."],
+  ["Protest with a banner at their office","Three days of protesting, 70% recovered. But now the neighborhood knows you as the banner guy."],
+ ]},
+ "e36":{tag:"👥 Social",title:"A Relative's Wedding",text:"A distant relative's wedding — gift money starts at ¥2,000. Three weddings in one month. Your wallet is bleeding.",opts:[
+  ["Attend them all, gift generously","Face saved, wallet emptied. You console yourself: relationships are a savings account."],
+  ["Attend selectively","Go for the close ones, send money for the far ones. Adult socializing: precision-targeted."],
+  ["Just wire money every time","Saves time and effort, but someone in the family group chat calls you 'clueless.' You: let them talk."],
+ ]},
+ "e37":{tag:"🌿 Life",title:"Your Own Birthday",text:"Your 45th birthday — nobody remembers. You buy yourself a cake, light the candles, make a wish.",opts:[
+  ["Call old friends for a drink","An old friend says: happy birthday, brother! In that moment, 45 doesn't feel so bad."],
+  ["Eat the cake alone, make the wish","The wish: fewer regrets next year. The candles go out. You smile."],
+  ["Work overtime, birthday as usual","You earn an extra ¥10,000 — but you're the only one blowing out the candles."],
+ ]},
+ "e38":{tag:"🌿 Life",title:"Gray Hair",text:"Your wife plucks your gray hairs, then gives up: forget it, there are too many. You look in the mirror — the temples are already frosted.",opts:[
+  ["Dye it, back to your prime","Five years younger. The kid says: Dad, you're such a poser. You: I call it polished."],
+  ["Accept it gracefully","Gray hair is a medal of the years. You decide: age elegantly."],
+  ["Transplant plus the full med-spa menu","You're younger; your bank card is older. Sometimes the anxiety about aging costs more than aging itself."],
+ ]},
+ "e39":{tag:"👥 Social",title:"Old Friend in Town",text:"Your best college buddy is in town on business and invites you for drinks. He went into business for himself and is worth tens of millions now. You're still punching a clock.",opts:[
+  ["Talk till dawn","You talk till 3 a.m. and discover: he envies your stability, you envy his wealth. Even."],
+  ["Partner with him on something","You invest ¥80,000; the project dies. Still brothers — just never talk money again."],
+  ["Decline, too busy","You work late and earn an extra ¥5,000. At night you scroll his social feed and can't sleep."],
+ ]},
+ "e40":{tag:"🏠 Family",title:"Dad's Old House",text:"Dad wants to renovate the old family house: 40 years old, roof leaking. You do the math: ¥150,000.",opts:[
+  ["Renovate! Let him live well","The day the new house is done, Dad stands at the door a long while. He says: this house was worth it."],
+  ["Basic repairs","No more leaks; Dad is content. Old folks never ask for much."],
+  ["'You've got a city flat, why bother'","Dad never mentions it again. But on every video call, the sound of rain in the background aches."],
+ ]},
+ "heal01":{tag:"🌿 Amends",title:"The Overdue Checkup",text:"Dad always says hospitals are money pits — but you can't forget last time he fainted, Mom calling you with shaking hands. You decide: no asking his opinion this time. You're driving him to a top-tier hospital for the full workup.",opts:[
+  ["Full workup plus specialist consult","A full day of tests. Result: a false alarm, thank goodness. You photograph the report and set it as your wallpaper — a reminder: no more 'next time.'"],
+  ["Standard checkup","Numbers mostly normal. You exhale; Dad grumbles about the wasted money. You smile and let it go."],
+  ["Forget it, he doesn't want to go","Once again you 'respect' his reluctance. At night you remember that phone call from the day he fainted, and your back goes cold."],
+ ]},
+ "heal02":{tag:"🌿 Amends",title:"The Missed Parent-Teacher Nights",text:"Scrolling your photo album: 16 years, and it's always Mom in the parent-teacher night photos. You count the times you went — not even a full hand.",opts:[
+  ["Clear everything, go to one","You squeeze onto a tiny stool and hear the teacher praise your kid. Afterward he runs over, eyes shining: Dad, you looked so cool today."],
+  ["Take the kid on a trip","Three days, two nights — you talk about everything you never talked about. On the way home he says: Dad, let's do this every year? You say: deal."],
+  ["Earn more first, later","You earn another ¥30,000. But childhood doesn't accept installment plans."],
+ ]},
+ "heal03":{tag:"🌿 Amends",title:"The Wedding, Twenty Years Late",text:"Twenty years married, and you don't even have a decent wedding photo. Your wife digs out the old marriage certificate — the photo has faded. She laughs: you had quite the hair back then.",opts:[
+  ["Redo the wedding, with photos","She puts on the dress, eyes a little red: at our age, still all this fuss. You say: what I owed you, twenty years late. The kid takes the photos, grinning widest."],
+  ["Just redo the photo shoot","Under the studio lights you laugh like it's 20 years ago. She says: what I wanted was always simple."],
+  ["We're an old couple, skip the fuss","You let it drop. But sometimes, seeing other people's wedding photos, you linger a little longer."],
+ ]},
+ "forceDad":{tag:"🚨 Crisis · Father Down",title:"Dad Has Collapsed",text:"Mom calls in tears: this time it's really bad — the doctor issued a critical-condition notice. Do you regret it? Regret not taking him for that checkup sooner.",opts:[
+  ["Spend whatever it takes","Twenty days in the ICU — Dad pulls through. The ¥180,000 bill. You: worth it."],
+  ["Conservative care, accept fate","Dad passes. At the funeral you don't shed a single tear — because you can't."],
+  ["Transfer to Shanghai specialists","The Shanghai specialists work a miracle. Only problem: three years of belt-tightening ahead."],
+ ]},
+ "forceWife":{tag:"🚨 Crisis · Marriage on the Rocks",title:"She Asks for a Divorce",text:"Years of neglect finally detonate. Your wife slides the divorce papers across the table: all these years, I've been a single mom. Your hand shakes looking at them.",opts:[
+  ["Get on your knees, win her back","You start dating again — flowers, late-night talks. She says: if only you'd done this sooner."],
+  ["Separate calmly, both step back","Half a year apart; you both lose weight. Some distance creates beauty; some creates strangers."],
+  ["Sign. Part on good terms","You're a divorced middle-aged man now. The house is hers, the kid is yours — and endless long nights."],
+ ]},
+ "forceHealth":{tag:"🚨 Crisis · You Collapse",title:"You Go Down at the Office",text:"Everything goes black; you wake up in a hospital. Doctor: pre-heart-attack. Half an hour later and… This is the closest you've ever been to death.",opts:[
+  ["Rest fully for three months","Three months: you learn tai chi, fishing, and the art of doing nothing. The day you're discharged, the sun is perfect."],
+  ["One week, then back to work","The boss visits with a fruit basket — and a fresh set of KPIs. You laugh: that's just fate."],
+  ["Refuse admission, rest at home","You save the hospital bill. But on nights your heart flutters, the fear creeps in."],
+ ]},
+ "time38":{tag:"🕰️ Time",title:"Dad's Reading Glasses",text:"Dad's on another pair of reading glasses, thicker lenses this time. He laughs that old eyes go dim, holding the newspaper closer and closer. Suddenly you can't bear to watch.",opts:[
+  ["Get him the best progressive lenses","Dad puts them on and looks at you for a long time: clear, really clear. You know he's not looking at the newspaper."],
+  ["Order a cheap pair online","They're uncomfortable; he switches back to the old ones. You saved money and lost something else."],
+  ["'Next time I'm home'","'Next time' has lasted two years. Dad holds the newspaper farther and farther away."],
+ ]},
+ "time43":{tag:"🕰️ Time",title:"Mom Starts Forgetting",text:"Mom always buys an extra portion of your favorite sweet-and-sour ribs — except you gave those up three years ago. She freezes, then laughs: look at my memory. Your heart sinks.",opts:[
+  ["Take her for a full workup","Doctor: mild decline. More company, more mental exercise. You pin that sentence to the top of your notes app."],
+  ["Hire a helper to watch over her","The helper is diligent. But when Mom's memory slips, it's still your name she calls."],
+  ["Tell yourself: that's just aging","You choose not to think about it. The things you refuse to think about grow fastest."],
+ ]},
+ "time48":{tag:"🕰️ Time",title:"The Kid Is Taller Than You",text:"The checkup form says it: the kid has outgrown you. His childhood clothes in the closet will never fit again. Measuring against him, it hits you: he grows faster than you age.",opts:[
+  ["Fold them away, keep the memory","You fold every little garment. Your wife says: what are you doing? You say nothing; your nose just stings a bit."],
+  ["Donate them to kids in need","The day the box ships, the kid says: Dad, I'm grown up now — you take care of yourself too. You say: mm."],
+  ["Didn't notice, threw them out","Years later you understand: what you threw away wasn't clothes, but time that will never come back."],
+ ]},
+ "warnDad":{tag:"🏠 Family",title:"Dad's Cough Gets Worse",text:"Mom says: your dad coughs all night and still won't see a doctor. The last time you said 'drink more hot water' was two years ago.",opts:[
+  ["This time, take him in for real","Results: early-stage lesions, caught in time — lucky. You're drenched in cold sweat thinking about it."],
+  ["Watch and wait a bit more","You drag it out another year. Fate's ledger gains another entry."],
+ ]},
+};
+
+/* ================= i18n ================= */
+let LANG=LS.get("lang",null)||(((navigator.language||"").toLowerCase().indexOf("en")===0)?"en":"zh");
+function T(k){const d=I18N[LANG]||{};return d[k]!==undefined?d[k]:(I18N.zh[k]!==undefined?I18N.zh[k]:k)}
+function tf(k,n){return T(k).split("{n}").join(n)}
+function gL(o,f){return (LANG==="en"&&o["en_"+f])?o["en_"+f]:o[f]}
+function evL(ev,f){if(LANG==="en"){const e=I18N_EV[ev.id];if(e&&e[f])return e[f]}return ev[f]}
+function evOpt(evId,idx,k){if(LANG!=="en")return null;const e=I18N_EV[evId];return (e&&e.opts&&e.opts[idx])?e.opts[idx][k]:null}
+const EPITAPH_NAMES={
+ wuhui:{zh:"此生无悔",en:"No Regrets"},
+ fuzu:{zh:"富足的缺席者",en:"The Affluent Absentee"},
+ fangnu:{zh:"房奴",en:"The Mortgage-Bound"},
+ pinming:{zh:"拼命三郎",en:"Burning the Candle"},
+ quexi:{zh:"缺席的家人",en:"The Absent One"},
+ pingfan:{zh:"平凡人",en:"An Ordinary Life"}};
+function setLang(l){
+ LANG=(l==="en")?"en":"zh";LS.set("lang",LANG);renderTexts();
+ const scr=document.querySelector(".screen.on").id;
+ if(scr==="sStart")renderStart();
+ else if(scr==="sGame"&&S){if(!$("overlay").classList.contains("on")&&S.curEv)renderEventCard(S.curEv);renderHUD();}
+ else if(scr==="sEnd"&&S&&S._end)renderEndScreen();
+}
+function renderActions(){
+ $("aCheck").innerHTML=T("act_check")+"<small>"+T("act_check_s")+"</small>";
+ $("aTalk").innerHTML=T("act_talk")+"<small>"+T("act_talk_s")+"</small>";
+ $("aKid").innerHTML=T("act_kid")+"<small>"+T("act_kid_s")+"</small>";
+ $("muteBtn").title=T("mute_title");$("achvBtn").title=T("achv_title_btn");
+}
+function renderTexts(){
+ document.documentElement.lang=LANG==="en"?"en":"zh-CN";
+ document.title=T("game_title")+" · 35-50";
+ $("gameTitle").textContent=T("game_title");
+ $("gameSub").innerHTML=T("game_sub");
+ $("jxBoxLabel").textContent=T("jx_box_label");
+ $("hw1").innerHTML=T("how1");$("hw2").textContent=T("how2");$("hw3").innerHTML=T("how3");$("hw4").textContent=T("how4");
+ $("winLine").innerHTML=T("winline");$("loseLine").innerHTML=T("loseline");
+ $("ruleSum").textContent=T("ruledet_sum");$("ruleDet").innerHTML=T("ruledet_body");
+ $("startBtn").textContent=T("start_btn");
+ $("footNote").innerHTML=T("footer");
+ $("langBtn").textContent=LANG==="en"?"中文":"EN";
+ $("langBtnStart").textContent=LANG==="en"?"🌐 切换到中文":"🌐 Switch to English";
+ renderActions();
+}
+
+</script>
+<script>
+"use strict";
+/* ================= 事件库 =================
+   d: {time,health,money(元）,family} 增减； r: 结果文案； regret: 额外遗憾
+   setFlag: {k, yrs} 埋伏笔； needFlag: 仅当flag存在时出现（特殊事件单独处理） */
+/* ---------- 固定大考 ---------- */
+const EXAM35={
+ id:"exam35",tag:"⚡ 35岁大考 · 裁员潮",title:"公司「毕业」名单",
+ text:"HR的会议邀请发到了你的邮箱，标题只有四个字：单独沟通。35岁，优化名单上的常客年龄。你知道，这次躲不掉了。",
+ options:[
+  {t:"拼命表现，争取留下来",d:{time:-15,health:-10,money:30000,family:-5},r:"你连续加了两个月班，留下来了，还涨了点工资。但体检单上的箭头又多了两个。",regret:2,setFlag:{k:"overwork",yrs:3}},
+  {t:"骑驴找马，联系猎头",d:{time:-10,money:-8000,family:2},r:"猎头说：35岁是道坎，但你的履历还能卖个好价钱。",setFlag:{k:"jobhop",yrs:2}},
+  {t:"拿赔偿N+1，体面离开",d:{money:90000,time:10,family:5},r:"赔偿金到账那天，你睡到了自然醒。只是下个月的房贷，让你笑不出来。",regret:4,setFlag:{k:"unemployed",yrs:2}}
+ ]};
+const EXAM40={
+ id:"exam40",tag:"⚡ 40岁大考 · 父母大病",title:"父亲倒在了菜市场",
+ text:"电话是母亲打来的，声音在抖：你爸在菜市场晕倒了，120刚拉走。医生说要立刻手术，进口支架不在医保里。",
+ options:[
+  {t:"全力救治，钱以后再挣",d:{money:-150000,time:-12,family:8},r:"手术很成功。父亲醒来第一句话是：花了不少钱吧？",regret:0,good:"dakao40"},
+  {t:"用国产支架，省一半",d:{money:-70000,time:-8,family:2},r:"父亲说国产的也挺好。你知道他在替你省钱，这让你更难受。",regret:5},
+  {t:"请护工，自己回去上班",d:{money:-220000,time:-2,family:-8},r:"护工很专业，但母亲夜里给你打电话，哭着说想你。",regret:8}
+ ]};
+const EXAM45={
+ id:"exam45",tag:"⚡ 45岁大考 · 孩子叛逆",title:"孩子说：你们根本不懂我",
+ text:"初二的孩子把房门摔得震天响，成绩单从年级前50掉到了400名。老师说：孩子最近和一群社会青年走得很近。",
+ options:[
+  {t:"耐心沟通，每周一次深谈",d:{time:-12,family:12,money:-5000},r:"第三次深谈，他哭了。说压力太大，怕让你们失望。门，慢慢打开了。",regret:0,good:"dakao45"},
+  {t:"棍棒底下出孝子",d:{family:-18},r:"他不再摔门了——因为他开始翻窗了。",regret:8},
+  {t:"请心理咨询师+家教",d:{money:-40000,time:-5,family:6},r:"咨询师说：孩子的问题，一半是你们的焦虑传导的。",regret:2}
+ ]};
+/* ---------- 父亲已故时的40岁替代事件 ---------- */
+const EXAM40B={
+ id:"exam40b",tag:"⚡ 40岁 · 清明",title:"父亲走后的第一个清明",
+ text:"父亲走后，母亲明显老了。清明你回老家扫墓，摆上他最爱的花生米，坐了很久。",
+ options:[
+  {t:"陪母亲住一个月",d:{time:-10,family:12,money:-5000},r:"母亲的气色好了些。她说：你爸在天上，看着呢。",regret:0,good:"dakao40"},
+  {t:"把母亲接到城里住",d:{money:-30000,family:10,time:-3},r:"母亲不习惯城里，但她说：离你们近，心安。",regret:2},
+  {t:"转账表心意",d:{money:-10000,family:-5},r:"母亲收了钱，电话里却叹气。你明白：她要的从来不是钱。",regret:5}
+ ]};
+/* ---------- 年度事件池（43） ---------- */
+const EVENTS=[
+{id:"e01",tag:"💼 职场",title:"猎头挖角",text:"猎头电话：对家公司想挖你，涨薪30%，但要从零开始证明自己，还要适应996。",
+options:[
+ {t:"跳槽，搏一把",d:{money:60000,time:-10,health:-5,family:-5},r:"新公司薪水涨了，但你发现：围城，处处都是。",setFlag:{k:"jobhop",yrs:2}},
+ {t:"用offer跟现公司谈加薪",d:{money:30000,family:-2},r:"领导黑着脸给你加了薪。从此你上了他的小本本。"},
+ {t:"拒绝，安稳压倒一切",d:{family:5,time:5},r:"你婉拒了。当晚陪孩子写作业，他第一次主动给你削了个苹果。",regret:0}]},
+{id:"e02",tag:"💼 职场",title:"优化名单风声",text:"部门要优化20%，领导找你谈话：年轻人便宜又听话，你懂的。",
+options:[
+ {t:"主动接最难的项目自证",d:{time:-15,health:-8,money:20000},r:"项目成了，你保住了位置。代价是连续三周凌晨两点到家。",regret:2,setFlag:{k:"overwork",yrs:2}},
+ {t:"开始偷偷面试",d:{time:-8,money:-5000},r:"面试了三家，都嫌你贵。你第一次认真算了算自己的「性价比」。"},
+ {t:"摆烂，爱咋咋地",d:{money:-30000,family:5,time:8},r:"你开始准时下班。孩子说：爸爸最近好像变年轻了。",regret:3}]},
+{id:"e03",tag:"💼 职场",title:"升职答辩",text:"总监位置空出来了，答辩PPT你改了18版。对手是32岁的海归，PPT比你好看。",
+options:[
+ {t:"全力以赴准备",d:{time:-12,health:-5,money:50000},r:"你升职了！年薪涨了一大截。庆功宴上，你敬了那面镜子一杯。",setFlag:{k:"promoted",yrs:99}},
+ {t:"随缘，陪家人更重要",d:{family:8,time:5},r:"你输了答辩，但那天正好赶上孩子的生日，你第一次全程在场。"},
+ {t:"搞小动作挤掉对手",d:{money:20000,family:-5},r:"你赢了，但从此每次路过茶水间都觉得有人在看你。",regret:6}]},
+{id:"e04",tag:"💼 职场",title:"副业直播",text:"同事靠直播带货月入两万，你心动了：下班播两小时，好像也不是不行？",
+options:[
+ {t:"开播！搞钱要紧",d:{time:-15,health:-5,money:40000,family:-8},r:"三个月，你挣了四万，也收获了颈椎病和孩子的抱怨。"},
+ {t:"试一个月看看",d:{time:-8,money:8000,family:-3},r:"播了两周，观看人数稳定在个位数——包括你妈的三个号。"},
+ {t:"算了，身体是本钱",d:{health:5,family:3},r:"你关掉了直播教程，出去夜跑了五公里。风很凉快。"}]},
+{id:"e05",tag:"💼 职场",title:"创业邀约",text:"发小拉你合伙创业：All in 三年，要么财务自由，要么一无所有。你看着房贷账单，手在抖。",
+options:[
+ {t:"All in！搏一把大的",d:{money:-200000,time:-10,health:-10,family:-10},r:"公司在第18个月倒闭。你明白了：中年人，输不起。",regret:10},
+ {t:"投点小钱，不辞职",d:{money:-50000},r:"投的五万打了水漂，但好在工作还在。你学会了：别拿鸡蛋碰石头。"},
+ {t:"拒绝，守住基本盘",d:{family:3},r:"发小三年后开上了保时捷。你看着自己的电动车，笑了笑：也挺好。",regret:2}]},
+{id:"e06",tag:"💼 职场",title:"年终奖缩水",text:"公司说今年大环境不好，年终奖从6个月变成2个月。群里怨声载道。",
+options:[
+ {t:"找领导理论",d:{money:20000,time:-5},r:"领导单独给你补了点。你成了同事眼中的「刺头」，也是「英雄」。"},
+ {t:"默默接受",d:{money:-60000,family:-2},r:"你算了算，少了小十万。晚上多喝了二两，啥也没说。",regret:2},
+ {t:"把怨气变成跳槽动力",d:{time:-10,money:10000},r:"你更新了简历。有时候，委屈是最好的燃料。"}]},
+{id:"e07",tag:"💼 职场",title:"新领导空降",text:"新领导比你小五岁，开会第一句：我们要狼性文化。你看着自己保温杯里的枸杞，陷入沉思。",
+options:[
+ {t:"积极靠拢表忠心",d:{time:-8,health:-3,money:15000},r:"你学会了「颗粒度」「抓手」「闭环」。孩子问你最近怎么说话怪怪的。"},
+ {t:"保持距离，做好本分",d:{family:2},r:"你不站队，只做事。领导觉得你「不够有激情」，但也没动你。"},
+ {t:"硬刚：我不认同",d:{money:-40000,time:5},r:"你当众反驳了他。全场安静三秒。你知道，年终奖没了。",regret:3}]},
+{id:"e08",tag:"💼 职场",title:"考证",text:"行业新规，没证不能上岗。备考要脱层皮，但考下来每月多3000津贴。",
+options:[
+ {t:"脱产备考三个月",d:{time:-18,health:-5,money:36000},r:"一次通过！津贴到手。你发现：学习这件事，和年龄无关。"},
+ {t:"佛系备考",d:{time:-8,money:-3000},r:"考了两次才过。好在，过了。"},
+ {t:"不考了，爱咋咋地",d:{money:-36000},r:"你被调到了边缘岗位，薪水降了。有些坎，躲不过去。",regret:5}]},
+{id:"e09",tag:"🩺 健康",title:"体检报告",text:"体检报告：脂肪肝、结节、尿酸高。医生推了推眼镜：你这个年龄，要当回事了。",
+options:[
+ {t:"彻底执行健康计划",d:{time:-8,health:18,money:-12000},r:"半年后复查，箭头少了一半。医生难得地笑了。"},
+ {t:"吃点药应付下",d:{money:-3000,health:5},r:"药吃了，酒没停。你管这叫「中年人的平衡」。"},
+ {t:"报告塞抽屉，明年再说",d:{health:-10},r:"抽屉里的报告越积越厚，像你不愿面对的人生。",regret:4,setFlag:{k:"ignoreHealth",yrs:2}}]},
+{id:"e10",tag:"🩺 健康",title:"中年发福",text:"去年的裤子扣不上了。称一称：85公斤。镜子里的肚子，像怀了三个月。",
+options:[
+ {t:"办卡！请私教！",d:{money:-15000,time:-8,health:15},r:"三个月瘦了8斤。私教说：哥，你这毅力不像中年人。"},
+ {t:"每天快走一小时",d:{time:-5,health:8},r:"不花钱，效果慢，但稳。你爱上了清晨的公园。"},
+ {t:"发福是福气的象征",d:{health:-8,family:2},r:"妻子说：你抱起来手感变好了。你决定：这就是幸福的形状。"}]},
+{id:"e11",tag:"🩺 健康",title:"失眠",text:"连续一周，凌晨三点准时醒来，盯着天花板想：房贷、孩子、父母、工作……",
+options:[
+ {t:"看心理医生",d:{money:-8000,health:10,time:-3},r:"医生说：你的焦虑，源于想把一切都掌控住。试着放下一点。"},
+ {t:"睡前跑步+泡脚",d:{time:-5,health:8},r:"土办法，管用。你重新学会了「困」是什么感觉。"},
+ {t:"硬扛，数羊",d:{health:-10,time:-5},r:"你数到了第3846只羊，羊都睡了，你还没睡。",regret:2}]},
+{id:"e12",tag:"🩺 健康",title:"腰椎报警",text:"弯腰捡个快递，腰「咔嚓」一声。医生：椎间盘突出，再不好好保养，以后只能躺着。",
+options:[
+ {t:"系统理疗+核心训练",d:{money:-10000,time:-8,health:15},r:"三个月后，你能一口气爬六楼了。腰，男人的第二张脸。"},
+ {t:"贴膏药+减少久坐",d:{money:-2000,health:6},r:"膏药味成了你的新香水。同事都躲着你走。"},
+ {t:"忍忍就过去了",d:{health:-12},r:"半年后你只能站着开会。站着，也挺好，显得精神。",regret:4}]},
+{id:"e13",tag:"🩺 健康",title:"夜跑",text:"小区夜跑团招新，口号是：跑掉中年危机。你看着自己的人字拖，犹豫了。",
+options:[
+ {t:"加入！风雨无阻",d:{time:-6,health:12,family:-2},r:"半年后，你跑完了人生第一个半马。终点线前，你哭了。"},
+ {t:"偶尔跑跑",d:{time:-3,health:5},r:"跑三天歇五天，效果约等于无，但快乐是真的。"},
+ {t:"跑步伤膝盖，不去",d:{health:-3},r:"你选择了快乐肥宅水。膝盖保住了，肚子没保住。"}]},
+{id:"e14",tag:"🩺 健康",title:"掉发",text:"洗头时下水道堵了，全是你的头发。发际线一年比一年往后撤，像退潮。",
+options:[
+ {t:"植发！重回青春",d:{money:-50000,health:3},r:"植完你年轻了五岁。就是每次洗头都心疼得不行。"},
+ {t:"坦然接受，剃光头",d:{family:3},r:"光头很酷，孩子说你像电影明星。你信了。"},
+ {t:"各种偏方试一遍",d:{money:-8000,health:-2},r:"生姜擦头、黑芝麻糊……头发没回来，厨房倒是香了。"}]},
+{id:"e15",tag:"🏠 家庭",title:"孩子小升初",text:"孩子要小升初了，重点中学的门槛像天一样高。邻居的孩子已经上了三个补习班。",
+options:[
+ {t:"报最贵的冲刺班",d:{money:-60000,time:-8,family:-5},r:"孩子考上了。拿到录取通知那天，他抱着你哭了。值了。",regret:0},
+ {t:"自己每天辅导两小时",d:{time:-15,family:10,health:-5},r:"你重学了一遍奥数。孩子考上了普通中学，但你们的感情，前所未有地好。"},
+ {t:"顺其自然，快乐教育",d:{family:5},r:"孩子去了普通学校，但他很快乐。你偶尔会想：是不是耽误了他？",regret:4}]},
+{id:"e16",tag:"🏠 家庭",title:"母亲催生二胎",text:"母亲：一个孩子太孤单了，趁你们还年轻，再生一个！我来带！你看着自己的工资条和白头发。",
+options:[
+ {t:"响应号召，拼二胎",d:{money:-100000,time:-10,health:-8,family:10},r:"老二出生那天，全家都哭了。穷，但热闹。"},
+ {t:"坚决丁克到底（一胎版）",d:{family:-8},r:"母亲一个月没理你。但你知道：负责任的不生，比不负责的生，更难。",regret:3},
+ {t:"拖字诀：再说吧",d:{family:-3},r:"「再说吧」说了三年。母亲不再提了，你反而有点失落。",regret:2}]},
+{id:"e17",tag:"🏠 家庭",title:"学区房",text:"为了孩子上学，学区房老破小，单价是新房的两倍。中介：买它，孩子赢在起跑线。",
+options:[
+ {t:"咬牙买下",d:{money:-300000,time:-5,family:5},r:"背上了30年贷款。但每天接送孩子只要10分钟。这时间，值钱。",regret:2},
+ {t:"租房陪读",d:{money:-60000,family:3},r:"租在学校旁边，省了一大笔。你发现：不一定非要「拥有」。"},
+ {t:"不买，顺其自然",d:{family:-5},r:"孩子去了普通小学。他问你：为什么别人能上好学校？你沉默了。",regret:6}]},
+{id:"e18",tag:"🏠 家庭",title:"结婚纪念日",text:"15周年结婚纪念日，你忘得一干二净。妻子把礼物藏在身后，眼神从期待变成失落。",
+options:[
+ {t:"将功补过：补一场旅行",d:{money:-20000,time:-5,family:15},r:"三亚的海边，她靠在你肩上说：老了，我们还来。"},
+ {t:"补送贵重礼物",d:{money:-15000,family:8},r:"包治百病，但她说：其实我更想要你早点回家。"},
+ {t:"「纪念日不就是个形式」",d:{family:-15},r:"她没吵没闹，只是那晚背对着你睡了。你知道，有些裂缝是无声的。",regret:7}]},
+{id:"e19",tag:"🏠 家庭",title:"婆媳战争",text:"母亲和妻子因为带孩子的方式大吵一架，一个摔门回老家，一个抱着孩子哭。你夹在中间，两头不是人。",
+options:[
+ {t:"请个育儿嫂，物理隔离",d:{money:-60000,family:8},r:"花钱买和平。贵，但管用。中年人的智慧：能用钱解决的，都不是事。"},
+ {t:"分别谈心，当和事佬",d:{time:-10,family:10,health:-3},r:"你磨破了嘴皮子。两人都给了你面子。你觉得自己像个外交官。"},
+ {t:"各打五十大板",d:{family:-12},r:"两边都得罪了。那晚你睡的沙发，硌得慌。",regret:5}]},
+{id:"e20",tag:"🏠 家庭",title:"孩子早恋",text:"老师在孩子书包里发现了情书。初二，正是荷尔蒙燃烧的年纪。",
+options:[
+ {t:"开明引导，约法三章",d:{time:-5,family:8},r:"你跟他聊到了半夜。他说：爸，你比我想象的开明。你们成了「兄弟」。"},
+ {t:"没收手机，严防死守",d:{family:-10},r:"他学会了用老年机谈恋爱。你输了，输得很彻底。",regret:4},
+ {t:"请对方家长吃饭",d:{money:-3000,family:5},r:"两家人吃了顿饭，孩子们尴尬得脚趾抠地。早恋，卒。"}]},
+{id:"e21",tag:"🏠 家庭",title:"家长会",text:"家长会，老师点名表扬了前十名，没提你孩子。你坐在小板凳上，如坐针毡。",
+options:[
+ {t:"会后找老师深聊",d:{time:-5,family:5},r:"老师说：孩子很善良，只是还没开窍。你决定：善良，也是一种优秀。"},
+ {t:"回家给孩子加压",d:{family:-8,time:-3},r:"孩子哭着说：我已经很努力了。你第一次意识到：你的焦虑，正在杀死他。",regret:5},
+ {t:"带孩子去吃顿好的",d:{money:-500,family:8},r:"「一次没考好，天又没塌。」孩子笑了，露出了豁牙。"}]},
+{id:"e22",tag:"🏠 家庭",title:"父亲生日",text:"父亲70大寿，亲戚们都要来。你在想要不要大办一场。",
+options:[
+ {t:"大办！风风光光",d:{money:-30000,time:-5,family:12},r:"父亲喝多了，拉着你的手说：我这辈子，最骄傲的就是你。"},
+ {t:"一家人简单吃顿饭",d:{money:-3000,family:8},r:"没有排场，但父亲吃得很香。他说：人齐，比啥都强。"},
+ {t:"太忙，转账表心意",d:{money:-8800,family:-8},r:"父亲收了红包，回了句「谢谢」。你们之间，客气得像网友。",regret:6}]},
+{id:"e23",tag:"🏠 家庭",title:"父亲总咳嗽",text:"视频里，父亲咳得厉害，却摆摆手：老毛病，不用去医院。你心里咯噔一下。",
+options:[
+ {t:"立刻带他去大医院检查",d:{money:-8000,time:-5,family:5},r:"虚惊一场，只是慢性咽炎。但你庆幸：去了，才安心。",setFlag:{k:"dadChecked",yrs:3}},
+ {t:"「多喝热水，注意休息」",d:{family:-3},r:"父亲说「好」，挂了电话。你盯着手机，心里不踏实。",regret:3,setFlag:{k:"ignoreDadCheckup",yrs:2}},
+ {t:"买最好的止咳药寄回去",d:{money:-2000,family:3},r:"药到了，父亲很开心。但你知道，药代替不了检查。",regret:1}]},
+{id:"e24",tag:"👥 社交",title:"同学聚会",text:"十年没见的同学聚会。班长开上了保时捷，你打车去的。推门的手，有点抖。",
+options:[
+ {t:"坦然赴宴，谈笑风生",d:{money:-2000,family:2},r:"你发现：混得最好的，反而最谦逊。焦虑的，都是中间那批——包括你。"},
+ {t:"炫一把，不能输",d:{money:-15000},r:"你租了辆好车去。第二天还车时，心在滴血。面子，真贵。",regret:4},
+ {t:"不去，省钱省心",d:{family:3},r:"你在家陪孩子拼乐高。他说：爸爸，你今天好开心。你想：是啊。"}]},
+{id:"e25",tag:"👥 社交",title:"老同学借钱",text:"十年没联系的老同学开口借5万：周转一下，下个月就还。你知道，他三年前就「下个月还」过。",
+options:[
+ {t:"借，情分无价",d:{money:-50000},r:"钱如期没回来。你花五万，看清了一个人。不亏。",regret:3},
+ {t:"借一半，留个余地",d:{money:-20000},r:"他有点不高兴，但还是接受了。成年人的体面：帮一半，留一半。"},
+ {t:"哭穷拒绝",d:{family:2},r:"你说最近手头也紧。他秒回：理解。从此，你们心照不宣地断了联系。"}]},
+{id:"e26",tag:"💰 资产",title:"换房",text:"现在的房子太小，老人孩子挤在一起。换大房子要加300万贷款，你看着利率，倒吸凉气。",
+options:[
+ {t:"换！一步到位",d:{money:-200000,time:-5,family:10},r:"新家宽敞明亮，母亲有了自己的房间。月供多了，但笑声也多了。"},
+ {t:"旧房改造",d:{money:-50000,family:5},r:"打通阳台，做了榻榻米。钱花得少，幸福感一点没少。"},
+ {t:"将就住吧",d:{family:-5},r:"孩子在餐桌上写作业，爷爷在旁边看电视。你告诉自己：这就是生活。",regret:3}]},
+{id:"e27",tag:"💰 资产",title:"买车",text:"家里的旧车总趴窝。妻子看上了30万的新能源，你觉得10万的油车也能开。",
+options:[
+ {t:"听老婆的，买好的",d:{money:-300000,family:8},r:"新车真香。就是每个月看着车贷，你开车都轻踩油门。"},
+ {t:"买个性价比的",d:{money:-120000,family:3},r:"折中方案，全家都还满意。中年人的核心技能：折中。"},
+ {t:"旧车再战三年",d:{money:-20000,family:-3},r:"旧车又趴窝在高架上。那天你发誓：下次一定换。",regret:2}]},
+{id:"e28",tag:"🏠 家庭",title:"全家旅游",text:"孩子说：同学都去过三亚了，就我没去过。妻子翻出了三年前的旅游攻略。",
+options:[
+ {t:"豪华游，弥补遗憾",d:{money:-40000,time:-5,family:18},r:"五天四夜，照片拍了2000张。很多年后，你们还会翻出来看。"},
+ {t:"周边穷游",d:{money:-8000,time:-3,family:10},r:"农家乐、小溪、烤红薯。孩子说：这是我最开心的一次旅行。"},
+ {t:"「等有钱了再去」",d:{family:-8},r:"「等有钱了」说了五年。孩子的童年，不等人。",regret:7}]},
+{id:"e29",tag:"🌿 生活",title:"钓鱼",text:"同事安利钓鱼：治愈一切烦恼。你想起小时候在河边，一坐就是一下午。",
+options:[
+ {t:"入坑！装备拉满",d:{money:-20000,time:-5,health:8},r:"空军是常态，但坐在水边的那几个小时，你谁都不想。"},
+ {t:"借根竿体验下",d:{time:-3,health:5},r:"钓到两条小鲫鱼，放生了。快乐，有时候很简单。"},
+ {t:"钓鱼不如加班",d:{money:15000,health:-5,family:-3},r:"你多挣了一万五，但看着朋友圈的渔获照片，咽了口口水。",regret:2}]},
+{id:"e30",tag:"🏠 家庭",title:"母亲跳舞受伤",text:"母亲跳广场舞扭了脚，医生说要静养三个月。她闲不住，整天唉声叹气。",
+options:[
+ {t:"请假陪她+请护工",d:{money:-20000,time:-10,family:10},r:"你陪她看了十部电视剧。她说：这脚，伤得值。"},
+ {t:"请个钟点工照看",d:{money:-12000,family:5},r:"阿姨很负责，母亲却总说：还是我儿子陪着好。"},
+ {t:"「静养几天就好」",d:{family:-8},r:"母亲偷偷去跳舞，脚伤加重了。你的「省心」，成了她的「伤心」。",regret:6}]},
+{id:"e31",tag:"🏠 家庭",title:"妻子加班",text:"妻子连续加班一个月，每天回家倒头就睡。家里的事全压在了你一个人身上。",
+options:[
+ {t:"主动分担+煲汤",d:{time:-10,health:-3,family:12},r:"她出差回来抱着你哭：还好有你。婚姻，就是轮流撑伞。"},
+ {t:"请钟点工分担",d:{money:-15000,family:5},r:"花钱买时间。你们终于能一起吃顿晚饭了。"},
+ {t:"抱怨：家不要了？",d:{family:-12},r:"大吵一架。她说：你以为我想加班？你沉默了。是啊，谁想呢。",regret:6}]},
+{id:"e32",tag:"🏠 家庭",title:"孩子近视",text:"孩子查出400度近视。医生：少看电子产品，多户外。你看着他手里的平板，陷入两难。",
+options:[
+ {t:"没收平板+每天户外",d:{time:-8,family:8,money:-5000},r:"度数没再涨。周末的公园，成了你们的新据点。"},
+ {t:"配最贵的眼镜",d:{money:-8000,family:2},r:"眼镜很贵，度数照涨。你明白了：贵，不等于对。"},
+ {t:"「我小时候也近视」",d:{family:-3,health:-2},r:"你选择了「传承」。孩子翻了个白眼：这福气给你要不要？",regret:2}]},
+{id:"e33",tag:"🏠 家庭",title:"养宠物",text:"孩子抱回来一只流浪猫，眼睛亮晶晶地看着你：爸爸，能养吗？",
+options:[
+ {t:"养！家庭新成员",d:{money:-10000,family:15,time:-3},r:"猫治愈了全家。父亲每天最大的乐趣，就是跟猫吵架。"},
+ {t:"先试养一个月",d:{money:-3000,family:5},r:"一个月后，谁也舍不得送走了。真香定律，诚不我欺。"},
+ {t:"不行，太麻烦",d:{family:-10},r:"孩子哭了一晚上。你第一次觉得：自己像个「坏人」。",regret:5}]},
+{id:"e34",tag:"💰 资产",title:"股市",text:"牛市来了！同事全仓吃肉，你看着账户里的闲钱，手痒难耐。",
+options:[
+ {t:"全仓杀入",d:{money:120000},r:"你吃了三个涨停板！但你知道：凭运气挣的钱，会凭实力亏回去。",regret:0},
+ {t:"定投指数基金",d:{money:30000},r:"不刺激，但稳。你学会了：中年人，玩不起心跳。"},
+ {t:"坚决不碰",d:{family:2},r:"牛市与你无关。你守住了本金，也守住了睡眠。",regret:1}],
+ note:"股市有风险，选项1其实是抛硬币——但人生不就是吗？"},
+{id:"e35",tag:"💰 资产",title:"理财暴雷",text:"你买的理财产品暴雷了！20万可能打水漂。销售经理的电话，已经打不通了。",
+options:[
+ {t:"报警+维权",d:{time:-10,money:-100000},r:"追回来一半。你明白了：高收益的另一面，是高风险。",regret:4},
+ {t:"认栽，就当交学费",d:{money:-200000},r:"20万买了个教训：不懂的东西，别碰。",regret:8},
+ {t:"拉横幅去公司闹",d:{time:-8,health:-5,money:-150000},r:"闹了三天，拿回七成。但你在小区出名了：那个拉横幅的老王。",regret:5}]},
+{id:"e36",tag:"👥 社交",title:"亲戚结婚",text:"远房亲戚结婚，份子钱2000起。一个月三场，你的钱包在流血。",
+options:[
+ {t:"场场到，份子拉满",d:{money:-8000,family:3},r:"面子保住了，钱包瘪了。你安慰自己：人情，都是存折。"},
+ {t:"选择性参加",d:{money:-4000},r:"近的去，远的随份子。成年人的社交：精准投放。"},
+ {t:"一律微信转账",d:{money:-3000,family:-2},r:"省时省力，但亲戚群里有人说你「不懂事」。你：随他去吧。"}]},
+{id:"e37",tag:"🌿 生活",title:"自己生日",text:"45岁生日，没人记得。你给自己买了块蛋糕，插上蜡烛，许了个愿。",
+options:[
+ {t:"约老友喝一杯",d:{money:-2000,family:3,time:5},r:"老友说：兄弟，生日快乐！那一刻，你觉得45岁也没那么糟。"},
+ {t:"独自吃蛋糕许愿",d:{health:3},r:"愿望是：明年，少点遗憾。蜡烛灭了，你笑了。"},
+ {t:"加班，生日照常过",d:{money:10000,health:-5,family:-5},r:"你多挣了一万，但吹蜡烛的人，只有你自己。",regret:4}]},
+{id:"e38",tag:"🌿 生活",title:"白发",text:"妻子帮你拔白头发，拔着拔着说：别拔了，拔不完。你看着镜子，鬓角已经花白。",
+options:[
+ {t:"染发，重回巅峰",d:{money:-3000,family:3},r:"染完年轻五岁。孩子说：爸，你闷骚。你：这叫精致。"},
+ {t:"坦然接受，顺其自然",d:{health:2},r:"白发是岁月的勋章。你决定：优雅地老去。"},
+ {t:"植发+医美一条龙",d:{money:-80000},r:"你年轻了，但银行卡老了。有时候，年龄焦虑比年龄本身更贵。",regret:3}]},
+{id:"e39",tag:"👥 社交",title:"老友重逢",text:"大学时最好的兄弟来出差，约你喝酒。他下海经商，如今身家千万，你还在打工。",
+options:[
+ {t:"彻夜长谈",d:{time:-5,family:5,money:-3000},r:"聊到凌晨三点。你发现：他羡慕你的安稳，你羡慕他的财富。扯平了。"},
+ {t:"跟他合伙做点事",d:{money:-80000,time:-5},r:"投了八万，项目黄了。兄弟还是兄弟，只是别再谈钱。",regret:5},
+ {t:"婉拒，太忙了",d:{money:5000,family:-2},r:"你加了个班，多挣五千。深夜，你看着他的朋友圈，失眠了。",regret:3}]},
+{id:"e40",tag:"🏠 家庭",title:"父亲的老房子",text:"父亲想把老家房子翻新：住了40年，漏雨了。你算了算，要15万。",
+options:[
+ {t:"翻新！让他住得舒服",d:{money:-150000,family:10},r:"新房盖好那天，父亲在门口站了很久。他说：这房子，值了。"},
+ {t:"简单修缮",d:{money:-40000,family:5},r:"不漏雨了，父亲很满足。老人要的，从来不多。"},
+ {t:"「城里有房还修它干嘛」",d:{family:-10},r:"父亲没再提。但每次视频，背景里的雨声都让你心疼。",regret:7}]},
+{id:"heal01",tag:"🌿 弥补",title:"迟到的体检",text:"父亲总说医院是烧钱的地方，可你忘不了他上次晕倒时，母亲抖着手给你打电话的样子。你决定：这次不问他的意见，直接开车带他去三甲做个全套检查。",
+options:[
+ {t:"全套检查+专家会诊",d:{money:-80000,time:-5,act:-1,family:8},r:"检查做了整整一天，结果：万幸，只是虚惊。你把报告单拍了照，设成手机壁纸——提醒自己，别再「下次再说」。",regret:-5},
+ {t:"常规体检",d:{money:-15000,time:-3,family:3},r:"指标基本正常。你松了口气，父亲却念叨：花这冤枉钱干啥。你笑着没接话。",regret:-2},
+ {t:"算了，他不愿意去",d:{family:-3},r:"你又一次尊重了他的「不愿意」。深夜，你想起他晕倒那天的电话，后背发凉。",regret:2}]},
+{id:"heal02",tag:"🌿 弥补",title:"缺席的家长会",text:"你翻手机相册，16年，孩子的家长会照片里永远只有妈妈。你数了数自己去的次数：一只手都用不完。",
+options:[
+ {t:"推掉一切，去开一次家长会",d:{time:-10,money:-20000,family:12},r:"你坐在小板凳上，听老师夸你的孩子。散会时孩子跑过来，眼睛亮亮的：爸，你今天真帅。",regret:-4},
+ {t:"带孩子去一次远行",d:{money:-30000,time:-8,family:15},r:"三天两夜，你们聊了很多以前没聊过的话。回来那天，孩子说：爸，以后每年都去一次，行吗？你说：行。",regret:-6},
+ {t:"多挣点钱，以后再说",d:{money:30000},r:"你又多挣了三万。但孩子的童年，不接受分期付款。",regret:2}]},
+{id:"heal03",tag:"🌿 弥补",title:"补办的婚礼",text:"结婚20年，你们连一张像样的婚纱照都没有。妻子翻出当年的结婚证，照片都褪色了，她笑着说：那时候你头发还挺多。",
+options:[
+ {t:"补办婚礼+婚纱照",d:{money:-100000,time:-8,family:18},r:"她穿上婚纱，眼睛有点红：老了老了，还折腾。你说：欠你的，迟到了20年。孩子负责拍照，笑得最大声。",regret:-5},
+ {t:"补拍一套婚纱照",d:{money:-30000,family:10},r:"影楼的灯光下，你们笑得像20年前。她说：其实我想要的，一直都很简单。",regret:-3},
+ {t:"老夫老妻了，不讲究",d:{},r:"你把这事翻篇了。但偶尔看到别人的婚纱照，你会多看两眼。",regret:1}]}
+];
+/* ---------- 隐藏数值触发的强制事件 ---------- */
+const FORCE_DAD={
+ id:"forceDad",tag:"🚨 突发 · 父亲病重",title:"父亲病倒了",
+ text:"母亲哭着打来电话：你爸这次是真的不行了，医生下了病危通知。你后悔吗？后悔当初没有早点带他去体检。",
+ options:[
+  {t:"倾家荡产也要治",d:{money:-180000,time:-15,family:10},r:"ICU住了20天，父亲挺过来了。账单18万，你：值。",regret:2,good:"dakao40b"},
+  {t:"保守治疗，听天由命",d:{money:-50000,family:-5},r:"父亲走了。葬礼上，你一滴泪都没掉——因为哭不出来。",regret:15,setFlag:{k:"dadGone",yrs:99}},
+  {t:"转院去上海",d:{money:-250000,time:-10,family:5},r:"上海的专家创造了奇迹。只是接下来三年，你要勒紧裤腰带了。",regret:3}
+ ]};
+const FORCE_WIFE={
+ id:"forceWife",tag:"🚨 突发 · 婚姻危机",title:"她提出了离婚",
+ text:"长期的忽视终于爆发。妻子把离婚协议放在桌上：这些年，我像个单亲妈妈。你看着协议，手在抖。",
+ options:[
+  {t:"跪下认错，重新追她",d:{time:-15,money:-50000,family:20},r:"你重新开始约会、送花、谈心。她说：早这样，何必呢？",regret:3},
+  {t:"冷静分居，各退一步",d:{family:-15,time:5},r:"分居半年，你们都瘦了。有些距离，产生的是美；有些，是陌生。",regret:10},
+  {t:"签字，好聚好散",d:{money:-200000,family:-30},r:"你成了离异中年男。房子归她，孩子归你——还有无尽的深夜。",regret:20}
+ ]};
+const FORCE_HEALTH={
+ id:"forceHealth",tag:"🚨 突发 · 急性住院",title:"你倒在了办公室",
+ text:"眼前一黑，再醒来已经在医院。医生：心梗前兆，再晚半小时就……。你第一次离死亡这么近。",
+ options:[
+  {t:"彻底休养三个月",d:{money:-100000,time:10,health:25,family:5},r:"三个月，你学会了太极、钓鱼、发呆。出院那天，阳光正好。"},
+  {t:"住一周就回去上班",d:{money:-30000,health:8},r:"领导来看你，带了果篮，也带了新的KPI。你笑了：这就是命。",regret:5},
+  {t:"拒绝住院，回家躺",d:{health:-15},r:"你省下了医药费。但夜里心悸的时候，你开始怕了。",regret:8}
+ ]};
+/* ---------- 岁月三问：38/43/48岁必出，不可避免的遗憾（所有选项都+遗憾） ---------- */
+const TIME38={
+ id:"time38",tag:"🕰️ 岁月",title:"父亲的老花镜",
+ text:"父亲的老花镜又换了一副，度数更厚了。他笑着说人老了眼花了，低头看报纸时，要凑得很近很近。你突然不敢看下去了。",
+ options:[
+  {t:"配最好的渐进多焦点眼镜",d:{money:-12000,family:5},r:"父亲戴上新眼镜，看了你很久，说：清楚了，真清楚。你知道，他看的不是报纸。",regret:2},
+  {t:"在网上随便买一副",d:{money:-1500},r:"父亲戴着不舒服，还是换回了旧的。你省了钱，丢了点别的。",regret:3},
+  {t:"「下次回家再说」",d:{family:-3},r:"「下次」说了两年。父亲的报纸，越拿越远。",regret:5}
+ ]};
+const TIME43={
+ id:"time43",tag:"🕰️ 岁月",title:"母亲开始忘事",
+ text:"母亲买菜总会多买一份你爱吃的糖醋排骨——可你三年前就忌口了。她愣了一下，笑着说瞧我这记性。你心里一沉。",
+ options:[
+  {t:"陪她去医院做全面检查",d:{money:-20000,time:-8,family:8},r:"医生说：轻度衰退，多陪伴，多用脑。你把这句话记在了备忘录第一条。",regret:2},
+  {t:"请个阿姨多照看着",d:{money:-30000,family:3},r:"阿姨很尽责。但母亲忘事的时候，喊的还是你的名字。",regret:3},
+  {t:"安慰自己：老了都这样",d:{family:-5},r:"你选择了不去想。有些不敢想的事，越不去想，长得越快。",regret:5}
+ ]};
+const TIME48={
+ id:"time48",tag:"🕰️ 岁月",title:"孩子比你高了",
+ text:"体检表上，孩子的身高超过了你。衣柜里他小时候的衣服，再也穿不下。你比着他的个头，突然发现：他长大的速度，比你变老的速度快。",
+ options:[
+  {t:"把旧衣服收好，留个念想",d:{family:5},r:"你叠好每一件小衣服。妻子说：你这是干嘛呀。你没说话，只是鼻子有点酸。",regret:2},
+  {t:"捐给山区的小朋友",d:{family:3},r:"衣服寄走那天，孩子说：爸，我长大了，你也要好好的。你说：嗯。",regret:2},
+  {t:"没在意，扔了",d:{family:-5},r:"很多年后你才明白：扔掉的不是衣服，是再也回不去的时光。",regret:5}
+ ]};
+</script>
+<script>
+"use strict";
+/* ================= 天赋树 ================= */
+const TALENTS={
+ career:{name:"💼 职业系",en_name:"💼 Career",desc:"搞钱能力：在职场这条赛道上，老兵自有老兵的打法。",en_desc:"The money game: veterans have their own plays on the career track.",
+  tiers:[
+   {n:"人脉变现",en_n:"Network Monetized",d:"事件中获得的金钱 +10%",en_d:"+10% money from events"},
+   {n:"晋升快车道",en_n:"Fast-Track Promotion",d:"每年年薪 +20000（跳槽/升职累积）",en_d:"+¥20,000 yearly salary (stacks with job hops and promotions)"}]},
+ health:{name:"🌿 养生系",en_name:"🌿 Wellness",desc:"身体是革命的本钱，中年人的本钱尤其金贵。",en_desc:"Health is capital — and middle-aged capital is precious.",
+  tiers:[
+   {n:"科学养生",en_n:"Scientific Wellness",d:"每年健康自然衰减 -30%",en_d:"-30% yearly natural health decay"},
+   {n:"回春",en_n:"Second Spring",d:"每年健康 +3",en_d:"+3 health every year"}]},
+ family:{name:"🏠 家庭系",en_name:"🏠 Family",desc:"家，是唯一不计KPI的地方。",en_desc:"Home: the one place with no KPIs.",
+  tiers:[
+   {n:"情绪价值",en_n:"Emotional Value",d:"事件中亲情正收益 +30%",en_d:"+30% family gains from events"},
+   {n:"相濡以沫",en_n:"Through Thick and Thin",d:"夫妻感情衰减减半",en_d:"Marriage decay halved"}]}
+};
+/* ================= 家训模板 ================= */
+const JIAXUN=[
+ {id:"jx_health",name:"按时体检，防患未然",en_name:"Checkups on schedule",desc:"每年健康自然衰减 -15%",en_desc:"-15% yearly natural health decay",fx:s=>{s.jxHealthDec=.85}},
+ {id:"jx_money",name:"开源节流，细水长流",en_name:"Earn more, spend wisely",desc:"每年结算自动 +5000 元",en_desc:"+¥5,000 auto-added at each settlement",fx:s=>{s.jxMoney=5000}},
+ {id:"jx_family",name:"常回家看看",en_name:"Go home often",desc:"每年亲情自然衰减 -50%",en_desc:"-50% yearly family decay",fx:s=>{s.jxFamDec=.5}},
+ {id:"jx_time",name:"劳逸结合，拒绝内耗",en_name:"Work-life balance",desc:"每年时间自然衰减 -30%",en_desc:"-30% yearly time decay",fx:s=>{s.jxTimeDec=.7}},
+ {id:"jx_safe",name:"不懂不投，守住本金",en_name:"Never invest blind",desc:"事件金钱损失 -15%",en_desc:"-15% money losses from events",fx:s=>{s.jxLossCut=.85}}
+];
+function genJiaxun(st){
+ // 按终局最高货币生成家训
+ const c=[["jx_health",st.health],["jx_money",st.money],["jx_family",st.family],["jx_time",st.time]];
+ c.sort((a,b)=>b[1]-a[1]);
+ const id=c[0][0]==="jx_money"&&st.money<300000?"jx_health":c[0][0];
+ return JIAXUN.find(j=>j.id===id);
+}
+/* ================= 成就 ================= */
+const ACHV={
+ wuhui:{em:"🕊️",n:"此生无悔",en_n:"No Regrets",d:"50岁结算时遗憾值<10",en_d:"Regret below 10 at the age-50 reckoning"},
+ chuanren:{em:"📜",n:"家训传人",en_n:"Keeper of the House Rules",d:"带着家训完成三代人生",en_d:"Carry house rules through three generations"},
+ dakao:{em:"⚡",n:"大考全过",en_n:"Exams Ace",d:"35/40/45岁大考全部妥善应对",en_d:"Handle the 35/40/45 exams well"},
+ muzhiming:{em:"✍️",n:"墓志铭作家",en_n:"Epitaph Collector",d:"集齐5种墓志铭",en_d:"Collect 5 epitaph types"}
+};
+/* ================= 墓志铭 ================= */
+function genEpitaph(st){
+ let type;
+ if(st.regret<10)type="wuhui";
+ else if(st.money>1400000&&st.regret>15)type="fuzu";
+ else if(st.money>=800000&&st.family<40)type="fangnu";
+ else if(st.health<30)type="pinming";
+ else if(st.family<35)type="quexi";
+ else type="pingfan";
+ const dep=(st.money/10000).toFixed(1);
+ const depEn=st.money>=1000000?(st.money/1000000).toFixed(1)+"M":Math.round(st.money/1000)+"K";
+ const E={
+ wuhui:{zh:`他没有成为传奇。<br>但他接过放学的孩子，陪父亲喝过最后那杯酒，<br>在妻子加班的深夜里煲过汤。<br><br>遗憾值 ${st.regret} —— <b>此生无悔</b>。`,
+        en:`He never became a legend.<br>But he picked the kid up from school, shared one last drink with his father,<br>and made soup on the nights his wife worked late.<br><br>Regret: ${st.regret} — <b>No Regrets</b>.`},
+ fuzu:{zh:`他攒下了 ${dep} 万，是同龄人里最多的。<br>孩子18岁生日那天，他还在出差。<br>视频里儿子说：爸，钱够了，你回来吧。<br><br>那一刻他突然明白：<b>富足的缺席者</b>，缺的从来不是钱。`,
+       en:`He saved ¥${depEn}, more than anyone his age.<br>On the kid's 18th birthday, he was away on business.<br>On video, his son said: Dad, we have enough — come home.<br><br>In that moment he understood: <b>the affluent absentee</b> was never short of money.`},
+ fangnu:{zh:`他准时还了${st.years}年房贷，存款 ${dep} 万，<br>却错过了父亲最后的春节，<br>缺席了孩子 ${st.missKid} 次家长会。<br><br>他赢了所有的账单，输给了时间。`,
+         en:`He paid the mortgage on time for ${st.years} years, with ¥${depEn} saved,<br>yet missed Dad's last Lunar New Year,<br>and skipped ${st.missKid} parent-teacher nights.<br><br>He won every bill and lost to time.`},
+ pinming:{zh:`50岁，他提前拿到了医院的VIP卡。<br>存款单上的数字很长，体检单上的箭头更长。<br>医生说：你这身体，是拿命换的。<br><br>他笑了笑：<b>拼命三郎</b>，中年人，谁又不是呢。`,
+           en:`At 50, he got his hospital VIP card early.<br>The numbers on his bank slip were long; the arrows on his lab report, longer.<br>The doctor said: this body was bought with your life.<br><br>He smiled: <b>burning the candle at both ends</b> — show me a middle-aged person who isn't.`},
+ quexi:{zh:`孩子的家长会，他一次都没去过。<br>孩子说：没关系，我习惯了。<br>妻子说：习惯，真是最残忍的词。<br><br>他什么都有了，除了家人的原谅。`,
+         en:`He never once made it to a parent-teacher night.<br>The kid said: it's fine, I'm used to it.<br>His wife said: "used to it" — the cruelest phrase there is.<br><br>He had everything, except his family's forgiveness.`},
+ pingfan:{zh:`他算过每一笔账，唯独没算过时间。<br>存款 ${dep} 万，遗憾 ${st.regret}。<br>他爱过，痛过，后悔过，<br>像每一个认真活过的普通人。`,
+           en:`He calculated every bill, except the one for time.<br>Savings ¥${depEn}, regret ${st.regret}.<br>He loved, he hurt, he regretted —<br>like every ordinary person who lived earnestly.`}
+ }[type];
+ return {type,text:LANG==="en"?E.en:E.zh};
+}
+/* ================= 游戏状态 ================= */
+let S=null;
+function newGame(jxId){
+ S={age:35,year:1,time:70,health:80,money:250000,family:70,
+  regret:0,wife:75,parents:80,actPts:2,
+  talentPts:0,talents:{career:0,health:0,family:0},
+  flags:{},deck:shuffle(EVENTS.map(e=>e.id)),
+  probeWife:false,probeParents:false,
+  overwork:0,missKid:0,accompany:0,
+  dakao:{},years:0,jxId:jxId||null,
+  jxHealthDec:1,jxFamDec:1,jxTimeDec:1,jxMoney:0,jxLossCut:1,
+  salary:300000,over:false,history:[]};
+ if(jxId){const j=JIAXUN.find(x=>x.id===jxId);if(j)j.fx(S);}
+ return S;
+}
+function setFlag(k,yrs){S.flags[k]=S.age+yrs}
+function hasFlag(k){return S.flags[k]&&S.flags[k]>S.age}
+/* ---------- 数值应用 ---------- */
+function applyDelta(d,opt){
+ const log=[];
+ const gain=(k,v,label)=>{
+  if(!v)return;
+  if(k==="money"){
+   let vv=v;
+   if(v>0&&S.talents.career>=1)vv=Math.round(v*1.1);
+   if(v<0&&S.jxLossCut<1)vv=Math.round(v*S.jxLossCut);
+   S.money+=vv;log.push([label,vv]);
+  }else{
+   let vv=v;
+   if(k==="family"&&v>0&&S.talents.family>=1)vv=Math.round(v*1.3);
+   S[k]=clamp(S[k]+vv,0,100);log.push([label,vv]);
+  }};
+ gain("time",d.time,T("d_time"));gain("health",d.health,T("d_health"));
+ gain("money",d.money,T("d_money"));gain("family",d.family,T("d_family"));
+ if(d.act){S.actPts=Math.max(0,S.actPts+d.act);log.push([T("d_act"),d.act]);}
+ if(opt.regret)S.regret=Math.max(0,S.regret+opt.regret);
+ if(opt.setFlag)setFlag(opt.setFlag.k,opt.setFlag.yrs);
+ if(opt.good)S.dakao[opt.good]=true;
+ if(d.time<=-12)S.overwork++;
+ return log;
+}
+function checkDeath(){
+ if(S.health<=0)return{dead:true,title:T("death_title"),
+  sub:T("death_sub_health").split("{n}").join(S.age),why:"health"};
+ if(S.money<-50000)return{dead:true,title:T("death_title_money"),
+  sub:T("death_sub_money"),why:"money"};
+ return null;
+}
+/* ---------- 年度结算 ---------- */
+function yearSettle(){
+ const L=[];
+ const salary=S.salary+(S.talents.career>=2?20000:0)+(S.jxMoney||0);
+ const expense=200000;
+ S.money+=salary-expense;
+ L.push([T("ys_salary"),salary],[T("ys_expense"),-expense]);
+ // 自然衰减
+ let hDec=4*(S.talents.health>=1?0.7:1)*S.jxHealthDec;
+ S.health=clamp(S.health-Math.round(hDec)+(S.talents.health>=2?3:0),0,100);
+ let tDec=Math.round(4*S.jxTimeDec);S.time=clamp(S.time-tDec+6,0,100);
+ let fDec=3*S.jxFamDec;S.family=clamp(S.family-Math.round(fDec),0,100);
+ L.push([T("ys_time"),T("ys_time_v").split("{n}").join(tDec)],
+ [T("ys_health"),T("ys_health_v").split("{n}").join(Math.round(hDec))],[T("ys_fam"),T("ys_fam_v").split("{n}").join(Math.round(fDec))]);
+ // 隐藏衰减
+ S.wife=clamp(S.wife-(S.talents.family>=2?2:4),0,100);
+ S.parents=clamp(S.parents-5,0,100);
+ // 天赋点
+ if((S.age-35)%3===0&&S.age>35&&S.age<50){S.talentPts++;L.push([T("ys_talent"),T("ys_talent_v")])}
+ // 遗憾
+ let rg=0;
+ if(S.time<25)rg+=2;if(S.health<25)rg+=2;if(S.family<25)rg+=2;if(S.money<0)rg+=4;
+ if(rg>0){S.regret+=rg;L.push([T("ys_regret"), "+"+rg]);}
+ S.actPts=2;S.years++;
+ return L;
+}
+/* ---------- 事件抽取 ---------- */
+function drawEvent(){
+ // 固定大考
+ if(S.age===35&&S.year===1)return EXAM35;
+ if(S.age===40)return hasFlag("dadGone")?EXAM40B:Object.assign({},EXAM40,{options:adjustDakao40(EXAM40.options)});
+ if(S.age===45)return Object.assign({},EXAM45,{options:adjustDakao45(EXAM45.options)});
+ // 隐藏数值爆发
+ if(S.parents<25&&!hasFlag("dadGone"))return FORCE_DAD;
+ if(S.wife<30)return FORCE_WIFE;
+ if(S.health<25)return FORCE_HEALTH;
+ // 岁月三问：不可避免的遗憾（38/43/48岁必出）
+ if(S.age===38&&!hasFlag("dadGone"))return TIME38;
+ if(S.age===43)return TIME43;
+ if(S.age===48)return TIME48;
+ // 伏笔：忽略父亲体检2年后
+ if(hasFlag("ignoreDadCheckup")&&S.flags._dadWarned!==S.age){
+   S.flags._dadWarned=S.age;
+   return{id:"warnDad",tag:"🏠 家庭",title:"父亲的咳嗽加重了",
+    text:"母亲说：你爸咳得整夜睡不着，还是不肯去医院。你上次说「多喝热水」，已经是两年前了。",
+    options:[
+     {t:"这次必须带他去检查",d:{money:-8000,time:-5,family:5},r:"检查结果：早期病变，发现得早，万幸。你后怕得一身冷汗。",setFlag:{k:"dadChecked",yrs:3}},
+     {t:"再观察观察",d:{family:-5},r:"你又拖了一年。命运的账本上，又记了一笔。",regret:6,setFlag:{k:"ignoreDadCheckup",yrs:1}}]};
+ }
+ if(S.deck.length===0)S.deck=shuffle(EVENTS.map(e=>e.id));
+ let id=S.deck.pop();
+ if(hasFlag("dadGone")){let tries=0;while((id==="e22"||id==="e23"||id==="e40"||id==="heal01")&&tries<5){S.deck.unshift(id);id=S.deck.pop();tries++}}
+ const ev0=EVENTS.find(e=>e.id===id);return ev0;
+}
+function adjustDakao40(opts){
+ // 父母健康越差/有忽略flag，选项代价更高
+ const bad=S.parents<40||hasFlag("ignoreDadCheckup");
+ if(!bad)return opts;
+ return opts.map((o,i)=>i===0?Object.assign({},o,{d:Object.assign({},o.d,{money:-200000}) ,
+   r:"重症监护室住了20天，父亲挺过来了。账单20万，你：值。",or:T("dakao40_r")}):o);
+}
+function adjustDakao45(opts){
+ const easy=S.family>=60||hasFlag("accompanyKid");
+ if(easy)return opts;
+ return opts.map((o,i)=>i===0?Object.assign({},o,{r:"谈了五次，他才开口。说在学校被孤立过。你心疼得不行，但门，终究是打开了。",or:T("dakao45_r")}):o);
+}
+</script>
+<script>
+"use strict";
+/* ================= 渲染与流程 ================= */
+function showScreen(id){document.querySelectorAll(".screen").forEach(s=>s.classList.remove("on"));$(id).classList.add("on");window.scrollTo(0,0)}
+function openSheet(html){$("sheet").innerHTML=html;$("overlay").classList.add("on")}
+function closeSheet(){$("overlay").classList.remove("on")}
+$("overlay").addEventListener("click",e=>{if(e.target.id==="overlay")closeSheet()});
+function renderHUD(){
+$("hud").style.display="block";
+$("hAge").textContent=S.age;$("hAgeSuf").textContent=T("age_suffix");$("hYear").textContent=tf("hud_year",S.year);$("hAct").textContent=S.actPts;
+$("lbAct").textContent=T("hud_act");
+$("lbTime").textContent=T("lb_time");$("lbHealth").textContent=T("lb_health");$("lbMoney").textContent=T("lb_money");$("lbFam").textContent=T("lb_fam");
+$("lbRegret").textContent=T("lb_regret");
+$("vTime").textContent=Math.round(S.time);$("bTime").style.width=S.time+"%";
+$("vHealth").textContent=Math.round(S.health);$("bHealth").style.width=S.health+"%";
+$("vMoney").textContent=fmtMoney(S.money);$("bMoney").style.width=clamp(S.money/1000000*100,0,100)+"%";
+$("vFam").textContent=Math.round(S.family);$("bFam").style.width=S.family+"%";
+$("vRegret").textContent=S.regret;
+$("hTalentPts").textContent=S.talentPts>0?("🌳 "+T("talent_pts")+"×"+S.talentPts):"";
+$("talentHint").textContent=S.talentPts>0?(tf("talent_hint",S.talentPts)):"";
+const can=S.actPts>0;
+["aCheck","aTalk","aKid"].forEach(id=>{$(id).disabled=!can;$(id).title=can?"":T("act_disabled")});
+renderActions();
+renderProbe();
+}
+function renderProbe(){
+let h="";
+if(S.probeParents&&!hasFlag("dadGone"))h+='<div class="hiddenbox">'+T("probe_parents").split("{n}").join(Math.round(S.parents))+(S.parents<40?'<br><span style="color:#ff9d9d">'+T("probe_parents_warn")+'</span>':"")+"</div>";
+if(S.probeWife)h+='<div class="hiddenbox">'+T("probe_wife").split("{n}").join(Math.round(S.wife))+(S.wife<45?'<br><span style="color:#ff9d9d">'+T("probe_wife_warn")+'</span>':"")+"</div>";
+$("probeBox").innerHTML=h;
+}
+function renderYear(){
+const ev=drawEvent();S.curEv=ev;renderEventCard(ev);renderHUD();
+}
+function renderEventCard(ev){
+$("evTag").textContent=evL(ev,"tag");$("evTitle").textContent=evL(ev,"title");$("evText").textContent=evL(ev,"text");
+const box=$("evOpts");box.innerHTML="";
+ev.options.forEach((o,i)=>{
+const b=document.createElement("button");b.className="btn";
+let hint=[];
+if(o.d.time)hint.push(T("h_time")+(o.d.time>0?"+":"")+o.d.time);
+if(o.d.health)hint.push(T("h_health")+(o.d.health>0?"+":"")+o.d.health);
+if(o.d.money)hint.push(T("h_money")+(o.d.money>0?"+":"")+fmtMoney(o.d.money));
+if(o.d.family)hint.push(T("h_family")+(o.d.family>0?"+":"")+o.d.family);
+if(o.d.act)hint.push(T("h_act")+(o.d.act>0?"+":"")+o.d.act);
+if(o.regret)hint.push(T("h_regret")+(o.regret>0?"+":"")+o.regret);
+b.innerHTML=(evOpt(ev.id,i,0)||o.t)+(hint.length?("<small>💱 "+hint.join(" · ")+"</small>"):"");
+b.onclick=()=>{beep(520,.08);chooseOption(ev,o,i);box.querySelectorAll("button").forEach(x=>x.disabled=true)};
+box.appendChild(b);
+});
+}
+function chooseOption(ev,o,idx){
+if(ev.id==="exam35"&&idx===0)S.dakao.dakao35=true;
+ if(ev.id==="forceDad"&&(idx===0||idx===2))S.parents=45;
+ if(ev.id==="forceWife"&&idx===0)S.wife=60;
+ if(ev.id==="exam40"&&idx===0)S.parents=50;
+const log=applyDelta(o.d||{},o);
+const death=checkDeath();
+const rTxt=(LANG==="en"?(o.or||evOpt(ev.id,idx,1)||o.r):o.r);
+let h='<h2>'+tf("year_title",S.age)+'</h2><div class="card" style="background:var(--panel2)"><div style="font-size:15px;line-height:1.8">'+rTxt+'</div></div>';
+if(log.length){h+='<div style="margin:10px 0">';const ML=T("d_money");
+log.forEach(([k,v])=>{h+='<div class="kv"><span>'+k+'</span><b class="'+(v>0?"pos":"neg")+'">'+(v>0?"+":"")+(k===ML?fmtMoney(v):v)+'</b></div>'});h+="</div>"}
+if(o.regret)h+='<div class="kv"><span>'+T("ys_regret")+'</span><b class="'+(o.regret>0?"neg":"pos")+'">'+(o.regret>0?"+":"")+o.regret+'</b></div>';
+h+='<button class="btn primary" id="goSettle">'+T("go_settle")+'</button>';
+openSheet(h);renderHUD();
+$("goSettle").onclick=()=>{beep(440,.08);
+if(death){closeSheet();endGame(death);return}
+const L=yearSettle();
+const death2=checkDeath();
+let h2='<h2>'+tf("settle_title",S.age)+'</h2>';
+L.forEach(([k,v])=>{h2+='<div class="kv"><span>'+k+'</span><b>'+(typeof v==="number"?(v>0?"+":"")+fmtMoney(v):v)+'</b></div>'});
+h2+='<button class="btn primary" id="goNext">'+(S.age>=50?T("go_end"):tf("go_next",S.age+1))+'</button>';
+openSheet(h2);renderHUD();
+$("goNext").onclick=()=>{beep(440,.08);closeSheet();
+if(death2){endGame(death2);return}
+nextYear()};
+};
+}
+function nextYear(){
+if(S.age>=50){endGame(null);return}
+S.age++;S.year++;renderYear();
+}
+/* ---------- 行动点 ---------- */
+function useAct(fn){
+if(S.actPts<=0){toast(T("t_noact"));return}
+if(S.time<5){toast(T("t_notime"));return}
+S.actPts--;S.time=clamp(S.time-5,0,100);fn();beep(600,.08);renderHUD();
+}
+$("aCheck").onclick=()=>useAct(()=>{
+if(hasFlag("dadGone")){S.family=clamp(S.family+5,0,100);toast(T("t_mompark"));return}
+S.probeParents=true;S.parents=clamp(S.parents+8,0,100);
+delete S.flags.ignoreDadCheckup;
+toast(T("t_check"));
+});
+$("aTalk").onclick=()=>useAct(()=>{
+S.probeWife=true;S.wife=clamp(S.wife+10,0,100);
+toast(T("t_talk"));
+});
+$("aKid").onclick=()=>useAct(()=>{
+S.family=clamp(S.family+8,0,100);S.accompany++;setFlag("accompanyKid",2);
+toast(T("t_kid"));
+});
+/* ---------- 天赋树 ---------- */
+$("talentBtn").onclick=()=>{
+let h="<h2>"+T("talent_title")+"</h2>";
+if(S.talentPts<=0)h+='<div class="sub">'+T("talent_none")+'</div>';
+Object.keys(TALENTS).forEach(k=>{
+const TT=TALENTS[k],lv=S.talents[k];
+h+='<div class="tbranch"><h3>'+gL(TT,"name")+' <span class="tier">'+(lv>=2?T("talent_max"):"Lv."+lv+"/2")+'</span></h3><p>'+gL(TT,"desc")+'<br>';
+TT.tiers.forEach((t,i)=>{h+="· "+(i<lv?"✅ ":"")+gL(t,"n")+(LANG==="en"?": ":"：")+gL(t,"d")+"<br>"});
+h+='</p><button class="tbtn" data-k="'+k+'" '+((S.talentPts>0&&lv<2)?"":"disabled")+'>'+T("talent_up")+'</button></div>';
+});
+h+='<button class="btn ghost" onclick="closeSheet()">'+T("btn_close")+'</button>';
+openSheet(h);
+document.querySelectorAll(".tbtn").forEach(b=>b.onclick=()=>{
+const k=b.dataset.k;S.talentPts--;S.talents[k]++;beep(660,.1);toast(T("t_talent").split("{n}").join(gL(TALENTS[k],"name")));$("talentBtn").click();renderHUD();
+});
+};
+/* ---------- 成就 ---------- */
+function unlockAchv(id){
+const a=LS.get("achv",{});
+if(a[id])return;a[id]=1;LS.set("achv",a);
+toast(T("t_achv").split("{n}").join(gL(ACHV[id],"n")));beep(880,.15);
+}
+$("achvBtn").onclick=()=>{
+const a=LS.get("achv",{});const types=LS.get("epitaphTypes",[]);
+let h="<h2>"+T("achv_title")+"</h2>";
+Object.keys(ACHV).forEach(k=>{
+h+='<div class="achv '+(a[k]?"":"lock")+'"><div class="em">'+ACHV[k].em+'</div><div><b>'+gL(ACHV[k],"n")+'</b><small>'+gL(ACHV[k],"d")+'</small></div></div>';
+});
+const epNames=types.map(t=>(EPITAPH_NAMES[t]?(LANG==="en"?EPITAPH_NAMES[t].en:EPITAPH_NAMES[t].zh):t));
+h+='<div class="achv"><div class="em">✍️</div><div><b>'+T("achv_epitaph").split("{n}").join(types.length)+'</b><small>'+(epNames.join(" · ")||T("achv_epitaph_none"))+'</small></div></div>';
+h+='<button class="btn ghost" onclick="closeSheet()">'+T("btn_close")+'</button>';
+openSheet(h);
+};
+/* ================= 终局 ================= */
+function endGame(death){
+closeSheet();$("hud").style.display="none";
+const st={money:S.money,family:S.family,health:S.health,time:S.time,regret:S.regret,
+years:S.years,missKid:Math.max(0,16-S.accompany*2),overwork:S.overwork};
+if(death)st.regret+=20;
+const ep=genEpitaph(st);
+// 成就判定
+if(!death&&st.regret<10)unlockAchv("wuhui");
+if(S.dakao.dakao35&&(S.dakao.dakao40||S.dakao.dakao40b)&&S.dakao.dakao45)unlockAchv("dakao");
+const types=LS.get("epitaphTypes",[]);
+if(!types.includes(ep.type)){types.push(ep.type);LS.set("epitaphTypes",types)}
+if(types.length>=5)unlockAchv("muzhiming");
+// best
+const best=LS.get("best",null);
+if(!death&&(!best||st.regret<best.regret)){LS.set("best",{regret:st.regret,money:S.money});}
+// 家训生成
+const jx=genJiaxun({health:S.health,money:S.money,family:S.family,time:S.time});
+S._end={death,st,ep,jx};
+renderEndScreen();
+showScreen("sEnd");
+window._lastEpitaph=ep.text;beep(330,.3);
+}
+function renderEndScreen(){
+const _e=S._end,death=_e.death,st=_e.st,ep=_e.ep,jx=_e.jx;
+if(death){$("endTitle").textContent=death.title;$("endSub").textContent=death.sub;}
+else{$("endTitle").textContent=T("end_title");$("endSub").textContent=T("end_sub");}
+$("epitaph").innerHTML="“"+ep.text+"”"+'<div class="sig">'+T("sig_fmt").split("{age}").join(S.age).split("{m}").join(fmtMoney(S.money)).split("{regret}").join(st.regret)+'</div>';
+let h="";
+h+='<div class="kv"><span>'+T("stat_time")+'</span><b>'+Math.round(S.time)+'</b></div>';
+h+='<div class="kv"><span>'+T("stat_health")+'</span><b>'+Math.round(S.health)+'</b></div>';
+h+='<div class="kv"><span>'+T("stat_money")+'</span><b>'+fmtMoney(S.money)+'</b></div>';
+h+='<div class="kv"><span>'+T("stat_family")+'</span><b>'+Math.round(S.family)+'</b></div>';
+h+='<div class="kv"><span>'+T("stat_regret")+'</span><b>'+st.regret+'</b></div>';
+h+='<div class="kv"><span>'+T("stat_dakao")+'</span><b>'+T("stat_dakao_v").split("{n}").join(["dakao35","dakao40","dakao45"].filter(k=>S.dakao[k]||S.dakao[k+"b"]).length)+'</b></div>';
+$("endStats").innerHTML=h;
+$("jxGenLabel").textContent=T("jx_gen_label");
+$("jxGenName").textContent="📜 "+gL(jx,"name");$("jxGenDesc").textContent=gL(jx,"desc");
+$("jxGenBox").style.display="block";
+const saved=LS.get("jiaxun",[]).some(x=>x.id===jx.id);
+$("saveJxBtn").disabled=saved;$("saveJxBtn").textContent=saved?T("jx_saved"):T("jx_save");
+$("saveJxBtn").onclick=()=>{
+const arr=LS.get("jiaxun",[]).filter(x=>x.id!==jx.id);arr.unshift(jx);LS.set("jiaxun",arr.slice(0,3));
+const gen=(LS.get("gen",0)||0)+1;LS.set("gen",gen);
+if(S.jxId&&gen>=3)unlockAchv("chuanren");
+toast(T("t_jx_saved"));beep(700,.12);
+$("saveJxBtn").disabled=true;$("saveJxBtn").textContent=T("jx_saved");
+};
+$("againBtn").textContent=T("again");
+$("copyBtn").textContent=T("copy_btn");
+$("copyBtn").onclick=()=>{
+const txt=T("copy_prefix")+ep.text.replace(/<br>/g,"\n").replace(/<[^>]+>/g,"")+"\n"+T("copy_sig").split("{age}").join(S.age).split("{m}").join(fmtMoney(S.money)).split("{regret}").join(st.regret);
+const done=()=>toast(T("t_copied"));
+if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(txt).then(done).catch(()=>fallbackCopy(txt,done))}
+else fallbackCopy(txt,done);
+};
+}
+function fallbackCopy(txt,done){
+const ta=document.createElement("textarea");ta.value=txt;document.body.appendChild(ta);ta.select();
+try{document.execCommand("copy");done()}catch(e){toast(T("t_copyfail"))}
+document.body.removeChild(ta);
+}
+$("againBtn").onclick=()=>{location.reload()};
+/* ================= 开始屏 ================= */
+function renderStart(){
+const jx=LS.get("jiaxun",[]);
+if(jx.length){
+$("jxBox").style.display="block";
+const list=$("jxList");list.innerHTML="";
+window._jxSel=null;
+jx.forEach(j=>{
+const d=document.createElement("div");d.className="jiaxun";
+d.innerHTML="<b>"+gL(j,"name")+"</b><small>"+gL(j,"desc")+"</small>";
+d.onclick=()=>{document.querySelectorAll(".jiaxun").forEach(x=>x.classList.remove("sel"));d.classList.add("sel");window._jxSel=j.id;beep(600,.06)};
+list.appendChild(d);
+});
+const d0=document.createElement("div");d0.className="jiaxun sel";d0.innerHTML="<b>"+T("jx_none")+"</b><small>"+T("jx_none_desc")+"</small>";
+d0.onclick=()=>{document.querySelectorAll(".jiaxun").forEach(x=>x.classList.remove("sel"));d0.classList.add("sel");window._jxSel=null};
+list.appendChild(d0);
+}
+const best=LS.get("best",null);
+if(best)$("bestBox").innerHTML=T("best_line").split("{regret}").join("<b style='color:var(--acc)'>"+best.regret+"</b>").split("{m}").join(fmtMoney(best.money))+(best.regret<10?T("best_wuhui"):"");
+}
+$("startBtn").onclick=()=>{beep(520,.1);newGame(window._jxSel);showScreen("sGame");renderYear();toast(T("t_start"))};
+$("langBtn").onclick=()=>setLang(LANG==="en"?"zh":"en");
+$("langBtnStart").onclick=()=>setLang(LANG==="en"?"zh":"en");
+setLang(LANG);
+</script>
+</body>
+</html>

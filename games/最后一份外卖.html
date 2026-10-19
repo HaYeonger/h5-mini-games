@@ -1,0 +1,995 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>最后一份外卖 · 台风夜</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{height:100%;background:#070b16;color:#e8ecf5;font-family:-apple-system,"PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;overflow:hidden}
+#app{height:100%;display:flex;flex-direction:column;max-width:520px;margin:0 auto;position:relative}
+.screen{position:absolute;inset:0;display:none;flex-direction:column;background:#070b16;z-index:10}
+.screen.on{display:flex}
+.center{justify-content:center;align-items:center;padding:24px;text-align:center}
+#startScreen{background:radial-gradient(120% 90% at 50% 0%,#12203d 0%,#070b16 60%)}
+.gameTitle{font-size:42px;font-weight:900;letter-spacing:6px;margin:10px 0 4px;text-shadow:0 0 30px rgba(255,170,40,.35)}
+.gameSub{color:#8fa3c8;font-size:14px;letter-spacing:3px;margin-bottom:6px}
+.titleBadge{display:inline-block;border:1px solid #ffaa28;color:#ffaa28;border-radius:20px;padding:4px 14px;font-size:12px;margin:8px 0 18px;letter-spacing:2px}
+.storyBox{background:rgba(20,30,55,.75);border:1px solid #22345c;border-radius:12px;padding:14px 16px;font-size:14px;line-height:1.9;color:#c6d2e8;text-align:left;margin-bottom:16px;max-width:420px}
+.quickHow{max-width:420px;margin:0 auto 16px;font-size:13px;line-height:2;color:#9fb0cc}
+.quickHow .qd{color:#3a4a68;margin:0 4px}
+.btn{display:block;width:100%;max-width:420px;margin:8px auto;padding:14px;border:none;border-radius:12px;font-size:17px;font-weight:700;letter-spacing:2px;cursor:pointer}
+.btn-p{background:linear-gradient(135deg,#ffaa28,#ff7b2e);color:#241300}
+.btn-p:active{transform:scale(.98)}
+.btn-s{background:#16223c;color:#cfe0ff;border:1px solid #2b3f66}
+.btn-s:active{transform:scale(.98)}
+.btn:disabled{opacity:.4}
+.rowBtns{display:flex;gap:10px;max-width:420px;margin:8px auto;width:100%}
+.rowBtns .btn{margin:0}
+.smallNote{color:#5f7095;font-size:12px;margin-top:14px;line-height:1.8}
+#hud{background:#0c1322;border-bottom:1px solid #1d2a47;padding:8px 10px;z-index:5}
+.hudRow{display:flex;justify-content:space-between;align-items:center;font-size:13px;margin:3px 0}
+.hudRow .t{color:#8fa3c8}
+.hudRow .v{font-weight:700}
+#clock{font-size:20px;font-weight:800;color:#ffd97a;font-variant-numeric:tabular-nums}
+.barWrap{flex:1;height:8px;background:#1a2440;border-radius:4px;margin:0 8px;overflow:hidden;min-width:60px}
+.bar{height:100%;border-radius:4px;transition:width .3s}
+#hudBatt{background:linear-gradient(90deg,#37d67a,#a3e635)}
+#hudStam{background:linear-gradient(90deg,#38bdf8,#818cf8)}
+.pill{background:#16223c;border:1px solid #2b3f66;border-radius:12px;padding:2px 10px;font-size:12px}
+#mapWrap{flex:1;position:relative;overflow:hidden;background:#0a0f1e}
+#map{width:100%;height:100%;display:block;touch-action:manipulation}
+#routePanel{background:#0c1322;border-top:1px solid #1d2a47;padding:10px 12px;font-size:13px}
+#routePanel .dest{color:#ffd97a;font-weight:700}
+#routePanel .est{color:#8fa3c8;margin-top:4px}
+#ctrlBar{display:flex;gap:8px;padding:10px 12px 14px;background:#0c1322}
+#ctrlBar .btn{margin:0;padding:11px;font-size:14px}
+.tglOn{outline:2px solid #ffaa28}
+#modal{position:absolute;inset:0;background:rgba(4,7,14,.78);display:none;justify-content:center;align-items:center;z-index:30;padding:18px}
+#modal.on{display:flex}
+.card{background:#101a30;border:1px solid #2b3f66;border-radius:16px;padding:20px;max-width:440px;width:100%;max-height:86%;overflow-y:auto;box-shadow:0 12px 50px rgba(0,0,0,.6)}
+.card h3{font-size:19px;margin-bottom:10px;color:#ffd97a;letter-spacing:1px}
+.card .body{font-size:14.5px;line-height:1.9;color:#cfdaef;margin-bottom:14px}
+.opt{display:block;width:100%;text-align:left;background:#16223c;border:1px solid #2b3f66;color:#e8ecf5;border-radius:10px;padding:12px 14px;margin:8px 0;font-size:14px;cursor:pointer}
+.opt:active{background:#1d2c4d;transform:scale(.99)}
+.opt .cost{display:block;font-size:12px;color:#8fa3c8;margin-top:4px}
+.opt .cost b{color:#ffcf7a}
+#toasts{position:absolute;top:110px;left:0;right:0;display:flex;flex-direction:column;align-items:center;z-index:40;pointer-events:none}
+.toast{background:rgba(16,26,48,.95);border:1px solid #2b3f66;border-radius:20px;padding:8px 18px;margin:4px;font-size:13px;color:#ffe1a8;animation:tin .25s}
+@keyframes tin{from{opacity:0;transform:translateY(-8px)}to{opacity:1}}
+.diaryLine{background:#0e1730;border-left:3px solid #ffaa28;border-radius:0 8px 8px 0;padding:10px 12px;margin:8px 0;font-size:13.5px;line-height:1.8;color:#c9d6ee}
+.endTitle{font-size:34px;font-weight:900;margin:12px 0;letter-spacing:4px}
+.billRow{display:flex;justify-content:space-between;font-size:14px;padding:6px 2px;border-bottom:1px dashed #22345c;color:#c6d2e8}
+.billRow.total{font-size:17px;font-weight:800;color:#ffd97a;border-bottom:none}
+.shopItem{background:#101a30;border:1px solid #2b3f66;border-radius:12px;padding:14px;margin:10px 0;text-align:left}
+.shopItem h4{font-size:16px;color:#ffd97a;margin-bottom:6px}
+.shopItem p{font-size:13px;color:#9fb0d0;line-height:1.7;margin-bottom:8px}
+.pips{letter-spacing:4px;color:#ffaa28;margin-bottom:8px;font-size:15px}
+.achItem{display:flex;justify-content:space-between;align-items:center;background:#101a30;border:1px solid #2b3f66;border-radius:10px;padding:10px 14px;margin:8px 0;font-size:14px}
+.achItem.locked{opacity:.45}
+h2.sec{font-size:22px;letter-spacing:4px;margin-bottom:12px}
+.kv{color:#8fa3c8;font-size:13px}
+.howRow{font-size:14px;line-height:1.7;color:#cfdaef;padding:7px 2px;border-bottom:1px solid rgba(60,80,120,.25)}
+.howRow b{color:#ffd97a}
+.howRow.win{background:rgba(125,223,154,.08);border-radius:8px;padding:8px 10px;border-bottom:none;margin-top:10px;color:#7ddf9a}
+.howRow.lose{background:rgba(255,107,107,.08);border-radius:8px;padding:8px 10px;border-bottom:none;color:#ff9b9b}
+.endFold{margin-top:10px;border:1px solid #2a3a5c;border-radius:10px;padding:10px 12px}
+.endFold summary{cursor:pointer;font-size:14px;color:#ffd97a;font-weight:700}
+.endFold .howRow:last-child{border-bottom:none}
+.kv b{color:#ffd97a}
+</style>
+</head>
+<body>
+<div id="app">
+<div class="screen on center" id="startScreen">
+<div class="titleBadge">台风夜 · 杭州</div>
+<div class="gameTitle">最后一份外卖</div>
+<div class="gameSub">23:00 · 你决定再跑最后一单</div>
+<div class="storyBox">
+台风夜，23点。平台弹出“最后一单”：深夜的粥，送到武林，孩子发烧等着喝。<br>
+超时一分钟扣20块。但今晚的路，不会让你安稳送达——<br>
+摔倒的老人、熄火的同行、坏掉的红绿灯……<br>
+<b style="color:#ffd97a">每一个选择都没有对错，只有代价。</b>
+</div>
+<div class="quickHow">
+<div>🗺️ 点绿圈走路 <span class="qd">·</span> 🔋 没电去换电柜 <span class="qd">·</span> ❗ 抉择换善行定结局</div>
+<div>✅ 限时送达+400 <span class="qd">·</span> ❌ 超时每分钟-20</div>
+</div>
+<button class="btn btn-p" id="btnStart">接下这一单</button>
+<div class="rowBtns">
+<button class="btn btn-s" id="btnShop">改装铺</button>
+<button class="btn btn-s" id="btnAch">成就</button>
+</div>
+<div class="rowBtns">
+<button class="btn btn-s" id="btnHow">玩法说明</button>
+<button class="btn btn-s" id="btnMute">🔔 声音开</button>
+</div>
+<div class="smallNote" id="startMeta"></div>
+</div>
+<div class="screen" id="gameScreen">
+<div id="hud">
+<div class="hudRow">
+<span id="clock">23:00</span>
+<span class="pill">💰 <span class="v" id="hudMoney">0</span></span>
+<span class="pill">❤️ <span class="v" id="hudShan">0</span></span>
+</div>
+<div class="hudRow">
+<span class="t" id="hudBattL">🔋电量</span><div class="barWrap"><div class="bar" id="hudBatt" style="width:100%"></div></div><span class="v" id="hudBattN">100</span>
+</div>
+<div class="hudRow">
+<span class="t" id="hudStamL">💪体力</span><div class="barWrap"><div class="bar" id="hudStam" style="width:100%"></div></div><span class="v" id="hudStamN">100</span>
+</div>
+</div>
+<div id="mapWrap"><canvas id="map"></canvas></div>
+<div id="routePanel">
+<div><span id="destL">🎯 目标：</span><span class="dest" id="destName">—</span> <span id="orderTag"></span></div>
+<div class="est" id="estLine">点击相邻节点移动</div>
+</div>
+<div id="ctrlBar">
+<button class="btn btn-s" id="btnAccel">⚡ 加速</button>
+<button class="btn btn-s" id="btnDiaryLook">📓 日记</button>
+<button class="btn btn-s" id="btnMute2">🔔</button>
+<button class="btn btn-s" id="btnLang2">EN</button>
+</div>
+</div>
+<div class="screen" id="endScreen" style="overflow-y:auto">
+<div style="padding:24px;max-width:460px;margin:0 auto;width:100%" id="endContent"></div>
+</div>
+<div id="toasts"></div>
+<div id="modal"><div class="card" id="modalCard"></div></div>
+</div>
+<script>
+"use strict";
+/* ============ 工具 ============ */
+const $=id=>document.getElementById(id);
+const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
+const rnd=(a,b)=>a+Math.random()*(b-a);
+const pick=arr=>arr[Math.floor(Math.random()*arr.length)];
+function toast(msg,ms=2200){const d=document.createElement("div");d.className="toast";d.textContent=msg;$("toasts").appendChild(d);setTimeout(()=>{d.style.opacity="0";d.style.transition="opacity .4s";setTimeout(()=>d.remove(),400)},ms);}
+/* ============ 音效 ============ */
+let AU={ctx:null,muted:false};
+try{AU.muted=localStorage.getItem("waimai_mute")==="1";}catch(e){}
+function beep(f,d,type,v){
+d=d||0.08;type=type||"sine";v=v||0.12;
+if(AU.muted)return;
+try{
+AU.ctx=AU.ctx||new (window.AudioContext||window.webkitAudioContext)();
+const o=AU.ctx.createOscillator(),g=AU.ctx.createGain();
+o.type=type;o.frequency.value=f;g.gain.value=v;
+o.connect(g);g.connect(AU.ctx.destination);o.start();
+g.gain.exponentialRampToValueAtTime(0.001,AU.ctx.currentTime+d);o.stop(AU.ctx.currentTime+d);
+}catch(e){}
+}
+const sfx={
+click:()=>beep(620),
+go:()=>{beep(300,0.08,"triangle");setTimeout(()=>beep(520,0.08,"triangle"),70);},
+event:()=>{beep(440,0.12);setTimeout(()=>beep(330,0.15),120);},
+good:()=>{beep(660,0.1);setTimeout(()=>beep(880,0.14),100);},
+bad:()=>beep(180,0.25,"sawtooth",0.08),
+coin:()=>{beep(990,0.07,"square",0.06);setTimeout(()=>beep(1320,0.1,"square",0.06),70);},
+win:()=>{[523,659,784,1046].forEach((f,i)=>setTimeout(()=>beep(f,0.18),i*140));}
+};
+function refreshMuteBtns(){const t=AU.muted?tx("muteOff"):tx("muteOn");if($("btnMute"))$("btnMute").textContent=t;if($("btnMute2"))$("btnMute2").textContent=AU.muted?"🔇":"🔔";}
+function toggleMute(){AU.muted=!AU.muted;try{localStorage.setItem("waimai_mute",AU.muted?"1":"0");}catch(e){}refreshMuteBtns();if(!AU.muted)sfx.click();}
+/* ============ 存档 ============ */
+const DB={
+get(k,d){try{const v=localStorage.getItem("waimai_"+k);return v==null?d:JSON.parse(v);}catch(e){return d;}},
+set(k,v){try{localStorage.setItem("waimai_"+k,JSON.stringify(v));}catch(e){}}
+};
+let fund=DB.get("fund",0);
+let up=DB.get("up",{range:0,speed:0,load:0});
+let rep=DB.get("rep",{});
+let ach=DB.get("ach",{});
+let best=DB.get("best",-1);
+let diaryTotal=DB.get("diaryTotal",0);
+/* ============ I18N ============ */
+let LANG='zh';
+try{const _sv=DB.get("wm_lang",null);LANG=_sv||(((navigator.language||"zh").toLowerCase().indexOf("zh")===0)?"zh":"en");}catch(e){LANG="zh";}
+function tr(zh,en){return LANG==="en"?en:zh;}
+const STR={
+docTitle:["最后一份外卖 · 台风夜","The Last Delivery · Typhoon Night"],
+badge:["台风夜 · 杭州","Typhoon Night"],
+gameTitle:["最后一份外卖","The Last Delivery"],
+gameSub:["23:00 · 你决定再跑最后一单","11:00 PM · One last order before you call it a night"],
+story:["台风夜，23点。平台弹出“最后一单”：深夜的粥，送到武林，孩子发烧等着喝。<br>超时一分钟扣20块。但今晚的路，不会让你安稳送达——<br>摔倒的老人、熄火的同行、坏掉的红绿灯……<br><b style=\"color:#ffd97a\">每一个选择都没有对错，只有代价。</b>","Typhoon night, 11 PM. The app pings with one \"last order\": hot congee, bound for Wulin — a feverish kid is waiting.<br>Every minute late costs ¥20. But the road will not let you cruise —<br>a fallen senior, a stalled fellow rider, dead traffic lights…<br><b style=\"color:#ffd97a\">No choice is wrong. Every choice has a price.</b>"],
+how1:["🗺️ 点绿圈走路 <span class=\"qd\">·</span> 🔋 没电去换电柜 <span class=\"qd\">·</span> ❗ 抉择换善行定结局","🗺️ Tap green circles to move <span class=\"qd\">·</span> 🔋 Low battery? Find a swap station <span class=\"qd\">·</span> ❗ Choices earn karma — karma decides your ending"],
+how2:["✅ 限时送达+400 <span class=\"qd\">·</span> ❌ 超时每分钟-20","✅ On-time delivery +400 <span class=\"qd\">·</span> ❌ −20 for every late minute"],
+btnStart:["接下这一单","Take the Order"],
+btnShop:["改装铺","Upgrades"],
+btnAch:["成就","Achievements"],
+btnHow:["玩法说明","How to Play"],
+hudBatt:["🔋电量","🔋Battery"],
+hudStam:["💪体力","💪Stamina"],
+destL:["🎯 目标：","🎯 Goal: "],
+tapMove:["点击相邻节点移动","Tap an adjacent node to move"],
+btnAccel:["⚡ 加速","⚡ Boost"],
+btnDiary:["📓 日记","📓 Diary"],
+tStart:["🌧️ 台风夜 23:00，出发！先去取餐","🌧️ Typhoon night, 11 PM — go! Pick up the food first"],
+tLimitL:["（限时"," ("],tLimitR:["分钟）"," min limit)"],
+tNoReach:["到不了那里，选相邻的节点","Can not reach there — pick an adjacent node"],
+tRoadClosed:["⛔ 这段路被封了，绕一下吧","⛔ Road closed — find another way"],
+tBoostEnd:["加速结束","Boost ended"],
+tExhaust:["😮‍💨 体力透支，原地喘了6分钟","😮‍💨 Exhausted — catching breath for 6 min"],
+dExhaust:["体力透支了，在屋檐下喘了6分钟。雨声很大，心跳也很大。","Ran out of stamina — gasped under the eaves for 6 minutes. The rain was loud; so was my heartbeat."],
+tTree:["⛔ 台风掀翻大树，封路了！","⛔ The typhoon felled a tree — road closed!"],
+tFlood:["🌊严重积水，通过+3分钟","🌊 Deep flooding — +3 min to pass"],
+tGambleWin:["🍀 赌赢了！","🍀 Lucky!"],
+tGambleLose:["💥 赌输了……","💥 Bad luck…"],
+tRaincoat:["🧥 雨衣送人了，之后淋雨更耗体力","🧥 Gave away the raincoat — rain drains stamina faster now"],
+tAccel3:["⚡ 强制加速3步！电量消耗×2","⚡ Forced boost, 3 steps! Battery drain ×2"],
+tBlind3:["🧭 导航失灵，3步内无路线预估","🧭 GPS lost — no route estimate for 3 steps"],
+tPickup:["✅ 取餐成功，先送顺路单：","✅ Picked up! Side order first: "],
+tBoostOn:["⚡ 加速开启：更快，但更耗电","⚡ Boost on: faster, thirstier"],
+tBoostOff:["⚡ 加速关闭","⚡ Boost off"],
+tNoDiary:["今晚还没写下什么","Nothing written yet tonight"],
+mPickupB1:["店员把餐递出来：“","The clerk hands over the food: “"],
+mPickupB2:[",，趁热！台风天，路上小心啊师傅。"," — keep it hot! Careful out there in the storm, rider."],
+optCheck:["开箱检查一下","Check the box"],
+optCheckC:["+2分钟 · 之后餐品更稳","+2 min · sturdier meal"],
+optGrab:["直接拿走，赶时间","Grab and go"],
+mChargeT:["🔋 换电柜","🔋 Battery Swap"],
+mChargeB1:["路边的换电柜亮着绿灯。换一块满电电瓶，","A roadside swap cabinet glows green. Swap in a full battery: "],
+mChargeB2:["+40电量","+40 battery"],
+mChargeB3:[",，耗时3分钟。<br>到下一站（",", 3 minutes.<br>Next stop ("],
+mChargeB4:[")还需约 "," needs about "],
+mChargeB5:[" 电量"," battery"],
+mChargeB6:[",，你现在剩 ",", you have "],
+mChargeB7:["。","."],
+optSwap:["换电","Swap"],
+optSwapC:["+40电量 · +3分钟","+40 battery · +3 min"],
+optSkip:["赶时间，直接走","Skip, keep moving"],
+mShopT:["🏪 24小时便利店","🏪 24-Hour Store"],
+mShopB:["店员看你浑身湿透，递来一条干毛巾：“进来暖和3分钟吧，姜汤免费。”","Soaked through, you are handed a dry towel: “Warm up 3 minutes — ginger tea is on the house.”"],
+optWarm:["暖和一下","Warm up"],
+optWarmC:["+3分钟 · 体力+25","+3 min · +25 stamina"],
+dMid:["顺路给独居的陈奶奶送了药。她塞给我一把糖，说：“闺女，路上慢点。”","Delivered medicine to Granny Chen, who lives alone, on the way. She pressed candy into my hand: “Slow down out there, dear.”"],
+mMidT:["📦 顺路单送达","📦 Side Order Delivered"],
+mMidB:["顺路给独居的陈奶奶送了药，她千恩万谢，还多给了小费。","Delivered Granny Chen's medicine on the way — she was overjoyed and tipped extra."],
+optMid:["继续送主单","Continue the main order"],
+optMidC:["+100元 · 善行+6","+¥100 · +6 karma"],
+hudLeft1:[" · 剩"," · "],hudLeft2:["分钟"," min left"],
+hudLate:[" ⏰超时"," ⏰ "],hudLate2:["分钟"," min late"],
+rBlind:["🧭 导航失灵，凭记忆走（剩余","🧭 GPS lost — memory only ("],
+rBlind2:["步）"," steps left)"],
+rBlocked:["⚠️ 路被封死了，绕路中…","⚠️ Roads blocked — detouring…"],
+rEst1:["预计 ","Est. "],rEst2:[" 分钟 · 约 "," min · ~"],rEst3:[" 电量（"," battery ("],rEst4:["段路）"," segs)"],
+rRem:[" · 剩"," · "],rRem2:["分钟"," min"],
+rShort:[" ⚠️不够"," ⚠️ short"],
+rLate:[" · 已超时"," · "],rLate2:["分钟"," min late"],
+rBoost:[" · ⚡加速中"," · ⚡ boosting"],
+dPickup:["取餐：","Pickup: "],
+dSide:["送餐：","Deliver: "],
+dSideTag:["（顺路单）→ "," (side) → "],
+dHome:[" · 客户家"," · Customer"],
+oBig:["（大单·限时-10分钟）","(Big order · −10 min)"],
+oNear:["（近单·终点更近）","(Nearby · closer drop)"],
+sfT:["📣 老熟人专单","📣 Regulars' Special"],
+sfB1:["的老街坊都认识你，今晚有两单特殊单子："," — the neighbors all know you. Two special orders tonight:"],
+sfBig:["🔥 大单：+800元","🔥 Big order: +¥800"],
+sfBigC:["限时-10分钟","−10 min limit"],
+sfNear:["🚴 近单：+300元","🚴 Nearby: +¥300"],
+sfNearC:["终点更近（凤起路）","Closer drop-off (Fengqi Rd)"],
+sfNormal:["普通单","Regular order"],
+diaryT:["📓 夜行日记","📓 Night Diary"],
+diaryEmpty:["今晚太匆忙，没来得及写下什么。","Too rushed tonight to write anything down."],
+gotIt:["知道了","Got it"],
+sEasing:[" · 台风渐弱"," · Storm easing"],
+sBase:["基础配送费","Base delivery fee"],
+sMile1:["里程补贴 ×","Mileage ×"],sMile2:["段"," segs"],
+sLate:["超时扣款 ×","Late penalty ×"],sLate2:["分钟"," min"],
+sOnTime:["准时奖励","On-time bonus"],
+sBonus:["订单加成","Order bonus"],
+sRoad:["路上收支","Road income"],
+sLoad1:["载重改装 ×","Cargo mod ×"],sLoad2:["已计入","incl."],
+sTotal:["本单实收","Order total"],sYuan:[" 元",""],
+sFund1:["其中 ","¥"],sFund2:[" 元存入改装基金（当前 "," → upgrade fund (now ¥"],sFund3:["）",")"],
+sShan:["善行","Karma"],sTime:["用时","Time"],sMin:["分钟","min"],
+sLate3:["超时","Late"],sNoLate:["零超时","On time"],
+sBill:["💰 收入明细","💰 Earnings"],
+sNewAch:["🏆 新成就","🏆 New achievements"],
+sDiaryT1:["📓 夜行日记（","📓 Night diary ("],sDiaryT2:["篇）",")"],
+sAgain:["再跑一单","Run another"],sHome:["返回主页","Back home"],
+shFund1:["改装基金：","Upgrade fund: ¥"],
+shFund2:[" 元（每单实收的20%自动存入）"," (20% of each order auto-saved)"],
+shUp:["升级 · ","Upgrade · "],shMax:["已满级","Maxed"],
+shT:["🔧 改装铺","🔧 Upgrades"],shClose:["关闭","Close"],
+shToast1:[" 升到 Lv."," → Lv."],shToast2:["！","!"],
+aT:["🏆 成就","🏆 Achievements"],
+aBest:["历史最佳结局：","Best ending: "],aNone:["暂无","—"],
+aRep:["各区声望：","District rep: "],
+hT:["📖 玩法说明","📖 How to Play"],
+hHow:["🎮 <b>怎么玩</b>","🎮 <b>How to play</b>"],
+hR1:["🗺️ 点<b>绿色光圈</b>前进 —— 每段约 4 分钟 / 9 点电","🗺️ Tap the <b>green circles</b> to move — ~4 min / 9 battery per segment"],
+hR2:["🔋 电量见底会推车慢行 —— <b>换电柜</b> +40（花 3 分钟）","🔋 Dead battery means a slow crawl — <b>swap stations</b> +40 (3 min)"],
+hR3:["⚡ <b>加速</b>更快但更耗电 —— 赶时间时再开","⚡ <b>Boost</b> is faster but thirstier — save it for crunch time"],
+hR4:["❗ 路上<b>两难抉择</b> —— 花时间换善行，善行决定结局","❗ <b>Tough calls</b> on the road — trade time for karma; karma decides your ending"],
+hWin:["✅ 胜利：限时内送达，准时奖励 +400 元","✅ Win: deliver on time — +¥400 bonus"],
+hLose:["❌ 代价：超时每分钟扣 20 元，结局降档","❌ Price: −¥20 per late minute, ending downgraded"],
+hFold:["🏁 5 档结局怎么拿（点开看）","🏁 The 5 endings (tap to open)"],
+hE0:["👑 <b>台风眼</b>：善行 ≥60 且超时 ≤8 分钟","👑 <b>Eye of the Storm</b>: karma ≥60 and ≤8 min late"],
+hE1:["🌃 <b>夜行人生</b>：善行 ≥55 且收入 ≥900","🌃 <b>Night Shift</b>: karma ≥55 and earnings ≥900"],
+hE2:["🏅 <b>金牌骑手</b>：收入 ≥1500","🏅 <b>Gold Rider</b>: earnings ≥1500"],
+hE3:["💚 <b>城市侠客</b>：善行 ≥40","💚 <b>Street Hero</b>: karma ≥40"],
+hE4:["🌧️ <b>勉强度日</b>：其他情况","🌧️ <b>Getting By</b>: anything else"],
+mFund1:["改装基金 ","Upgrade fund ¥"],
+mFund2:[" 元 · 历史最佳："," · Best: "],
+mDiary1:["<br>累计夜行日记 ","<br>Diary entries: "],mDiary2:[" 篇",""],
+muteOn:["🔔 声音开","🔔 Sound on"],muteOff:["🔇 声音关","🔇 Muted"],
+dPool1:["雨一直在下，但心里好像没那么冷了。","The rain keeps falling, but somehow it feels less cold."],
+dPool2:["车灯照亮前路，也照亮了别人的路。","My headlight lights my road — and someone else's."],
+dPool3:["台风夜里，陌生人之间有种奇怪的默契。","On a typhoon night, strangers share a strange understanding."]
+};
+function tx(k){const v=STR[k];return LANG==="en"?v[1]:v[0];}
+const DISTRICTS_EN=["Binjiang","Xiaoshan","Shangcheng","Xihu","Gongshu","Wulin","Yuhang"];
+function distName(d){const i=DISTRICTS.indexOf(d);return (LANG==="en"&&i>=0)?DISTRICTS_EN[i]:d;}
+function nodeName(n){return (LANG==="en"&&n.en)?n.en:n.n;}
+function mName(){const m=MERCHANTS.find(function(x){return x.node===G.merchantNode;});return (LANG==="en"&&m.en_name)?m.en_name:m.name;}
+function mFood(){const m=MERCHANTS.find(function(x){return x.node===G.merchantNode;});return (LANG==="en"&&m.en_food)?m.en_food:m.food;}
+function evT(ev,f){const e=EVENTS_EN[ev.id];return (LANG==="en"&&e&&e[f])?e[f]:ev[f];}
+function refreshDest(){
+if(!G)return;
+$("orderTag").textContent=G.orderType==="big"?tx("oBig"):G.orderType==="near"?tx("oNear"):"";
+if(!G.pickedUp)$("destName").textContent=tx("dPickup")+mName();
+else if(!G.midDone)$("destName").textContent=tx("dSide")+nodeName(NODES[G.midNode])+tx("dSideTag")+nodeName(NODES[G.destNode]);
+else $("destName").textContent=tx("dSide")+nodeName(NODES[G.destNode])+tx("dHome");
+}
+function renderStart(){
+const el=$("startScreen");
+el.innerHTML=
+'<div class="titleBadge">'+tx("badge")+'</div>'
++'<div class="gameTitle">'+tx("gameTitle")+'</div>'
++'<div class="gameSub">'+tx("gameSub")+'</div>'
++'<div class="storyBox">'+tx("story")+'</div>'
++'<div class="quickHow"><div>'+tx("how1")+'</div><div>'+tx("how2")+'</div></div>'
++'<button class="btn btn-p" id="btnStart">'+tx("btnStart")+'</button>'
++'<div class="rowBtns"><button class="btn btn-s" id="btnShop">'+tx("btnShop")+'</button>'
++'<button class="btn btn-s" id="btnAch">'+tx("btnAch")+'</button>'
++'<button class="btn btn-s" id="btnLang">'+(LANG==="en"?"中":"EN")+'</button></div>'
++'<div class="rowBtns"><button class="btn btn-s" id="btnHow">'+tx("btnHow")+'</button>'
++'<button class="btn btn-s" id="btnMute">'+tx(AU.muted?"muteOff":"muteOn")+'</button></div>'
++'<div class="smallNote" id="startMeta"></div>';
+$("btnStart").onclick=function(){sfx.click();startFlow();};
+$("btnShop").onclick=openShop;
+$("btnAch").onclick=openAch;
+$("btnHow").onclick=function(){sfx.click();openHow();};
+$("btnMute").onclick=toggleMute;
+$("btnLang").onclick=function(){sfx.click();setLang(LANG==="en"?"zh":"en");};
+refreshStartMeta();
+}
+function setLang(l){LANG=l;DB.set("wm_lang",l);renderLang();}
+function renderLang(){
+document.title=tx("docTitle");
+if($("startScreen").classList.contains("on"))renderStart();
+refreshMuteBtns();
+if($("btnLang2"))$("btnLang2").textContent=LANG==="en"?"中":"EN";
+$("hudBattL").textContent=tx("hudBatt");$("hudStamL").textContent=tx("hudStam");
+$("destL").textContent=tx("destL");
+$("btnAccel").textContent=tx("btnAccel");$("btnDiaryLook").textContent=tx("btnDiary");
+if(!G)$("estLine").textContent=tx("tapMove");
+else{updateHUD();updateRoute();refreshDest();}
+}
+/* ============ 地图数据 ============ */
+const NODES=[
+{id:0,n:"长河站",en:"Changhe Station",d:"滨江",x:32,y:156},
+{id:1,n:"星光大道",en:"Starlight Ave",d:"滨江",x:54,y:148,shop:true},
+{id:2,n:"市北",en:"North Market",d:"萧山",x:74,y:140},
+{id:3,n:"白马湖",en:"White Horse Lake",d:"滨江",x:28,y:132},
+{id:4,n:"城站",en:"Central Station",d:"上城",x:56,y:124,charge:true},
+{id:5,n:"转塘",en:"Zhuantang",d:"西湖",x:14,y:114},
+{id:6,n:"钱江新城",en:"Qianjiang New Town",d:"上城",x:74,y:112},
+{id:7,n:"留下",en:"Liuxia",d:"西湖",x:30,y:100},
+{id:8,n:"湖滨",en:"Lakeside",d:"上城",x:52,y:96},
+{id:9,n:"大关",en:"Daguan",d:"拱墅",x:66,y:82},
+{id:10,n:"黄龙",en:"Huanglong",d:"西湖",x:34,y:78},
+{id:11,n:"武林广场",en:"Wulin Plaza",d:"武林",x:50,y:64,charge:true},
+{id:12,n:"运河广场",en:"Canal Plaza",d:"拱墅",x:70,y:56},
+{id:13,n:"文三路",en:"Wensan Rd",d:"西湖",x:30,y:50},
+{id:14,n:"凤起路",en:"Fengqi Rd",d:"武林",x:48,y:40},
+{id:15,n:"祥符",en:"Xiangfu",d:"拱墅",x:64,y:32},
+{id:16,n:"仓前",en:"Cangqian",d:"余杭",x:30,y:22},
+{id:17,n:"客户家",en:"Customer's Home",d:"武林",x:48,y:12},
+{id:18,n:"德胜",en:"Desheng",d:"拱墅",x:64,y:68}
+];
+const EDGES=[[0,1],[0,3],[1,3],[1,4],[3,5],[4,2],[4,6],[5,7],[4,8],[6,9],[7,8],[7,10],[8,9],[8,11],[10,11],[9,12],[9,18],[10,13],[11,18],[11,14],[12,15],[18,12],[13,14],[14,15],[13,16],[15,16],[14,17],[16,17],[18,14]];
+const ADJ={};NODES.forEach(n=>{ADJ[n.id]=[];});
+EDGES.forEach(e=>{ADJ[e[0]].push(e[1]);ADJ[e[1]].push(e[0]);});
+const MERCHANTS=[
+{node:4,name:"城站 · 知味观",en_name:"Central Station · Riverside Noodles",food:"一碗热腾腾的片儿川",en_food:"A steaming bowl of noodle soup"},
+{node:8,name:"湖滨 · 外婆家",en_name:"Lakeside · Grandma's Kitchen",food:"一份熬得软烂的小米粥",en_food:"A bowl of soft millet congee"},
+{node:11,name:"武林广场 · 新白鹿",en_name:"Wulin Plaza · Ginger House",food:"一盅驱寒的姜汤鸡",en_food:"A warming ginger chicken soup"}
+];
+const DISTRICTS=["滨江","萧山","上城","西湖","拱墅","武林","余杭"];
+const UPGRADES=[
+{k:"range",name:"🔋 续航改装",en_name:"🔋 Battery Mod",desc:"加大电瓶容量，每级 +40 电量上限",en_desc:"+40 max battery per level",costs:[300,700,1500]},
+{k:"speed",name:"⚡ 极速改装",en_name:"⚡ Speed Mod",desc:"换高转电机，每级每步 -0.5 分钟",en_desc:"−0.5 min per segment per level",costs:[300,700,1500]},
+{k:"load",name:"📦 载重改装",en_name:"📦 Cargo Mod",desc:"加固货架多接单，每级收入 +15%",en_desc:"+15% income per level",costs:[300,700,1500]}
+];
+const ACH_DEFS=[
+{k:"eye",name:"🌀 台风眼",en_name:"🌀 Eye of the Storm",desc:"达成隐藏结局：台风眼",en_desc:"Reach the hidden ending: Eye of the Storm"},
+{k:"hero",name:"🦸 城市侠客",en_name:"🦸 Street Hero",desc:"达成结局：城市侠客",en_desc:"Reach the ending: Street Hero"},
+{k:"master",name:"🔧 改装大师",en_name:"🔧 Mod Master",desc:"三系改装全部升满",en_desc:"Max all three upgrade lines"},
+{k:"writer",name:"📓 日记作家",en_name:"📓 Night Writer",desc:"累计写下 20 篇夜行日记",en_desc:"Write 20 night-diary entries"}
+];
+const ENDINGS=[
+{rank:0,name:"勉强度日",en_name:"Getting By",color:"#8fa3c8",text:"雨停了，天快亮了。你数了数到手的钱，叹了口气。生活就是这样，勉强，但还在继续。",en_text:"The rain stopped; dawn is coming. You count the cash and sigh. That is life — barely, but still going."},
+{rank:1,name:"金牌骑手",en_name:"Gold Rider",color:"#ffd97a",text:"准时率拉满，收入漂亮。平台给你发了“金牌骑手”徽章。只是今晚那些求助的眼神，偶尔还会在雨声里浮现。",en_text:"On-time rate maxed, earnings handsome. The platform awards you a Gold Rider badge. Only those pleading eyes from tonight surface now and then, in the sound of rain."},
+{rank:2,name:"城市侠客",en_name:"Street Hero",color:"#7ddf9a",text:"钱没多赚，但今晚你扶起的人、推过的车、送出的雨衣，都会记得。老城区的孩子们都知道：那个骑手，是个好人。",en_text:"You did not earn much, but everyone you lifted, every cart you pushed, every raincoat you gave away will remember. The old neighborhood kids all know: that rider is a good one."},
+{rank:3,name:"夜行人生",en_name:"Night Shift",color:"#ffaa28",text:"又快又暖。你证明了：准时和善良不是单选题。今晚的台风很大，但你的车灯，比台风更亮。",en_text:"Fast and warm. You proved it: punctual and kind are not either-or. The typhoon was huge tonight — but your headlight shone brighter."},
+{rank:4,name:"台风眼",en_name:"Eye of the Storm",color:"#c084fc",text:"台风有眼，风暴中心反而最平静。你超时不到10分钟，还把善意洒满了半个杭州。这一夜，整座城市都欠你一句谢谢。",en_text:"Every typhoon has an eye — calmest at the center of the storm. You ran less than 10 minutes late and scattered kindness across half the city. Tonight, the whole city owes you a thank-you."}
+];
+/* ============ 15 个两难事件 ============
+fx: time分钟 batt电量 stam体力 money收入 shan善行 rep本区声望
+特殊: noraincoat accel3 blind3 gamble{p,win,lose} */
+const EVENTS=[
+{id:"oldman",title:"摔倒的老人",text:"雨幕里，一位老人连人带伞滑倒在积水边，菜撒了一地，爬了两次都没起来。雨点砸在他花白的头发上。",
+opts:[
+{label:"扶起他，等家属赶来",cost:"+8分钟 · 善行+16 · 声望+3",fx:{time:8,shan:16,rep:3},diary:"在{node}扶起一位摔倒的老人。雨很大，他的手很凉，攥着我说“谢谢”。"},
+{label:"扶起他，然后赶路",cost:"+4分钟 · 善行+8",fx:{time:4,shan:8}},
+{label:"假装没看见，绕过去",cost:"善行-8",fx:{shan:-8}}]},
+{id:"cat",title:"纸箱里的猫",text:"路中间一个纸箱，已经湿透，里面蜷着一只发抖的流浪猫，正对着你的车灯叫，声音都劈了。",
+opts:[
+{label:"把它抱到屋檐下",cost:"+5分钟 · 善行+10",fx:{time:5,shan:10},diary:"把纸箱里的猫挪到了屋檐下。它不叫了，拿头蹭了蹭我的手。"},
+{label:"绕行，不打扰它",cost:"+3分钟",fx:{time:3}},
+{label:"按喇叭把它吓走",cost:"+1分钟 · 善行-5",fx:{time:1,shan:-5}}]},
+{id:"ginger",title:"老板娘的姜汤",text:"便利店老板娘隔着雨帘喊你：“小伙子！进来喝口姜汤再走！刚煮的，驱寒！”店里的灯暖黄暖黄的。",
+opts:[
+{label:"喝一碗再走",cost:"+3分钟 · 体力+30",fx:{time:3,stam:30},diary:"老板娘的姜汤很烫，辣得眼睛发酸。她说：“台风天还跑单，慢点骑。”"},
+{label:"道谢，赶时间",cost:"善行+2",fx:{shan:2}}]},
+{id:"call",title:"客户的电话",text:"电话响了，是客户，声音发颤：“师傅，我孩子发烧39度，就等这口热的。能再快点吗？求你了。”",
+opts:[
+{label:"咬牙加速，连赶3步",cost:"3步电量×2 · 体力-10",fx:{accel3:true,stam:-10},diary:"客户说孩子发烧39度。我拧足了电门，雨抽在脸上生疼。"},
+{label:"稳住他，解释路况",cost:"+2分钟",fx:{time:2}}]},
+{id:"stall",title:"熄火的同行",text:"前方积水漫过脚踝，一辆电瓶车熄火了。大哥站在水里推车，推一下滑半步，雨水顺着安全帽往下淌。",
+opts:[
+{label:"下车帮他推出积水",cost:"+6分钟 · 善行+12 · 声望+2",fx:{time:6,shan:12,rep:2},diary:"帮同行把车推出了积水。他非要塞给我两个包子，说“热乎的”。"},
+{label:"指条水浅的小路给他",cost:"+2分钟 · 善行+3",fx:{time:2,shan:3}}]},
+{id:"billboard",title:"倒下的广告牌",text:"一块巨大的广告牌被吹倒在路中间，上面写着“双11提前购，全场五折”。台风天，它倒是先打折了。",
+opts:[
+{label:"下车把它挪开",cost:"+4分钟 · 善行+8",fx:{time:4,shan:8},diary:"挪开了“双11提前购”的广告牌。感觉像赢了消费主义一次。"},
+{label:"等阵风小一点再过",cost:"+6分钟",fx:{time:6}},
+{label:"冒险从缝隙钻过去",cost:"赌一把：50%直接过 / 50%摔倒+8分钟",fx:{gamble:{p:0.5,win:{},lose:{time:8,stam:-15}}}}]},
+{id:"student",title:"公交站的学生",text:"公交站里，一个学生浑身湿透，抱着书包发抖。末班车两小时前就没了，他在查打车软件，贵得咋舌。",
+opts:[
+{label:"把备用雨衣给他",cost:"余程淋雨体力消耗+50% · 善行+14 · 声望+2",fx:{noraincoat:true,shan:14,rep:2},diary:"雨衣给了那个学生。接下来的路，雨会更冷一点。但他的笑很暖。"},
+{label:"指引他去便利店避雨",cost:"+2分钟 · 善行+4",fx:{time:2,shan:4}}]},
+{id:"puncture",title:"同行的求助",text:"对讲机里传来同行的声音，混着雨声：“兄弟，我爆胎了，就在前面，你带打气筒了吗？这单要超时了……”",
+opts:[
+{label:"过去帮他一起修",cost:"+6分钟 · 善行+12 · 体力+15",fx:{time:6,shan:12,stam:15},diary:"帮同行补好了胎。他请我吃了个包子，肉馅的，台风夜最好吃的东西。"},
+{label:"把打气筒留下，先走",cost:"+2分钟 · 善行+5",fx:{time:2,shan:5}},
+{label:"鸣笛致意，赶时间",cost:"善行-3",fx:{shan:-3}}]},
+{id:"manhole",title:"翻开的井盖",text:"风把井盖掀翻了，黑洞洞的口子藏在积水下面，像一张嘴。已经有辆单车歪在旁边，车主一瘸一拐地走了。",
+opts:[
+{label:"找辆共享单车立警示",cost:"+5分钟 · 善行+10 · 声望+2",fx:{time:5,shan:10,rep:2},diary:"用一辆共享单车在翻开的井盖前立了警示。后面的车都绕开了。"},
+{label:"小心绕行",cost:"+2分钟",fx:{time:2}}]},
+{id:"spill",title:"洒出来的餐",text:"一个颠簸，餐洒了一点，热粥渗出了盒盖。订单备注写着：“孩子发烧，麻烦快点，谢谢师傅。”",
+opts:[
+{label:"掉头回商家重做一份",cost:"+8分钟 · 收入-30",fx:{time:8,money:-30},diary:"掉头回去重做了一份。有些坚持很贵，但值得。孩子不能等，良心也不能。"},
+{label:"擦干净，硬着头皮送",cost:"30%差评风险",fx:{gamble:{p:0.3,win:{},lose:{money:-100,rep:-2}}}}]},
+{id:"stall2",title:"大排档的灯",text:"路边大排档的老板在雨里冲你招手：“进来躲躲！雨太大了，命要紧！炒粉马上好！”店里的灯在雨里晕成一团暖光。",
+opts:[
+{label:"进去躲10分钟",cost:"+10分钟 · 体力+25 · 善行+5",fx:{time:10,stam:25,shan:5},diary:"在大排档躲了10分钟雨。老板说：“台风天还跑单，你们才是最拼的。”"},
+{label:"买份炒粉带走",cost:"+4分钟 · -25元 · 体力+15",fx:{time:4,money:-25,stam:15}}]},
+{id:"lost",title:"问路的老人",text:"一位外地口音的老人举着张纸条，雨水把字晕开了：“师傅，XX小区怎么走？我儿子家……我记不清了。”",
+opts:[
+{label:"亲自把他带过去",cost:"+7分钟 · 善行+14",fx:{time:7,shan:14},diary:"把问路的老人送到了小区门口。他儿子下来接他，两父子在雨里抱了一下。"},
+{label:"画张简易地图给他",cost:"+3分钟 · 善行+6",fx:{time:3,shan:6}}]},
+{id:"lights",title:"失灵的红绿灯",text:"路口信号灯全灭了，汽车、行人、电瓶车挤成一团，喇叭声混着雨声。没人敢先走，也没人愿意让。",
+opts:[
+{label:"下车指挥交通",cost:"+6分钟 · 善行+12",fx:{time:6,shan:12},diary:"在失灵的路口当了6分钟交警。台风夜的路口，总得有个人先站出来。"},
+{label:"见缝插针挤过去",cost:"+2分钟 · 30%剐蹭风险",fx:{gamble:{p:0.3,win:{time:2},lose:{time:7,money:-50}}}}]},
+{id:"gps",title:"转圈的导航",text:"手机导航在风雨里不停转圈——信号丢了。眼前只有白茫茫的雨，和偶尔劈开夜空的闪电。",
+opts:[
+{label:"凭记忆走",cost:"接下来3步没有路线预估",fx:{blind3:true},diary:"导航丢了，凭记忆在雨里穿行。原来这座城，我比想象中更熟。"},
+{label:"找屋檐停下重启",cost:"+4分钟",fx:{time:4}}]},
+{id:"doorstep",title:"楼下的客户",text:"终于到了。客户举着伞站在楼下——伞骨断了两根，他半边身子全湿了，怀里还抱着个发烫的孩子。",
+opts:[
+{label:"把餐举过头顶冲过去",cost:"+2分钟 · 善行+8",fx:{time:2,shan:8},diary:"把餐举过头顶冲进雨里。孩子喝到热粥时笑了。那一刻觉得，这份工作也没那么糟。"},
+{label:"正常走过去交接",cost:"无",fx:{}}]}
+];
+/* ============ EVENTS EN (story globalization: natural English, universal frame) ============ */
+const EVENTS_EN={
+oldman:{title:"Fallen Senior",text:"Through the rain, a senior has slipped by the flooded curb, groceries scattered, twice failed to get up. Rain hammers his white hair.",opts:[
+{label:"Help him up, wait for family",cost:"+8 min · +16 karma · +3 rep",diary:"Helped a fallen senior up at {node}. The rain was heavy; his hand was cold as he gripped mine and said thanks."},
+{label:"Help him up, then hurry on",cost:"+4 min · +8 karma"},
+{label:"Pretend not to see, walk around",cost:"−8 karma"}]},
+cat:{title:"Cat in a Box",text:"A soggy cardboard box in the middle of the road, a shivering stray cat curled inside, meowing at your headlight until its voice cracks.",opts:[
+{label:"Carry it under the eaves",cost:"+5 min · +10 karma",diary:"Moved the boxed cat under the eaves. It stopped crying and rubbed its head against my hand."},
+{label:"Walk around, leave it be",cost:"+3 min"},
+{label:"Honk to scare it off",cost:"+1 min · −5 karma"}]},
+ginger:{title:"Ginger Tea",text:"The corner-store owner waves through the rain: “Young man! Come in for ginger tea — fresh off the stove, warms you right up!” Her shop glows warm yellow.",opts:[
+{label:"Drink a bowl first",cost:"+3 min · +30 stamina",diary:"Her ginger tea burned going down and stung my eyes. “Still riding in this storm? Take it slow out there,” she said."},
+{label:"Thank her, short on time",cost:"+2 karma"}]},
+call:{title:"The Customer Calls",text:"The phone rings — the customer, voice shaking: “Rider, my kid is burning up at 39°C, waiting on that hot food. Can you go any faster? Please.”",opts:[
+{label:"Floor it for 3 segments",cost:"3 steps ×2 battery · −10 stamina",diary:"The kid is at 39°C. I twisted the throttle; the rain stung my face."},
+{label:"Calm them, explain the roads",cost:"+2 min"}]},
+stall:{title:"Stalled Fellow Rider",text:"Water is over the ankles ahead; a scooter died in it. The rider pushes, slides half a step back, rain streaming off his helmet.",opts:[
+{label:"Help push him out",cost:"+6 min · +12 karma · +2 rep",diary:"Pushed a fellow rider's scooter out of the flood. He forced two hot buns on me."},
+{label:"Point him to a shallow path",cost:"+2 min · +3 karma"}]},
+billboard:{title:"Fallen Billboard",text:"A huge billboard lies across the road, reading “PRE-SALE: 50% OFF EVERYTHING”. The storm gave it an early discount.",opts:[
+{label:"Move it off the road",cost:"+4 min · +8 karma",diary:"Moved the “50% OFF” billboard. Felt like beating consumerism for once."},
+{label:"Wait for the wind to ease",cost:"+6 min"},
+{label:"Risk squeezing through the gap",cost:"Gamble: 50% pass / 50% fall, +8 min"}]},
+student:{title:"Student at the Bus Stop",text:"A student soaked through, hugging a backpack, shivering at the bus stop. The last bus left two hours ago; ride-hail prices make him wince.",opts:[
+{label:"Give him your spare raincoat",cost:"Rest of trip: +50% rain stamina drain · +14 karma · +2 rep",diary:"Gave the student my raincoat. The road ahead will be colder. His smile was warm, though."},
+{label:"Point him to a store for shelter",cost:"+2 min · +4 karma"}]},
+puncture:{title:"A Puncture",text:"The radio crackles through the rain: “Brother, flat tire up ahead — got a pump? This order is going late…”",opts:[
+{label:"Go help him fix it",cost:"+6 min · +12 karma · +15 stamina",diary:"Helped a fellow rider patch his tire. He bought me a pork bun — best thing on a typhoon night."},
+{label:"Leave the pump, keep moving",cost:"+2 min · +5 karma"},
+{label:"Honk in solidarity, hurry on",cost:"−3 karma"}]},
+manhole:{title:"Open Manhole",text:"The wind flipped a manhole cover — a black hole hiding under the water like a mouth. A bicycle lies tilted nearby; its owner limped off.",opts:[
+{label:"Stand a bike up as warning",cost:"+5 min · +10 karma · +2 rep",diary:"Stood a shared bike by the open manhole as a warning. Every car after steered clear."},
+{label:"Circle around carefully",cost:"+2 min"}]},
+spill:{title:"Spilled Soup",text:"One bump — the congee leaked through the lid. The order note reads: “Kid has a fever, please hurry. Thank you, rider.”",opts:[
+{label:"Head back, remake it",cost:"+8 min · −¥30",diary:"Went back for a fresh one. Some principles are expensive, but worth it. The kid can not wait — and neither can my conscience."},
+{label:"Wipe it, deliver as-is",cost:"30% bad-review risk"}]},
+stall2:{title:"The Food Stall's Light",text:"A street-stall owner waves you over through the rain: “Get in here! This rain will kill you! Fried noodles, coming right up!” His lamps blur into warm halos.",opts:[
+{label:"Hide out 10 minutes",cost:"+10 min · +25 stamina · +5 karma",diary:"Hid from the rain 10 minutes at the stall. “Riding in this weather — you folks are the toughest,” he said."},
+{label:"Buy noodles to go",cost:"+4 min · −¥25 · +15 stamina"}]},
+lost:{title:"Lost Senior",text:"An out-of-town senior holds up a note, the ink bleeding in the rain: “Rider, how do I get to Maple Apartments? My son's place… I can not remember.”",opts:[
+{label:"Walk him there yourself",cost:"+7 min · +14 karma",diary:"Walked the lost senior to the gate. His son came down; father and son hugged in the rain."},
+{label:"Sketch him a quick map",cost:"+3 min · +6 karma"}]},
+lights:{title:"Dead Traffic Lights",text:"Every signal at the intersection is out — cars, pedestrians, scooters jammed together, horns mixed with rain. Nobody dares go first; nobody yields.",opts:[
+{label:"Direct traffic yourself",cost:"+6 min · +12 karma",diary:"Directed traffic 6 minutes at the dead intersection. Someone has to step up on a typhoon night."},
+{label:"Weave through the gaps",cost:"+2 min · 30% scrape risk"}]},
+gps:{title:"Spinning GPS",text:"Your phone's GPS spins uselessly in the storm — signal is gone. Only white rain ahead, and lightning splitting the night now and then.",opts:[
+{label:"Trust your memory",cost:"No route estimate for 3 steps",diary:"GPS died; rode by memory through the rain. Turns out I know this city better than I thought."},
+{label:"Pull under cover, reboot",cost:"+4 min"}]},
+doorstep:{title:"The Customer Downstairs",text:"Made it. The customer stands downstairs with an umbrella — two ribs broken, half his body soaked, a feverish child in his arms.",opts:[
+{label:"Hold the food high, dash over",cost:"+2 min · +8 karma",diary:"Held the food over my head and dashed through the rain. The kid smiled at the hot congee. Maybe this job is not so bad."},
+{label:"Walk over normally",cost:"—"}]}
+};
+/* ============ 对局状态 ============ */
+/* 顺路单中转点：总路程（起点→商家→中转→终点）落在 9~11 段，单局有体量感又不拖沓 */
+function pickMid(mNode,dNode){
+const h0=pathHops(0,mNode);
+let bm=dNode,bd=1e9;const cands=[];
+for(let i=0;i<NODES.length;i++){if(i!==mNode&&i!==dNode&&i!==0)cands.push(i);}
+for(let t=0;t<80;t++){const m=pick(cands);const tot=h0+pathHops(mNode,m)+pathHops(m,dNode);
+if(tot>=9&&tot<=11)return m;
+const d=Math.abs(tot-10);if(d<bd){bd=d;bm=m;}}
+return bm;
+}
+let G=null;
+function newRun(orderType){
+const merchant=pick(MERCHANTS);
+const nearOrder=orderType==="near";
+G={
+node:0,merchantNode:merchant.node,merchantName:merchant.name,food:merchant.food,
+pickedUp:false,destNode:nearOrder?14:17,
+elapsed:0,deadline:55-(orderType==="big"?10:0),
+battMax:100+40*up.range,batt:100+40*up.range,
+stam:100,money:0,shan:0,
+moves:0,steps:0,closed:new Set(),flooded:new Set(),
+usedEvents:new Set(),diary:[],accel:false,accelLeft:0,blindLeft:0,
+noraincoat:false,checked:false,orderType:orderType,
+orderBonus:orderType==="big"?800:orderType==="near"?300:0
+};
+G.midNode=pickMid(merchant.node,G.destNode);G.midDone=false;
+/* 限时按路程浮动：路长了，限时也要给够——紧张感留给事件抉择，而不是赶路本身 */
+const totalHops=pathHops(0,merchant.node)+pathHops(merchant.node,G.midNode)+pathHops(G.midNode,G.destNode);
+G.deadline=Math.round(40+2.5*totalHops-(orderType==="big"?10:0));
+showScreen("gameScreen");
+refreshDest();
+toast(tx("tStart")+tx("tLimitL")+G.deadline+tx("tLimitR"));
+sfx.go();updateHUD();drawMap();updateRoute();
+}
+/* ============ 时间/数值 ============ */
+function fmtClock(){const m=23*60+Math.floor(G.elapsed);const h=Math.floor(m/60)%24;const mm=m%60;return (h<10?"0":"")+h+":"+(mm<10?"0":"")+mm;}
+function moveTime(flooded){
+let t=4-0.5*up.speed;
+if(G.accel)t=2.5;
+if(flooded)t+=3;
+if(G.batt<=0)t*=2;
+if(G.stam<30)t+=1;
+return Math.max(1.5,t);
+}
+function moveBatt(flooded){
+if(G.batt<=0)return 0;
+return Math.round((6+(G.accel?5:0)+(flooded?4:0))*1.5);
+}
+function addShan(v){G.shan=clamp(G.shan+v,-20,100);}
+function addRep(v){const d=NODES[G.node].d;rep[d]=(rep[d]||0)+v;DB.set("rep",rep);}
+function addDiary(t){t=t.replace("{node}",nodeName(NODES[G.node]));G.diary.push(""+t);}
+/* ============ 寻路 ============ */
+function edgeKey(a,b){return a<b?a+"-"+b:b+"-"+a;}
+function bfsPath(from,to){
+if(from===to)return [from];
+const prev={};prev[from]=-1;const q=[from];
+while(q.length){
+const c=q.shift();
+const nbs=ADJ[c];
+for(let i=0;i<nbs.length;i++){
+const nb=nbs[i];
+if(G.closed.has(edgeKey(c,nb))||prev[nb]!==undefined)continue;
+prev[nb]=c;
+if(nb===to){const p=[to];let x=to;while(prev[x]!==-1){x=prev[x];p.unshift(x);}return p;}
+q.push(nb);
+}
+}
+return null;
+}
+function pathHops(from,to){const p=bfsPath(from,to);return p?p.length-1:99;}
+function ensureConnected(){
+return bfsPath(G.node,G.merchantNode)!==null&&bfsPath(G.node,G.destNode)!==null&&bfsPath(G.node,G.midNode)!==null;
+}
+/* ============ 移动 ============ */
+let moving=false;
+function tryMove(to){
+if(!G||moving||isModalOpen())return;
+if(ADJ[G.node].indexOf(to)<0){toast(tx("tNoReach"));return;}
+if(G.closed.has(edgeKey(G.node,to))){toast(tx("tRoadClosed"));sfx.bad();return;}
+moving=true;sfx.go();
+const from=G.node;const flooded=G.flooded.has(edgeKey(from,to));
+animateMove(from,to,function(){
+G.node=to;G.moves++;G.steps++;
+const t=moveTime(flooded);const b=moveBatt(flooded);
+G.elapsed+=t;G.batt=Math.max(0,G.batt-b);
+G.stam=clamp(G.stam-(2+(G.noraincoat?1:0)+(flooded?3:0)+(G.accel?3:0)),0,100);
+if(G.accelLeft>0){G.accelLeft--;if(G.accelLeft===0){G.accel=false;toast(tx("tBoostEnd"));}}
+if(G.blindLeft>0)G.blindLeft--;
+moving=false;
+if(G.stam<=0){G.stam=40;G.elapsed+=6;toast(tx("tExhaust"));addDiary(tx("dExhaust"));}
+if(G.steps%2===0)rollHazard();
+updateHUD();drawMap();updateRoute();
+onArrive();
+});
+}
+function onArrive(){
+if(G.node===G.merchantNode&&!G.pickedUp){pickupEvent();return;}
+if(G.pickedUp&&!G.midDone&&G.node===G.midNode){midEvent();return;}
+if(G.node===G.destNode&&G.pickedUp&&G.midDone){deliverEvent();return;}
+stopServices(function(){afterStop();});
+}
+function stopServices(next){
+const n=NODES[G.node];
+if(n.charge&&G.batt<G.battMax){
+const tgt=G.pickedUp?(G.midDone?G.destNode:G.midNode):G.merchantNode;
+const nh=pathHops(G.node,tgt);const needB=Math.round(nh*9);
+openModal(tx("mChargeT"),"<div class='body'>"+tx("mChargeB1")+"<b style='color:#ffcf7a'>"+tx("mChargeB2")+"</b>"+tx("mChargeB3")+nodeName(NODES[tgt])+tx("mChargeB4")+needB+tx("mChargeB5")+tx("mChargeB6")+"<b>"+Math.round(G.batt)+"</b>"+tx("mChargeB7")+"</div>",
+[{label:tx("optSwap"),cost:tx("optSwapC"),fn:function(){G.batt=Math.min(G.battMax,G.batt+40);G.elapsed+=3;updateHUD();drawMap();updateRoute();next();}},
+{label:tx("optSkip"),cost:"",fn:next}]);
+return;
+}
+if(n.shop){
+openModal(tx("mShopT"),"<div class='body'>"+tx("mShopB")+"</div>",
+[{label:tx("optWarm"),cost:tx("optWarmC"),fn:function(){G.stam=clamp(G.stam+25,0,100);G.elapsed+=3;sfx.good();updateHUD();next();}},
+{label:tx("optSkip"),cost:"",fn:next}]);
+return;
+}
+next();
+}
+function afterStop(noEvent){
+if(!noEvent&&Math.random()<0.7){
+let avail=EVENTS.filter(function(e){return!G.usedEvents.has(e.id);});
+if(G.checked)avail=avail.filter(function(e){return e.id!=="spill"||Math.random()<0.5;});
+if(avail.length){openEvent(pick(avail));return;}
+}
+updateHUD();drawMap();updateRoute();
+}
+function pickupEvent(){
+openModal("🍱 "+mName(),"<div class='body'>"+tx("mPickupB1")+mFood()+tx("mPickupB2")+"</div>",
+[{label:tx("optCheck"),cost:tx("optCheckC"),fn:function(){G.elapsed+=2;G.checked=true;doPickup();}},
+{label:tx("optGrab"),cost:"",fn:function(){doPickup();}}]);
+}
+function doPickup(){
+G.pickedUp=true;
+refreshDest();
+toast(tx("tPickup")+nodeName(NODES[G.midNode]));sfx.good();
+updateHUD();drawMap();updateRoute();
+stopServices(function(){afterStop();});
+}
+function midEvent(){
+G.midDone=true;G.money+=100;addShan(6);
+addDiary(tx("dMid"));
+refreshDest();
+openModal(tx("mMidT"),"<div class='body'>"+tx("mMidB")+"</div>",
+[{label:tx("optMid"),cost:tx("optMidC"),fn:function(){sfx.good();updateHUD();drawMap();updateRoute();stopServices(function(){afterStop();});}}]);
+}
+function deliverEvent(){
+const door=EVENTS.find(function(e){return e.id==="doorstep";});
+if(!G.usedEvents.has("doorstep")){openEvent(door);return;}
+settle();
+}
+/* ============ 灾害 ============ */
+function rollHazard(){
+if(Math.random()>0.55)return;
+const cands=EDGES.filter(function(e){
+const k=edgeKey(e[0],e[1]);
+return!G.closed.has(k)&&!G.flooded.has(k);
+});
+if(!cands.length)return;
+const e=pick(cands);const k=edgeKey(e[0],e[1]);
+if(Math.random()<0.4){
+G.closed.add(k);
+if(!ensureConnected()){G.closed.delete(k);return;}
+toast(tx("tTree"));sfx.bad();
+}else{
+G.flooded.add(k);
+toast(tx("tFlood"));sfx.bad();
+}
+}
+/* ============ 事件引擎 ============ */
+function openEvent(ev){
+G.usedEvents.add(ev.id);sfx.event();
+const ee=EVENTS_EN[ev.id];
+const opts=ev.opts.map(function(o,oi){
+const eo=ee&&ee.opts[oi];
+return {label:tr(o.label,eo&&eo.label),cost:tr(o.cost,eo&&eo.cost),fn:function(){
+applyFx(o.fx||{},ev,{diary:tr(o.diary,eo&&eo.diary)});
+updateHUD();drawMap();updateRoute();
+if(G.node===G.destNode&&G.pickedUp&&ev.id==="doorstep"){settle();}
+else{afterStop(true);}
+}};
+});
+openModal("❗ "+evT(ev,"title"),"<div class='body'>"+evT(ev,"text")+"</div>",opts);
+}
+function applyFx(fx,ev,opt){
+if(fx.gamble){
+const win=Math.random()>=fx.gamble.p;
+const sub=win?fx.gamble.win:fx.gamble.lose;
+toast(win?tx("tGambleWin"):tx("tGambleLose"));if(win){sfx.good();}else{sfx.bad();}
+applyFx(sub,ev,opt);return;
+}
+if(fx.time)G.elapsed+=fx.time;
+if(fx.batt)G.batt=clamp(G.batt+fx.batt,0,G.battMax);
+if(fx.stam)G.stam=clamp(G.stam+fx.stam,0,100);
+if(fx.money){G.money+=fx.money;if(fx.money>0)sfx.coin();}
+if(fx.shan){addShan(fx.shan);if(fx.shan>0)sfx.good();}
+if(fx.rep)addRep(fx.rep);
+if(fx.noraincoat){G.noraincoat=true;toast(tx("tRaincoat"));}
+if(fx.accel3){G.accel=true;G.accelLeft=3;toast(tx("tAccel3"));}
+if(fx.blind3){G.blindLeft=3;toast(tx("tBlind3"));}
+if(opt&&opt.diary)addDiary(opt.diary);
+if(fx.shan>0&&Math.random()<0.3)addDiary(pick([tx("dPool1"),tx("dPool2"),tx("dPool3")]));
+}
+/* ============ 弹窗 ============ */
+function isModalOpen(){return $("modal").classList.contains("on");}
+function openModal(title,bodyHTML,opts){
+const c=$("modalCard");
+let h="<h3>"+title+"</h3>"+bodyHTML;
+opts.forEach(function(o,i){h+="<button class='opt' data-i='"+i+"'>"+o.label+"<span class='cost'>"+(o.cost||"")+"</span></button>";});
+c.innerHTML=h;$("modal").classList.add("on");
+const btns=c.querySelectorAll(".opt");
+btns.forEach(function(b){b.onclick=function(){sfx.click();$("modal").classList.remove("on");opts[+b.getAttribute("data-i")].fn();};});
+}
+function openInfo(title,bodyHTML){openModal(title,"<div class='body'>"+bodyHTML+"</div>",[{label:tx("gotIt"),cost:"",fn:function(){}}]);}
+/* ============ HUD & 路线 ============ */
+function updateHUD(){
+if(!G)return;
+const rem=Math.round(G.deadline-G.elapsed);
+$("clock").textContent=fmtClock()+(rem>=0?tx("hudLeft1")+rem+tx("hudLeft2"):tx("hudLate")+(-rem)+tx("hudLate2"));
+$("clock").style.color=rem<0?"#ff6b6b":(rem<=10?"#ffb347":"#ffd97a");
+$("hudMoney").textContent=G.money;
+$("hudShan").textContent=G.shan;
+$("hudBatt").style.width=(100*G.batt/G.battMax)+"%";
+$("hudBattN").textContent=Math.round(G.batt);
+$("hudStam").style.width=G.stam+"%";
+$("hudStamN").textContent=Math.round(G.stam);
+}
+function updateRoute(){
+if(!G)return;
+const target=G.pickedUp?(G.midDone?G.destNode:G.midNode):G.merchantNode;
+if(G.blindLeft>0){$("estLine").textContent=tx("rBlind")+G.blindLeft+tx("rBlind2");return;}
+const hops=pathHops(G.node,target);
+if(hops>=99){$("estLine").textContent=tx("rBlocked");return;}
+const t=Math.round(hops*(4-0.5*up.speed));const b=Math.round(hops*9);
+const rem=Math.round(G.deadline-G.elapsed);
+const cmp=rem>=0?(tx("rRem")+rem+tx("rRem2")+(t<=rem?" ✅":tx("rShort"))):(tx("rLate")+(-rem)+tx("rLate2"));
+$("estLine").textContent=tx("rEst1")+t+tx("rEst2")+b+tx("rEst3")+hops+tx("rEst4")+cmp+(G.accel?tx("rBoost"):"");
+}
+/* ============ 地图渲染 ============ */
+const cv=$("map");const ctx2d=cv.getContext("2d");
+const VW=100;const VH=168;let SC=1;
+const rainDrops=[];for(let i=0;i<70;i++)rainDrops.push({x:rnd(0,100),y:rnd(0,168),v:rnd(40,80)});
+function resizeMap(){
+const w=$("mapWrap").clientWidth;const h=$("mapWrap").clientHeight;
+if(!w||!h)return;
+const dpr=Math.min(2,window.devicePixelRatio||1);
+cv.width=w*dpr;cv.height=h*dpr;
+SC=Math.min(cv.width/VW,cv.height/VH);
+}
+window.addEventListener("resize",resizeMap);
+let animPos=null;
+function animateMove(a,b,cb){
+const A=NODES[a];const B=NODES[b];
+animPos={x0:A.x,y0:A.y,x1:B.x,y1:B.y,t:0};
+const step=function(){animPos.t+=0.06;if(animPos.t>=1){animPos=null;cb();}else{requestAnimationFrame(step);}};
+requestAnimationFrame(step);
+}
+function lerp(a,b,t){return a+(b-a)*t;}
+function drawMap(){
+const W=cv.width;const H=cv.height;
+if(!W||!H){requestAnimationFrame(drawMap);return;}
+ctx2d.setTransform(1,0,0,1,0,0);
+ctx2d.fillStyle="#0a0f1e";ctx2d.fillRect(0,0,W,H);
+const ox=(W-VW*SC)/2;const oy=(H-VH*SC)/2;
+ctx2d.translate(ox,oy);ctx2d.scale(SC,SC);
+const T=performance.now()/1000;
+ctx2d.strokeStyle="rgba(140,170,220,.28)";ctx2d.lineWidth=0.35;
+for(let i=0;i<rainDrops.length;i++){const d=rainDrops[i];ctx2d.beginPath();ctx2d.moveTo(d.x,d.y);ctx2d.lineTo(d.x-0.6,d.y+2.4);ctx2d.stroke();}
+if(!G){requestAnimationFrame(drawMap);return;}
+const target=G.pickedUp?(G.midDone?G.destNode:G.midNode):G.merchantNode;
+const path=bfsPath(G.node,target);
+if(path&&path.length>1){
+ctx2d.strokeStyle="rgba(255,170,40,.5)";ctx2d.lineWidth=1.1;ctx2d.setLineDash([2.5,2]);
+ctx2d.beginPath();
+for(let i=0;i<path.length;i++){const n=NODES[path[i]];if(i)ctx2d.lineTo(n.x,n.y);else ctx2d.moveTo(n.x,n.y);}
+ctx2d.stroke();ctx2d.setLineDash([]);
+}
+for(let i=0;i<EDGES.length;i++){
+const a=EDGES[i][0];const b=EDGES[i][1];
+const A=NODES[a];const B=NODES[b];const k=edgeKey(a,b);
+const closed=G.closed.has(k);const flood=G.flooded.has(k);
+ctx2d.strokeStyle=closed?"rgba(120,40,40,.9)":flood?"rgba(60,140,255,.75)":"rgba(70,95,140,.4)";
+ctx2d.lineWidth=flood?1.6:0.8;
+ctx2d.beginPath();ctx2d.moveTo(A.x,A.y);ctx2d.lineTo(B.x,B.y);ctx2d.stroke();
+const mx=(A.x+B.x)/2;const my=(A.y+B.y)/2;
+if(closed){ctx2d.fillStyle="#ff6b6b";ctx2d.font="bold 5px sans-serif";ctx2d.textAlign="center";ctx2d.fillText("✕",mx,my+1.8);}
+if(flood){ctx2d.fillStyle="#5aa9ff";ctx2d.font="5px sans-serif";ctx2d.textAlign="center";ctx2d.fillText("≋",mx,my+1.8);}
+}
+for(let i=0;i<NODES.length;i++){
+const n=NODES[i];
+const isP=G.node===n.id;const isT=target===n.id;const isM=n.id===G.merchantNode&&!G.pickedUp;
+const adj=ADJ[G.node].indexOf(n.id)>=0;
+ctx2d.beginPath();ctx2d.arc(n.x,n.y,4.4,0,7);
+ctx2d.fillStyle=isP?"#ffaa28":isT?"#ff5b5b":isM?"#ffd97a":"#1b2745";
+ctx2d.fill();
+if(adj&&!isP){ctx2d.strokeStyle="#37d67a";ctx2d.lineWidth=1.2;ctx2d.beginPath();ctx2d.arc(n.x,n.y,6.4+Math.sin(T*4),0,7);ctx2d.stroke();}
+if(isT){ctx2d.strokeStyle="#ff5b5b";ctx2d.lineWidth=1.4;ctx2d.beginPath();ctx2d.arc(n.x,n.y,7+Math.sin(T*5)*1.2,0,7);ctx2d.stroke();}
+ctx2d.fillStyle="#0a0f1e";ctx2d.font="bold 4.6px sans-serif";ctx2d.textAlign="center";
+let icon="";
+if(n.charge)icon="🔋";else if(n.shop)icon="🏪";else if(isM)icon="🍱";else if(n.id===G.midNode&&G.pickedUp&&!G.midDone)icon="📦";else if(n.id===G.destNode&&G.pickedUp)icon="🏠";
+if(icon)ctx2d.fillText(icon,n.x,n.y+1.7);
+ctx2d.fillStyle=isP?"#ffd97a":"#8fa3c8";ctx2d.font="3.1px sans-serif";
+ctx2d.fillText(nodeName(n),n.x,n.y+9.5);
+}
+let px=NODES[G.node].x;let py=NODES[G.node].y;
+if(animPos){const t=Math.min(1,animPos.t);px=lerp(animPos.x0,animPos.x1,t);py=lerp(animPos.y0,animPos.y1,t);}
+ctx2d.font="6.5px sans-serif";ctx2d.textAlign="center";ctx2d.fillText("🛵",px,py-4.5);
+ctx2d.strokeStyle="rgba(255,170,40,.7)";ctx2d.lineWidth=0.9;
+ctx2d.beginPath();ctx2d.arc(px,py,5.5+Math.sin(T*6)*1,0,7);ctx2d.stroke();
+requestAnimationFrame(drawMap);
+}
+cv.addEventListener("click",function(e){
+if(!G||moving||isModalOpen())return;
+const r=cv.getBoundingClientRect();
+const lx=((e.clientX-r.left)*(cv.width/r.width)-(cv.width-VW*SC)/2)/SC;
+const ly=((e.clientY-r.top)*(cv.height/r.height)-(cv.height-VH*SC)/2)/SC;
+let bestN=null;let bd=9;
+for(let i=0;i<NODES.length;i++){const n=NODES[i];const d=Math.hypot(n.x-lx,n.y-ly);if(d<bd){bd=d;bestN=n.id;}}
+if(bestN!==null&&bestN!==G.node)tryMove(bestN);
+});
+setInterval(function(){for(let i=0;i<rainDrops.length;i++){const d=rainDrops[i];d.y+=d.v*0.03;if(d.y>172){d.y=-4;d.x=rnd(0,100);}}},30);
+/* ============ 结算 ============ */
+function settle(){
+sfx.win();
+const overtime=Math.max(0,Math.round(G.elapsed-G.deadline));
+const loadMul=1+0.15*up.load;
+const rows=[
+[tx("sBase"),850],
+[tx("sMile1")+G.moves+tx("sMile2"),G.moves*30],
+[overtime>0?tx("sLate")+overtime+tx("sLate2"):tx("sOnTime"),overtime>0?-20*overtime:400],
+[tx("sBonus"),G.orderBonus],
+[tx("sRoad"),G.money]
+];
+let income=Math.round((850+G.moves*30+(overtime>0?-20*overtime:400)+G.orderBonus+G.money)*loadMul);
+rows.push([tx("sLoad1")+(100+15*up.load)+"%",tx("sLoad2")]);
+const R=income;const S=G.shan;let rank;
+if(S>=60&&overtime<=8)rank=4;
+else if(S>=55&&R>=900)rank=3;
+else if(R>=1500)rank=1;
+else if(S>=40)rank=2;
+else rank=0;
+const ed=ENDINGS[rank];
+fund+=Math.floor(Math.max(0,income)*0.2);DB.set("fund",fund);
+diaryTotal+=G.diary.length;DB.set("diaryTotal",diaryTotal);
+if(rank>best){best=rank;DB.set("best",best);}
+const newAch=[];
+const unlock=function(k){if(!ach[k]){ach[k]=1;newAch.push(k);}};
+if(rank===4)unlock("eye");
+if(rank===2)unlock("hero");
+if(up.range>=3&&up.speed>=3&&up.load>=3)unlock("master");
+if(diaryTotal>=20)unlock("writer");
+DB.set("ach",ach);
+let h="<div class='titleBadge'>"+fmtClock()+tx("sEasing")+"</div>";
+h+="<div class='endTitle' style='color:"+ed.color+"'>"+tr(ed.name,ed.en_name)+"</div>";
+h+="<div class='storyBox'>"+tr(ed.text,ed.en_text)+"</div>";
+h+="<div class='kv' style='margin:10px 0'>"+tx("sShan")+" <b>"+G.shan+"</b> · "+tx("sTime")+" <b>"+Math.round(G.elapsed)+tx("sMin")+"</b>"+(overtime>0?" · "+tx("sLate3")+" <b style='color:#ff6b6b'>"+overtime+tx("sMin")+"</b>":" · <b style='color:#7ddf9a'>"+tx("sNoLate")+"</b>")+"</div>";
+h+="<h3 style='margin:14px 0 6px'>"+tx("sBill")+"</h3>";
+rows.forEach(function(r){h+="<div class='billRow'><span>"+r[0]+"</span><span>"+(typeof r[1]==="number"?(r[1]>=0?"+":"")+r[1]:""+r[1])+"</span></div>";});
+h+="<div class='billRow total'><span>"+tx("sTotal")+"</span><span>"+income+tx("sYuan")+"</span></div>";
+h+="<div class='kv' style='margin:8px 0'>"+tx("sFund1")+Math.floor(Math.max(0,income)*0.2)+tx("sFund2")+fund+tx("sFund3")+"</div>";
+if(newAch.length){h+="<h3 style='margin:14px 0 6px'>"+tx("sNewAch")+"</h3>";newAch.forEach(function(k){const a=ACH_DEFS.find(function(x){return x.k===k;});h+="<div class='achItem'><span>"+tr(a.name,a.en_name)+"</span><span class='kv'>"+tr(a.desc,a.en_desc)+"</span></div>";});}
+h+="<h3 style='margin:14px 0 6px'>"+tx("sDiaryT1")+G.diary.length+tx("sDiaryT2")+"</h3>";
+if(!G.diary.length)h+="<div class='kv'>"+tx("diaryEmpty")+"</div>";
+G.diary.forEach(function(d){h+="<div class='diaryLine'>"+d+"</div>";});
+h+="<button class='btn btn-p' id='btnAgain' style='margin-top:16px'>"+tx("sAgain")+"</button>";
+h+="<button class='btn btn-s' id='btnHome'>"+tx("sHome")+"</button>";
+$("endContent").innerHTML=h;showScreen("endScreen");
+$("btnAgain").onclick=function(){sfx.click();startFlow();};
+$("btnHome").onclick=function(){sfx.click();showScreen("startScreen");renderLang();};
+}
+/* ============ 改装铺 / 成就 / 说明 ============ */
+function openShop(){
+sfx.click();
+let h="<div class='kv' style='margin-bottom:10px'>"+tx("shFund1")+fund+tx("shFund2")+"</div>";
+UPGRADES.forEach(function(u){
+const lv=up[u.k];const maxed=lv>=3;const cost=maxed?null:u.costs[lv];
+h+="<div class='shopItem'><h4>"+tr(u.name,u.en_name)+"</h4><p>"+tr(u.desc,u.en_desc)+"</p><div class='pips'>"+"●".repeat(lv)+"○".repeat(3-lv)+"</div>";
+h+="<button class='btn btn-s' data-up='"+u.k+"' "+(maxed||fund<cost?"disabled":"")+">"+(maxed?tx("shMax"):tx("shUp")+cost+tr("元",""))+"</button></div>";
+});
+openModal(tx("shT"),"",[]);
+$("modalCard").innerHTML="<h3>"+tx("shT")+"</h3>"+h+"<button class='btn btn-s' id='shopClose'>"+tx("shClose")+"</button>";
+const ups=$("modalCard").querySelectorAll("[data-up]");
+ups.forEach(function(b){b.onclick=function(){
+const k=b.getAttribute("data-up");
+const u=UPGRADES.find(function(x){return x.k===k;});
+const cost=u.costs[up[k]];
+if(fund<cost)return;
+fund-=cost;up[k]++;DB.set("fund",fund);DB.set("up",up);
+sfx.coin();toast(tr(u.name,u.en_name)+tx("shToast1")+up[k]+tx("shToast2"));openShop();
+};});
+$("shopClose").onclick=function(){sfx.click();$("modal").classList.remove("on");refreshStartMeta();};
+}
+function openAch(){
+sfx.click();
+let h="";
+ACH_DEFS.forEach(function(a){const un=ach[a.k];h+="<div class='achItem"+(un?"":" locked")+"'><span>"+(un?tr(a.name,a.en_name):"🔒 ???")+"</span><span class='kv'>"+tr(a.desc,a.en_desc)+"</span></div>";});
+h+="<div class='kv' style='margin-top:10px'>"+tx("aBest")+"<b>"+(best>=0?tr(ENDINGS[best].name,ENDINGS[best].en_name):tx("aNone"))+"</b></div>";
+h+="<div class='kv'>"+tx("aRep")+DISTRICTS.map(function(d){return distName(d)+":"+(rep[d]||0);}).join(" · ")+"</div>";
+openInfo(tx("aT"),h);
+}
+function openHow(){
+openInfo(tx("hT"),
+"<div class='howRow'>"+tx("hHow")+"</div>"+
+"<div class='howRow'>"+tx("hR1")+"</div>"+
+"<div class='howRow'>"+tx("hR2")+"</div>"+
+"<div class='howRow'>"+tx("hR3")+"</div>"+
+"<div class='howRow'>"+tx("hR4")+"</div>"+
+"<div class='howRow win'>"+tx("hWin")+"</div>"+
+"<div class='howRow lose'>"+tx("hLose")+"</div>"+
+"<details class='endFold'><summary>"+tx("hFold")+"</summary>"+
+"<div class='howRow'>"+tx("hE0")+"</div>"+
+"<div class='howRow'>"+tx("hE1")+"</div>"+
+"<div class='howRow'>"+tx("hE2")+"</div>"+
+"<div class='howRow'>"+tx("hE3")+"</div>"+
+"<div class='howRow'>"+tx("hE4")+"</div></details>");
+}
+/* ============ 流程 ============ */
+function showScreen(id){
+const ss=document.querySelectorAll(".screen");
+ss.forEach(function(s){s.classList.remove("on");});
+$(id).classList.add("on");
+if(id==="gameScreen")setTimeout(resizeMap,50);
+}
+function refreshStartMeta(){
+$("startMeta").innerHTML=tx("mFund1")+fund+tx("mFund2")+(best>=0?tr(ENDINGS[best].name,ENDINGS[best].en_name):tx("aNone"))+tx("mDiary1")+diaryTotal+tx("mDiary2");
+}
+function startFlow(){
+const maxRep=Math.max.apply(null,DISTRICTS.map(function(d){return rep[d]||0;}).concat([0]));
+if(maxRep>=30){
+const dName=DISTRICTS.find(function(d){return (rep[d]||0)>=30;});
+openModal(tx("sfT"),"<div class='body'>"+distName(dName)+tx("sfB1")+"</div>",[
+{label:tx("sfBig"),cost:tx("sfBigC"),fn:function(){newRun("big");}},
+{label:tx("sfNear"),cost:tx("sfNearC"),fn:function(){newRun("near");}},
+{label:tx("sfNormal"),cost:"",fn:function(){newRun("normal");}}
+]);
+}else{newRun("normal");}
+}
+$("btnMute2").onclick=toggleMute;
+$("btnLang2").onclick=function(){sfx.click();setLang(LANG==="en"?"zh":"en");};
+$("btnAccel").onclick=function(){
+if(!G)return;
+G.accel=!G.accel;G.accelLeft=G.accel?9999:0;
+$("btnAccel").classList.toggle("tglOn",G.accel);
+toast(G.accel?tx("tBoostOn"):tx("tBoostOff"));sfx.click();updateRoute();
+};
+$("btnDiaryLook").onclick=function(){
+if(!G||!G.diary.length){toast(tx("tNoDiary"));return;}
+openInfo(tx("diaryT"),G.diary.map(function(d){return "<div class='diaryLine'>"+d+"</div>";}).join(""));
+};
+/* ============ 启动 ============ */
+renderLang();resizeMap();drawMap();
+</script>
+</body>
+</html>

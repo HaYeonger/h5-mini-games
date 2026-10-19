@@ -1,0 +1,1117 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<title data-i18n="docTitle">失眠 · 别用力</title>
+<style>
+  *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+  html,body{height:100%;background:#05060d;overflow:hidden;}
+  body{font-family:"PingFang SC","Hiragino Sans GB","Microsoft YaHei",system-ui,sans-serif;color:#dfe4f2;
+    display:flex;align-items:center;justify-content:center;
+    -webkit-user-select:none;user-select:none;touch-action:none;}
+  #wrap{position:relative;width:min(100vw, calc(100vh * 0.5526));max-width:480px;aspect-ratio:420/760;}
+  canvas{position:absolute;inset:0;width:100%;height:100%;display:block;touch-action:none;border-radius:6px;}
+  .ov{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;
+    background:rgba(5,7,16,.92);backdrop-filter:blur(6px);z-index:10;padding:28px 26px;text-align:center;border-radius:6px;}
+  .hidden{display:none !important;}
+  h1.title{font-size:44px;letter-spacing:14px;font-weight:200;color:#f2e9c9;margin-bottom:6px;text-indent:14px;}
+  .sub{color:#8b93b3;font-size:13px;letter-spacing:4px;margin-bottom:26px;}
+  .howto{background:rgba(20,26,48,.7);border:1px solid #2a3358;border-radius:12px;padding:10px 14px;
+    margin-bottom:10px;max-width:330px;width:100%;}
+  .hi{display:flex;gap:10px;align-items:center;font-size:13.5px;color:#b9c1dd;padding:5px 0;line-height:1.5;text-align:left;}
+  .hi .ic{font-size:18px;flex:none;}
+  .hi b{color:#f2e9c9;font-weight:600;}
+  .goal{border-radius:10px;padding:9px 14px;font-size:13px;margin-bottom:8px;max-width:330px;width:100%;text-align:left;line-height:1.6;}
+  .goal.win{background:rgba(242,233,201,.08);border:1px solid rgba(242,233,201,.45);color:#f2e9c9;}
+  .goal.fail{background:rgba(224,138,138,.07);border:1px solid rgba(224,138,138,.4);color:#e0a3a3;}
+  .goal b{font-size:15px;}
+  .more{max-width:330px;width:100%;margin-bottom:12px;}
+  .more summary{font-size:12px;color:#8b93b3;cursor:pointer;list-style:none;text-align:center;padding:5px;letter-spacing:2px;}
+  .more summary::-webkit-details-marker{display:none;}
+  .morebody{font-size:12.5px;color:#9aa3c7;line-height:2;background:rgba(20,26,48,.5);
+    border:1px solid #2a3358;border-radius:10px;padding:10px 14px;margin-top:4px;text-align:left;}
+  .morebody b{color:#f2e9c9;}
+  #ov-start{justify-content:flex-start;overflow-y:auto;padding-top:22px;scrollbar-width:none;}
+  #ov-start::-webkit-scrollbar{display:none;}
+  #ov-start h1.title{margin-bottom:2px;}
+  #ov-start .sub{margin-bottom:14px;}
+  .btn{display:block;width:230px;margin:8px auto;padding:13px 0;border-radius:30px;border:1px solid #3d4a7d;
+    background:linear-gradient(180deg,#232c52,#1a2140);color:#eef1ff;font-size:16px;letter-spacing:6px;text-indent:6px;cursor:pointer;}
+  .btn:active{transform:scale(.96);}
+  .btn.primary{background:linear-gradient(180deg,#4a5a9e,#33407a);border-color:#5a6cab;}
+  .btn.ghost{background:transparent;}
+  .btn:disabled{opacity:.35;}
+  .nights{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin:6px 0 14px;max-width:330px;}
+  .night{border:1px solid #2a3358;border-radius:10px;padding:10px 4px;font-size:12px;color:#9aa3c7;cursor:pointer;background:rgba(20,26,48,.6);line-height:1.7;}
+  .night small{display:block;font-size:10px;color:#6b7396;}
+  .night.done{border-color:#6f7fb8;color:#dfe4f2;}
+  .night.lock{opacity:.3;}
+  .night.cur{border-color:#f2e9c9;box-shadow:0 0 12px rgba(242,233,201,.25);}
+  .row{display:flex;gap:10px;justify-content:center;margin-top:4px;}
+  .mini{font-size:12px;color:#8b93b3;border:1px solid #2a3358;border-radius:20px;padding:7px 16px;cursor:pointer;background:transparent;}
+  #codexGrid{display:grid;grid-template-columns:repeat(3,1fr);gap:7px;max-height:46vh;overflow-y:auto;margin:12px 0;width:100%;max-width:340px;padding-right:4px;}
+  .th{font-size:11px;border:1px solid #2a3358;border-radius:8px;padding:8px 4px;color:#dfe4f2;background:rgba(20,26,48,.6);line-height:1.5;}
+  .th small{display:block;font-size:9px;color:#6b7396;margin-top:2px;}
+  .th.unk{color:#3a4160;}
+  #achvList{width:100%;max-width:330px;max-height:40vh;overflow-y:auto;margin:10px 0;text-align:left;}
+  .ac{border:1px solid #2a3358;border-radius:10px;padding:10px 12px;margin-bottom:8px;font-size:13px;background:rgba(20,26,48,.6);}
+  .ac b{color:#f2e9c9;} .ac small{display:block;color:#8b93b3;font-size:11px;margin-top:3px;}
+  .ac.lock{opacity:.4;} .ac.lock b{color:#6b7396;}
+  .score{font-size:84px;font-weight:200;color:#f2e9c9;margin:8px 0;}
+  .cmt{font-size:14px;color:#9aa3c7;line-height:2;margin-bottom:18px;}
+  .back{margin-top:14px;}
+</style>
+</head>
+<body oncontextmenu="return false">
+<div id="wrap">
+  <canvas id="cv"></canvas>
+
+  <div id="ov-start" class="ov">
+    <h1 class="title" data-i18n="gameTitle">失眠</h1>
+    <div class="sub" data-i18n="gameSub">别 用 力</div>
+    <div class="howto">
+      <div class="hi"><span class="ic">🫧</span><span data-i18n-html="how1"><b>别点</b>杂念 — 点了会分裂，心率 +10</span></div>
+      <div class="hi"><span class="ic">👉</span><span data-i18n-html="how2">拖进右侧「<b>放下</b>」— 困意 +5，化作 ⭐</span></div>
+      <div class="hi"><span class="ic">🌬️</span><span data-i18n-html="how3"><b>按住慢上滑</b> — 踩中节拍，呼吸 +8</span></div>
+      <div class="hi"><span class="ic">💗</span><span data-i18n-html="how4">心率到 100 会<b>爆发</b> — 先静静，别碰它</span></div>
+    </div>
+    <div class="goal win" data-i18n-html="goalWin">🏆 困意 <b>100</b> → 睡着 → 梦境搭星星，<b>90 分</b> = 一夜好眠</div>
+    <div class="goal fail" data-i18n-html="goalFail">⚠️ 心率 <b>100</b> → 越想越精神 10 秒：放下收益减半</div>
+    <details class="more">
+      <summary data-i18n="moreSum">计分与进阶 · 展开 ▾</summary>
+      <div class="morebody" data-i18n-html="moreBody">
+        ⭐ 星星：放下攒星，梦境搭满 20 颗 = 80 分封顶<br>
+        🌬️ 呼吸：每次完美呼吸 +1 分，上限 15 分<br>
+        😌 冷静：全程不爆发 +15 分，爆发一次 −7 分<br>
+        🌙 七夜难度递增 → 通关解锁<b>禅定模式</b>（无终点）<br>
+        📖 60 种念头可收集 → 念头图鉴 · 🏅 成就：90 分 / 40 图鉴 / 20 连呼吸
+      </div>
+    </details>
+    <div class="nights" id="nightGrid"></div>
+    <button class="btn primary" id="btnStart" data-i18n="btnStart">开始今夜</button>
+    <button class="btn ghost" id="btnZen">禅定模式</button>
+    <div class="row">
+      <button class="mini" id="btnCodex" data-i18n="btnCodex">念头图鉴</button>
+      <button class="mini" id="btnAchv" data-i18n="btnAchv">成就</button>
+      <button class="mini" id="btnMute">声音开</button>
+      <button class="mini" id="btnLang">EN</button>
+    </div>
+    <div class="back" style="font-size:11px;color:#4a5170;margin-top:16px;" data-i18n="footer">单机 · 本地存档 · 原创</div>
+  </div>
+
+  <div id="ov-codex" class="ov hidden">
+    <div class="sub" style="margin-bottom:6px;" data-i18n="codexTitle">念 头 图 鉴</div>
+    <div style="font-size:12px;color:#6b7396;" id="codexCount"></div>
+    <div id="codexGrid"></div>
+    <button class="btn ghost back" id="btnCodexBack" style="width:180px;" data-i18n="btnBack">返回</button>
+  </div>
+
+  <div id="ov-achv" class="ov hidden">
+    <div class="sub" style="margin-bottom:6px;" data-i18n="achvTitle">成 就</div>
+    <div id="achvList"></div>
+    <button class="btn ghost back" id="btnAchvBack" style="width:180px;" data-i18n="btnBack">返回</button>
+  </div>
+
+  <div id="ov-morning" class="ov hidden">
+    <div class="sub" style="margin-bottom:2px;" data-i18n="morningTitle">晨 光</div>
+    <div class="score" id="mScore">0</div>
+    <div class="cmt" id="mComment"></div>
+    <div style="font-size:12px;color:#6b7396;margin-bottom:14px;" id="mDetail"></div>
+    <button class="btn primary" id="btnNext">下一夜</button>
+    <button class="btn ghost" id="btnMorningBack" style="width:180px;" data-i18n="btnBack">返回首页</button>
+  </div>
+</div>
+
+<script>
+"use strict";
+/* ================= 失眠 · 别用力 =================
+   一款"反游戏"：越用力，越清醒。放下，才能睡着。 */
+
+/* ---------- 存档 ---------- */
+const store = {
+  get(k, d){ try{ const v = localStorage.getItem('shimian_' + k); return v == null ? d : JSON.parse(v); }catch(e){ return d; } },
+  set(k, v){ try{ localStorage.setItem('shimian_' + k, JSON.stringify(v)); }catch(e){} }
+};
+
+/* ---------- i18n ---------- */
+const I18N={"zh": {"docTitle": "失眠 · 别用力", "gameTitle": "失眠", "gameSub": "别 用 力", "how1": "<b>别点</b>杂念 — 点了会分裂，心率 +10", "how2": "拖进右侧「<b>放下</b>」— 困意 +5，化作 ⭐", "how3": "<b>按住慢上滑</b> — 踩中节拍，呼吸 +8", "how4": "心率到 100 会<b>爆发</b> — 先静静，别碰它", "goalWin": "🏆 困意 <b>100</b> → 睡着 → 梦境搭星星，<b>90 分</b> = 一夜好眠", "goalFail": "⚠️ 心率 <b>100</b> → 越想越精神 10 秒：放下收益减半", "moreSum": "计分与进阶 · 展开 ▾", "moreBody": "⭐ 星星：放下攒星，梦境搭满 20 颗 = 80 分封顶<br>🌬️ 呼吸：每次完美呼吸 +1 分，上限 15 分<br>😌 冷静：全程不爆发 +15 分，爆发一次 −7 分<br>🌙 七夜难度递增 → 通关解锁<b>禅定模式</b>（无终点）<br>📖 60 种念头可收集 → 念头图鉴 · 🏅 成就：90 分 / 40 图鉴 / 20 连呼吸", "btnStart": "开始今夜", "btnZen": "禅定模式 · 已解锁", "btnZenLocked": "禅定模式（通关 7 夜解锁）", "btnCodex": "念头图鉴", "btnAchv": "成就", "btnMuteOn": "声音开", "btnMuteOff": "声音关", "footer": "单机 · 本地存档 · 原创", "codexTitle": "念 头 图 鉴", "achvTitle": "成 就", "btnBack": "返回", "morningTitle": "晨 光", "unknown": "？？？", "nextNight": "下一夜", "goNight": "进入{n}夜", "clearHome": "通关！返回首页", "backHome": "返回首页", "codexCount": "已收集 {n} / 60", "achvUnlock": "成就解锁：", "cmt90": "一夜好眠。<br>今早的你，可以原谅全世界。", "cmt70": "睡得还不错。<br>梦是完整的，人也是。", "cmt50": "凑合。<br>今天靠咖啡续命，明天早点放下。", "cmtLow": "你昨晚是睡了个寂寞。<br>记住：别用力。", "scoreLine": "⭐ {a} ＋ 🌬️ {b} ＋ 😌 {c} ＝ {d} 分", "scoreSub": "星光{a}颗（20颗拿满）· 完美呼吸{b}次 · 闹腾{c}次 · 历史最佳{d}", "splitMore": "越点越多…", "noRoom": "装不下了…", "mindDim": "心乱了 · +2.5 困意", "release5": "+5 困意 · 星光+1", "perfectBreath": "完美呼吸 +8", "comboX": "连击 x", "steady": " · 稳", "breath2": "呼吸 +2 · 跟上节拍试试", "wasted": "白忙一场", "spacing": "放空 +1", "racing": "越想越精神！", "tired": "…终于累了", "zenCalm": "睡意如潮…但这里没有终点", "goodNight": "晚安", "dropA": "放", "dropB": "下", "dropHint1": "拖到这里", "dropHint2": "化作星光", "barSleepy": "困意", "barHr": "心率", "hrWarn": "⚠ 偏高，慢下来", "zenHud": "禅定模式 · 无终点", "breathCue": "呼", "breathHint": "按住 · 缓慢上滑 · 深呼吸", "dreamTitle": "梦境构筑 · 完整度 {p}%", "dreamHint": "把星星拖进夜空（20 颗即完整），搭你的梦", "leftCount": "剩余 ", "dreamDone": "入梦", "exitBtn": "退出"}, "en": {"docTitle": "Insomnia · Don't Force It", "gameTitle": "Insomnia", "gameSub": "Don't Force It", "how1": "Don't tap the <b>thoughts</b> — they split, Heart rate +10", "how2": "Drag right into 「<b>Let Go</b>」 — Drowsiness +5, becomes ⭐", "how3": "<b>Press & swipe up slowly</b> — hit the beat, Breath +8", "how4": "Heart rate hits 100 → <b>burst</b> — stay still, don't touch it", "goalWin": "🏆 <b>100</b> Drowsiness → fall asleep → build stars in dreams. <b>90 pts</b> = a good night", "goalFail": "⚠️ <b>100</b> Heart rate → 10s of racing mind: Let-Go gains halved", "moreSum": "Scoring & progress · expand ▾", "moreBody": "⭐ Stars: let go to collect; 20 in dreams = 80 pts max<br>🌬️ Breath: +1 per perfect breath, max 15<br>😌 Calm: +15 for zero bursts, −7 per burst<br>🌙 7 nights of rising difficulty → unlock <b>Zen mode</b> (endless)<br>📖 60 thoughts to collect → Codex · 🏅 Achievements: 90 pts / 40 codex / 20-breath streak", "btnStart": "Start Tonight", "btnZen": "Zen Mode · Unlocked", "btnZenLocked": "Zen Mode (clear 7 nights)", "btnCodex": "Thought Codex", "btnAchv": "Achievements", "btnMuteOn": "Sound On", "btnMuteOff": "Sound Off", "footer": "Offline · Local saves · Original", "codexTitle": "Thought Codex", "achvTitle": "Achievements", "btnBack": "Back", "morningTitle": "Morning Light", "unknown": "???", "nextNight": "Next Night", "goNight": "Enter {n} Night", "clearHome": "Cleared! Back Home", "backHome": "Back Home", "codexCount": "Collected {n} / 60", "achvUnlock": "Achievement unlocked: ", "cmt90": "A perfect night's sleep.<br>This morning, you can forgive the whole world.", "cmt70": "Slept quite well.<br>The dream is whole, and so are you.", "cmt50": "Not bad.<br>Coffee carries you today — let go earlier tomorrow.", "cmtLow": "You barely slept at all.<br>Remember: don't force it.", "scoreLine": "⭐ {a} + 🌬️ {b} + 😌 {c} = {d} pts", "scoreSub": "Starlight {a} (20 max) · Perfect breaths {b} · Bursts {c} · Best {d}", "splitMore": "They keep multiplying…", "noRoom": "No room left…", "mindDim": "Mind scattered · +2.5 Drowsiness", "release5": "+5 Drowsiness · Starlight +1", "perfectBreath": "Perfect breath +8", "comboX": "Streak x", "steady": " · steady", "breath2": "Breath +2 · try to catch the beat", "wasted": "Wasted effort", "spacing": "Spacing out +1", "racing": "Mind racing!", "tired": "…finally tired", "zenCalm": "Sleepiness rolls in… but there's no end here", "goodNight": "Good night", "dropA": "Let", "dropB": "Go", "dropHint1": "Drag here", "dropHint2": "become stars", "barSleepy": "Drowsiness", "barHr": "Heart rate", "hrWarn": "⚠ High — slow down", "zenHud": "Zen mode · endless", "breathCue": "Out", "breathHint": "Hold · swipe up slowly · breathe deep", "dreamTitle": "Dreamweaving · {p}% complete", "dreamHint": "Drag stars into the night sky (20 = complete), build your dream", "leftCount": "Left: ", "dreamDone": "Dream", "exitBtn": "Exit"}};
+let LANG='zh';
+try{ const _lv=localStorage.getItem('sm_lang'); LANG=(_lv==='en'||_lv==='zh')?_lv:(((navigator.language||'en').toLowerCase().indexOf('zh')===0)?'zh':'en'); }catch(e){ LANG='zh'; }
+function T(k){ const d=I18N[LANG]||I18N.zh; const v=d[k]; return v!==undefined?v:((I18N.zh[k]!==undefined)?I18N.zh[k]:k); }
+function tx(o){ if(o==null) return ''; if(typeof o==='string') return o; return o[LANG]!==undefined?o[LANG]:o.zh; }
+function setLang(l){ LANG=(l==='en')?'en':'zh'; try{ localStorage.setItem('sm_lang',LANG); }catch(e){} applyLang(); }
+function applyLang(){
+  document.title=T('docTitle');
+  document.documentElement.lang = LANG==='zh' ? 'zh-CN' : 'en';
+  document.querySelectorAll('[data-i18n]').forEach(el=>{ el.textContent=T(el.getAttribute('data-i18n')); });
+  document.querySelectorAll('[data-i18n-html]').forEach(el=>{ el.innerHTML=T(el.getAttribute('data-i18n-html')); });
+  const bl=$('btnLang'); if(bl) bl.textContent = LANG==='zh' ? 'EN' : '中文';
+  const bm=$('btnMute'); if(bm) bm.textContent = muted ? T('btnMuteOff') : T('btnMuteOn');
+  if(typeof renderNights==='function') renderNights();
+  if(typeof renderCodex==='function' && !$('ov-codex').classList.contains('hidden')) renderCodex();
+  if(typeof renderAchv==='function' && !$('ov-achv').classList.contains('hidden')) renderAchv();
+  if(typeof renderMorning==='function' && !$('ov-morning').classList.contains('hidden')) renderMorning();
+}
+
+/* ---------- 60 种念头（5 类 x 12） ---------- */
+const CATS = {zh:['工作','金钱','家庭','过去','存在'], en:['Work','Money','Family','Past','Being']};
+const THOUGHTS = [
+  {t:{zh:'明天的汇报PPT',en:"Tomorrow's presentation deck"},c:0},
+  {t:{zh:'那个需求到底改不改',en:"Will that requirement change or not"},c:0},
+  {t:{zh:'老板已读不回',en:"Boss left me on read"},c:0},
+  {t:{zh:'周报还没写',en:"Weekly report still unwritten"},c:0},
+  {t:{zh:'会议纪要谁整理',en:"Who's writing the meeting notes"},c:0},
+  {t:{zh:'35岁的分水岭',en:"The 35-year-old watershed"},c:0},
+  {t:{zh:'年终奖有几薪',en:"How many months is the bonus"},c:0},
+  {t:{zh:'同事升职了',en:"A colleague got promoted"},c:0},
+  {t:{zh:'代码里的TODO',en:"TODOs in the code"},c:0},
+  {t:{zh:'邮件要不要现在回',en:"Reply to that email now?"},c:0},
+  {t:{zh:'团建非去不可吗',en:"Is team building mandatory"},c:0},
+  {t:{zh:'试用期表现如何',en:"How's my probation going"},c:0},
+  {t:{zh:'房贷还剩27年',en:"27 years left on the mortgage"},c:1},
+  {t:{zh:'信用卡账单日',en:"Credit card due date"},c:1},
+  {t:{zh:'孩子的补习费',en:"Kids' tutoring fees"},c:1},
+  {t:{zh:'父母的体检费',en:"Parents' checkup bills"},c:1},
+  {t:{zh:'存款够撑几个月',en:"How many months will savings last"},c:1},
+  {t:{zh:'双十一的尾款',en:"Singles' Day final payments"},c:1},
+  {t:{zh:'房租又要涨了',en:"Rent's going up again"},c:1},
+  {t:{zh:'基金绿得发慌',en:"Funds deep in the red"},c:1},
+  {t:{zh:'年底的份子钱',en:"Year-end wedding gifts"},c:1},
+  {t:{zh:'车险到期了',en:"Car insurance expiring"},c:1},
+  {t:{zh:'工资税后多少',en:"Take-home pay, how much"},c:1},
+  {t:{zh:'养老靠自己吗',en:"Retirement — on my own?"},c:1},
+  {t:{zh:'妈妈的白头发',en:"Mom's gray hairs"},c:2},
+  {t:{zh:'爸的体检报告',en:"Dad's checkup report"},c:2},
+  {t:{zh:'孩子今天哭了吗',en:"Did the kid cry today"},c:2},
+  {t:{zh:'多久没回家了',en:"How long since I went home"},c:2},
+  {t:{zh:'伴侣的欲言又止',en:"Partner's unspoken words"},c:2},
+  {t:{zh:'学区房的传说',en:"The school-district myth"},c:2},
+  {t:{zh:'老人一个人在家',en:"An elder home alone"},c:2},
+  {t:{zh:'年夜饭吃什么',en:"What's for New Year's dinner"},c:2},
+  {t:{zh:'孩子的班主任',en:"The kid's homeroom teacher"},c:2},
+  {t:{zh:'父母吵架了吗',en:"Did my parents fight"},c:2},
+  {t:{zh:'谁来接孩子',en:"Who picks up the kid"},c:2},
+  {t:{zh:'家里的药吃完了吗',en:"Are the meds at home gone"},c:2},
+  {t:{zh:'童年的弄堂',en:"Childhood alleyways"},c:3},
+  {t:{zh:'初恋的笑',en:"First love's smile"},c:3},
+  {t:{zh:'高考那年夏天',en:"That gaokao summer"},c:3},
+  {t:{zh:'爷爷的收音机',en:"Grandpa's radio"},c:3},
+  {t:{zh:'错过的那班车',en:"The bus I missed"},c:3},
+  {t:{zh:'年少时的梦想',en:"Childhood dreams"},c:3},
+  {t:{zh:'老同学的婚礼',en:"An old classmate's wedding"},c:3},
+  {t:{zh:'外婆做的菜',en:"Grandma's cooking"},c:3},
+  {t:{zh:'第一份工作的工位',en:"My first job's desk"},c:3},
+  {t:{zh:'写过的日记本',en:"Diaries I wrote"},c:3},
+  {t:{zh:'弄丢的合影',en:"The lost photo"},c:3},
+  {t:{zh:'再也回不去的家',en:"The home I can't return to"},c:3},
+  {t:{zh:'活着的意义',en:"The meaning of life"},c:4},
+  {t:{zh:'时间都去哪了',en:"Where does time go"},c:4},
+  {t:{zh:'我是谁',en:"Who am I"},c:4},
+  {t:{zh:'明天会更好吗',en:"Will tomorrow be better"},c:4},
+  {t:{zh:'孤独是常态吗',en:"Is loneliness normal"},c:4},
+  {t:{zh:'死亡是什么感觉',en:"What does death feel like"},c:4},
+  {t:{zh:'快乐是什么',en:"What is happiness"},c:4},
+  {t:{zh:'为什么失眠',en:"Why can't I sleep"},c:4},
+  {t:{zh:'人生的KPI',en:"Life's KPIs"},c:4},
+  {t:{zh:'自由多少钱一斤',en:"What's the price of freedom"},c:4},
+  {t:{zh:'世界与我无关吗',en:"Is the world none of my business"},c:4},
+  {t:{zh:'睡着了会做梦吗',en:"Will I dream when asleep"},c:4}
+];
+
+/* ---------- 7 夜 ---------- */
+const NIGHTS = [
+  {name:{zh:'周一',en:'Monday'}, title:{zh:'工作焦虑',en:'Work Anxiety'}, w:[5,2,1,1,1], spawn:2600, sp:1.0, tip:{zh:"KPI 在向你招手",en:"KPIs are waving at you"}},
+  {name:{zh:'周二',en:'Tuesday'}, title:{zh:'金钱压力',en:'Money Pressure'}, w:[2,5,1,1,1], spawn:2400, sp:1.06, tip:{zh:"算一算，又是心痛的一天",en:"Do the math — another heartbreaking day"}},
+  {name:{zh:'周三',en:'Wednesday'}, title:{zh:'牵挂家人',en:'Missing Family'}, w:[1,1,5,2,1], spawn:2200, sp:1.12, tip:{zh:"给家里打个电话吧…明天",en:"Call home… tomorrow"}},
+  {name:{zh:'周四',en:'Thursday'}, title:{zh:'故人旧事',en:'Old Memories'}, w:[1,1,1,5,2], spawn:2000, sp:1.18, tip:{zh:"回忆杀，最凶的梦魇",en:"Memory lane — the fiercest nightmare"}},
+  {name:{zh:'周五',en:'Friday'}, title:{zh:'深夜 emo',en:'Midnight Blues'}, w:[2,2,1,1,4], spawn:1900, sp:1.24, tip:{zh:"本该狂欢的夜晚",en:"A night meant for fun"}},
+  {name:{zh:'周六',en:'Saturday'}, title:{zh:'身体抗议',en:'Body Protests'}, w:[2,2,2,2,2], spawn:1750, sp:1.3, tip:{zh:"颈椎和腰，一起开会",en:"Neck and back, holding a meeting"}},
+  {name:{zh:'周日',en:'Sunday'}, title:{zh:'存在主义',en:'Existentialism'}, w:[1,1,1,2,5], spawn:1600, sp:1.36, tip:{zh:"终极之夜：我是谁",en:"Final night: who am I"}}
+];
+const ACHVS = [
+  {id:'sleep90', name:{zh:'一夜好眠',en:'Sound Sleep'}, desc:{zh:'精神值 ≥ 90',en:'Score ≥ 90'}, hint:{zh:'睡个好觉，比什么都难',en:'Harder than it sounds'}},
+  {id:'col40',   name:{zh:'念头收藏家',en:'Thought Collector'}, desc:{zh:'图鉴集齐 40 种念头',en:'Collect 40 thoughts'}, hint:{zh:'你心里装的事真多',en:'Quite a crowded mind'}},
+  {id:'breath20',name:{zh:'呼吸大师',en:'Breath Master'}, desc:{zh:'连续 20 次踩中呼吸节拍',en:'20 perfect breaths in a row'}, hint:{zh:'稳住，别急',en:"Steady, don't rush"}},
+];
+</script>
+<script>
+"use strict";
+/* ================= 失眠 · 别用力 · 游戏主体 ================= */
+
+/* 存档（定义见首个 script 块，此处复用全局 store） */
+
+/* ---------- 画布 ---------- */
+const W = 420, H = 760;
+const cv = document.getElementById('cv');
+const ctx = cv.getContext('2d');
+function fitCanvas(){
+  const dpr = Math.min(2, window.devicePixelRatio || 1);
+  cv.width = W * dpr; cv.height = H * dpr;
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+}
+fitCanvas(); window.addEventListener('resize', fitCanvas);
+function toGame(e){
+  const r = cv.getBoundingClientRect();
+  const p = e.touches ? e.touches[0] : e;
+  return { x: (p.clientX - r.left) / r.width * W, y: (p.clientY - r.top) / r.height * H };
+}
+
+/* ---------- 音频（环境嗡鸣 + 节拍 + 音效，可静音） ---------- */
+let AC = null, muted = store.get('muted', false), ambientNodes = null;
+function audio(){
+  if(!AC){
+    try{ AC = new (window.AudioContext || window.webkitAudioContext)(); }catch(e){ return null; }
+  }
+  if(AC && AC.state === 'suspended') AC.resume();
+  return AC;
+}
+function tone(freq, dur, type, gain, when){
+  if(muted) return; const ac = audio(); if(!ac) return;
+  const t = ac.currentTime + (when || 0);
+  const o = ac.createOscillator(), g = ac.createGain();
+  o.type = type || 'sine'; o.frequency.value = freq;
+  g.gain.setValueAtTime(0.0001, t);
+  g.gain.exponentialRampToValueAtTime(gain || 0.06, t + 0.02);
+  g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+  o.connect(g); g.connect(ac.destination);
+  o.start(t); o.stop(t + dur + 0.05);
+}
+function startAmbient(){
+  if(muted || ambientNodes) return; const ac = audio(); if(!ac) return;
+  const g = ac.createGain(); g.gain.value = 0.014;
+  const f = ac.createBiquadFilter(); f.type = 'lowpass'; f.frequency.value = 220;
+  const o1 = ac.createOscillator(); o1.type = 'sine'; o1.frequency.value = 55;
+  const o2 = ac.createOscillator(); o2.type = 'sine'; o2.frequency.value = 82.7;
+  o1.connect(f); o2.connect(f); f.connect(g); g.connect(ac.destination);
+  o1.start(); o2.start();
+  ambientNodes = {o1, o2, g};
+}
+function stopAmbient(){
+  if(!ambientNodes) return;
+  try{ ambientNodes.g.gain.linearRampToValueAtTime(0.0001, AC.currentTime + 0.5);
+    const n = ambientNodes; setTimeout(()=>{ try{n.o1.stop();n.o2.stop();}catch(e){} }, 700);
+  }catch(e){}
+  ambientNodes = null;
+}
+
+/* ---------- 工具 ---------- */
+const rand = (a,b)=>a + Math.random()*(b-a);
+const clamp = (v,a,b)=>v<a?a:(v>b?b:v);
+const $ = id=>document.getElementById(id);
+let bgStars = [];
+for(let i=0;i<70;i++) bgStars.push({x:rand(0,W), y:rand(0,H), r:rand(.5,1.6), p:rand(0,6.28)});
+
+/* 放下区 */
+const DROP = { x: W-86, y: 120, w: 86, h: 520 };
+
+/* ---------- 游戏状态 ---------- */
+let mode = 'start';       // start | night | zen | sleeping | dream | (overlays: codex/achv/morning via DOM)
+let G = null;             // 本夜状态
+let D = null;             // 梦境状态
+let selNight = store.get('selNight', 0);
+let unlocked = store.get('unlocked', 0);   // 已解锁到的夜晚 index（0-6），7=全通
+let codex = store.get('codex', []);        // 已发现的念头 index
+let achv = store.get('achv', {});
+let best = store.get('best', 0);
+
+function unlockThought(idx){
+  if(codex.indexOf(idx) < 0){ codex.push(idx); store.set('codex', codex); }
+}
+function grantAchv(id){
+  if(!achv[id]){ achv[id] = Date.now(); store.set('achv', achv); popup(T('achvUnlock') + tx(ACHVS.find(a=>a.id===id).name), W/2, H/2 - 60, '#f2e9c9', 20); tone(660,.3,'sine',.07); setTimeout(()=>tone(880,.4,'sine',.07), 150); }
+}
+
+function pickThought(night){
+  const w = night ? night.w : [1,1,1,1,1];
+  let total = 0; const cum = w.map(x=>total += x);
+  const r = Math.random() * total;
+  let cat = 0; for(let i=0;i<5;i++){ if(r <= cum[i]){ cat = i; break; } }
+  const pool = [];
+  THOUGHTS.forEach((th, i)=>{ if(th.c === cat) pool.push(i); });
+  const idx = pool[(Math.random()*pool.length)|0];
+  return { idx, th: THOUGHTS[idx] };
+}
+
+function newNight(n){
+  const night = NIGHTS[n];
+  G = {
+    n, night, bubbles: [], particles: [], popups: [],
+    sleepy: 0, hr: 18, stars: 0,
+    perfect: 0, combo: 0, maxCombo: 0, bursts: 0,
+    spawnT: 0, beatPhase: 0, lastBeat: performance.now(),
+    fade: 0, idleT: 0, zen: false, over: false,
+    bubbleId: 0,
+  };
+  mode = 'night';
+  hideAllOv(); startAmbient();
+}
+function newZen(){
+  G = {
+    n: -1, night: {name:{zh:'禅',en:'Zen'}, title:{zh:'定',en:'Stillness'}, w:[1,1,1,1,1], spawn:3000, sp:0.9, tip:{zh:'无目的，无终点',en:'No goal, no end'}},
+    bubbles: [], particles: [], popups: [],
+    sleepy: 0, hr: 18, stars: 0,
+    perfect: 0, combo: 0, maxCombo: 0, bursts: 0,
+    spawnT: 0, beatPhase: 0, lastBeat: performance.now(),
+    fade: 0, idleT: 0, zen: true, over: false, bubbleId: 0,
+  };
+  mode = 'zen'; hideAllOv(); startAmbient();
+}
+
+function spawnBubble(){
+  if(!G || G.bubbles.length >= 36) return;
+  const { idx, th } = pickThought(G.zen ? null : G.night);
+  unlockThought(idx);
+  const r = rand(30, 44) * (th.t.length > 7 ? 1.25 : 1);
+  G.bubbles.push({
+    id: ++G.bubbleId, x: rand(40, W-130), y: H + 40,
+    r, txt: tx(th.t), cat: th.c, thIdx: idx,
+    vy: -rand(22, 38) * (G.zen ? 0.9 : G.night.sp),
+    wob: rand(0, 6.28), wobSp: rand(0.8, 1.8),
+  });
+}
+
+function splitBubble(b){
+  // 点击/快滑消灭 → 分裂成两个，越努力越清醒
+  removeBubble(b);
+  G.hr = clamp(G.hr + 10, 0, 100);
+  G.combo = 0;
+  popup(T('splitMore'), b.x, b.y - 20, '#e08a8a', 14);
+  tone(220, .15, 'square', .04);
+  burstParticles(b);
+  if(G.bubbles.length >= 36){ popup(T('noRoom'), b.x, b.y, '#8b93b3', 13); return; }
+  if(b.r < 24) return; // 太小就不再分裂，直接消失
+  for(let i=0;i<2;i++){
+    G.bubbles.push({
+      id: ++G.bubbleId, x: b.x + rand(-24, 24), y: b.y + rand(-14, 14),
+      r: b.r * 0.62, txt: b.txt, cat: b.cat, thIdx: b.thIdx,
+      vy: b.vy * rand(0.9, 1.2), wob: rand(0, 6.28), wobSp: rand(1.2, 2.4),
+    });
+  }
+}
+function removeBubble(b){
+  const i = G.bubbles.indexOf(b); if(i >= 0) G.bubbles.splice(i, 1);
+}
+function burstParticles(b){
+  for(let i=0;i<10;i++) G.particles.push({x:b.x, y:b.y, vx:rand(-90,90), vy:rand(-90,90), life:rand(.3,.7), t:0, col:'#e08a8a', r:rand(1.5,3)});
+}
+function releaseBubble(b){
+  // 拖进放下区 → 化作星光；心率爆表时心乱了，星光也暗（收益减半）
+  removeBubble(b);
+  const dim = G.burstOn;
+  G.sleepy = clamp(G.sleepy + (dim ? 2.5 : 5), 0, 100);
+  G.stars += dim ? 0.5 : 1;
+  G.hr = clamp(G.hr - 2, 0, 100);
+  popup(dim ? T('mindDim') : T('release5'), b.x, b.y - 20, '#f2e9c9', 14);
+  tone(880, .25, 'sine', .05); setTimeout(()=>tone(1174, .3, 'sine', .04), 90);
+  for(let i=0;i<14;i++) G.particles.push({x:b.x, y:b.y, vx:rand(-60,60), vy:rand(-110,-20), life:rand(.5,1), t:0, col:'#f2e9c9', r:rand(1,2.6)});
+  checkSleep(); // 困意攒满即入睡：放下是主要困意来源，必须在此判定
+}
+function popup(text, x, y, col, size){
+  if(!G) return;
+  G.popups.push({text, x: clamp(x, 60, W-60), y, col: col||'#dfe4f2', size: size||14, t:0, life:1.6});
+}
+</script>
+
+<script>
+"use strict";
+/* ================= 输入：点按 / 快滑 / 拖放 / 呼吸 ================= */
+let ptr = null; // {id, sx, sy, st, bubble, moved, path:[], crossed:Set, inDrop}
+
+function bubbleAt(x, y){
+  if(!G) return null;
+  for(let i = G.bubbles.length - 1; i >= 0; i--){
+    const b = G.bubbles[i];
+    const dx = x - b.x, dy = y - b.y;
+    if(dx*dx + dy*dy <= (b.r + 8) * (b.r + 8)) return b;
+  }
+  return null;
+}
+function inDrop(x, y){
+  return x >= DROP.x && x <= DROP.x + DROP.w && y >= DROP.y && y <= DROP.y + DROP.h;
+}
+function segHitsBubble(x1, y1, x2, y2, b){
+  // 点到线段距离
+  const dx = x2 - x1, dy = y2 - y1;
+  const len2 = dx*dx + dy*dy;
+  let t = len2 === 0 ? 0 : ((b.x - x1)*dx + (b.y - y1)*dy) / len2;
+  t = clamp(t, 0, 1);
+  const px = x1 + t*dx, py = y1 + t*dy;
+  const ddx = b.x - px, ddy = b.y - py;
+  return ddx*ddx + ddy*ddy <= (b.r + 6) * (b.r + 6);
+}
+
+cv.addEventListener('pointerdown', e=>{
+  e.preventDefault();
+  audio(); // 用户手势解锁音频
+  if(mode !== 'night' && mode !== 'zen' && mode !== 'dream') return;
+  const p = toGame(e);
+  if(mode === 'dream'){ ptr = { id: e.pointerId, dream: true }; dreamDown(p); return; }
+  if(!G || G.over) return;
+  G.idleT = 0;
+  const b = bubbleAt(p.x, p.y);
+  ptr = { id: e.pointerId, sx: p.x, sy: p.y, st: performance.now(),
+          bubble: b, moved: false, path: [{x:p.x, y:p.y, t:performance.now()}],
+          crossed: new Set(), inDrop: false, lx: p.x, ly: p.y, lt: performance.now() };
+  if(b){ b.held = true; }
+  try{ cv.setPointerCapture(e.pointerId); }catch(err){}
+});
+
+cv.addEventListener('pointermove', e=>{
+  if(!ptr || e.pointerId !== ptr.id) return;
+  e.preventDefault();
+  const p = toGame(e);
+  const now = performance.now();
+  if(mode === 'dream'){ dreamMove(p); return; }
+  if(!G) return;
+  G.idleT = 0;
+  const dx = p.x - ptr.sx, dy = p.y - ptr.sy;
+  if(Math.hypot(dx, dy) > 12) ptr.moved = true;
+
+  if(ptr.bubble){
+    const b = ptr.bubble;
+    b.x = clamp(p.x, b.r, W - b.r); b.y = clamp(p.y, b.r + 70, H - b.r);
+    ptr.inDrop = inDrop(p.x, p.y);
+  } else {
+    // 快滑检测：高速划过气泡 = 想消灭它 → 分裂
+    const last = ptr.path[ptr.path.length - 1];
+    const segDt = (now - ptr.lt) / 1000;
+    const segDist = Math.hypot(p.x - ptr.lx, p.y - ptr.ly);
+    const speed = segDt > 0 ? segDist / segDt : 0;
+    ptr.path.push({x:p.x, y:p.y, t:now});
+    if(ptr.path.length > 24) ptr.path.shift();
+    if(speed > 750){
+      for(const b of [...G.bubbles]){
+        if(ptr.crossed.has(b.id)) continue;
+        if(segHitsBubble(ptr.lx, ptr.ly, p.x, p.y, b)){
+          ptr.crossed.add(b.id);
+          splitBubble(b);
+        }
+      }
+    }
+    ptr.lx = p.x; ptr.ly = p.y; ptr.lt = now;
+  }
+});
+
+function endPointer(e){
+  if(!ptr || e.pointerId !== ptr.id) return;
+  const p = toGame(e);
+  const now = performance.now();
+  const dur = now - ptr.st;
+  if(mode === 'dream'){ dreamUp(p); ptr = null; return; }
+  if(!G){ ptr = null; return; }
+
+  if(ptr.bubble){
+    const b = ptr.bubble; b.held = false;
+    if(inDrop(p.x, p.y)){
+      releaseBubble(b);            // 放下 → 星光
+    } else if(!ptr.moved && dur < 350){
+      splitBubble(b);              // 点按 → 分裂（越努力越清醒）
+    }
+    // 拖出来又放回去：什么都不发生，气泡留下
+  } else {
+    const dyUp = ptr.sy - p.y;                 // 上滑距离（正=向上）
+    const dxAbs = Math.abs(p.x - ptr.sx);
+    const pathLen = ptr.path.reduce((s, q, i, a)=> i ? s + Math.hypot(q.x - a[i-1].x, q.y - a[i-1].y) : s, 0);
+    if(dyUp > 60 && dur > 1200 && dur < 6000 && dxAbs < 130 && ptr.crossed.size === 0){
+      doBreath(now);               // 深呼吸
+    } else if(dur < 450 && pathLen > 130 && ptr.crossed.size === 0){
+      // 快速空挥：白忙一场
+      G.hr = clamp(G.hr + 2, 0, 100);
+      popup(T('wasted'), p.x, p.y - 10, '#8b93b3', 13);
+    }
+    // 普通轻点空白：无事发生（不惩罚发呆）
+  }
+  ptr = null;
+}
+cv.addEventListener('pointerup', endPointer);
+cv.addEventListener('pointercancel', e=>{ if(ptr && e.pointerId === ptr.id){ if(ptr.bubble) ptr.bubble.held = false; ptr = null; } });
+
+/* ---------- 呼吸判定 ---------- */
+function doBreath(now){
+  // 节拍器：4 秒一呼；落在节拍 ±0.5s 内算完美
+  const cyc = 4000;
+  const dtms = (now - G.lastBeat) % cyc;
+  const d = Math.min(dtms, cyc - dtms);
+  if(d <= 500){
+    G.sleepy = clamp(G.sleepy + 8, 0, 100);
+    G.perfect++; G.combo++; G.maxCombo = Math.max(G.maxCombo, G.combo);
+    G.hr = clamp(G.hr - 3, 0, 100);
+    popup(T('perfectBreath'), W/2, H - 190, '#f2e9c9', 16);
+    tone(523, .6, 'sine', .05); setTimeout(()=>tone(784, .7, 'sine', .04), 120);
+    for(let i=0;i<8;i++) G.particles.push({x:W/2+rand(-30,30), y:H-140, vx:rand(-20,20), vy:rand(-70,-30), life:rand(.6,1.1), t:0, col:'#9fe0c8', r:rand(1.5,3)});
+    if(G.combo > 0 && G.combo % 10 === 0) popup(T('comboX') + G.combo + T('steady'), W/2, H - 230, '#9fe0c8', 14);
+  } else {
+    G.sleepy = clamp(G.sleepy + 2, 0, 100);
+    G.combo = 0;
+    popup(T('breath2'), W/2, H - 190, '#8b93b3', 13);
+    tone(392, .5, 'sine', .035);
+  }
+  checkSleep();
+}
+function checkSleep(){
+  if(G && !G.zen && G.sleepy >= 100 && mode === 'night'){
+    mode = 'sleeping'; G.fade = 0; G.over = true;
+    stopAmbient(); tone(330, 1.2, 'sine', .05); setTimeout(()=>tone(262, 1.6, 'sine', .04), 300);
+  }
+}
+</script>
+
+<script>
+"use strict";
+/* ================= 主循环：更新 + 绘制 ================= */
+let lastT = performance.now();
+let beatFlash = 0;
+
+function update(dt){
+  const now = performance.now();
+  // 节拍器
+  if(mode === 'night' || mode === 'zen'){
+    if(now - G.lastBeat >= 4000){
+      G.lastBeat = now; beatFlash = 1;
+      tone(528, .5, 'sine', .022);
+    }
+    beatFlash = Math.max(0, beatFlash - dt * 1.4);
+  }
+
+  if(mode === 'night' || mode === 'zen'){
+    // 生成气泡
+    G.spawnT += dt * 1000;
+    const interval = G.zen ? 3000 : G.night.spawn;
+    if(G.spawnT >= interval){ G.spawnT = 0; spawnBubble(); }
+
+    // 心率爆表 → 越想越精神（先于回落判定，保证能触发）
+    if(G.hr >= 100 && !G.burstOn){
+      G.burstOn = true; G.burstT = 10; G.bursts++;
+      popup(T('racing'), W/2, H/2 - 40, '#e08a8a', 22);
+      tone(180, .8, 'sawtooth', .05);
+    }
+
+    // 心率自然回落；发呆也有微弱困意
+    G.hr = clamp(G.hr - dt * 0.7, 0, 100);
+    G.idleT += dt;
+    if(G.idleT > 8){
+      G.idleAcc = (G.idleAcc || 0) + dt;
+      if(G.idleAcc > 2){ G.idleAcc = 0; G.sleepy = clamp(G.sleepy + 1, 0, 100); popup(T('spacing'), rand(80, W-160), rand(200, 400), '#6b7396', 12); checkSleep(); }
+    }
+
+    // 禅定模式：困意满则柔和回落（没有终点）
+    if(G.zen && G.sleepy >= 100){
+      G.sleepy = 55;
+      popup(T('zenCalm'), W/2, H/2, '#f2e9c9', 15);
+    }
+
+    if(G.burstOn){
+      G.burstT -= dt;
+      if(Math.random() < dt * 6) spawnBubble();
+      if(G.burstT <= 0){
+        G.burstOn = false;
+        G.hr = clamp(G.hr - 30, 0, 100);
+        G.sleepy = clamp(G.sleepy - 10, 0, 100);
+        popup(T('tired'), W/2, H/2, '#8b93b3', 14);
+      }
+    }
+
+    // 气泡上浮
+    for(const b of [...G.bubbles]){
+      if(!b.held){
+        b.y += b.vy * dt * (G.burstOn ? 1.5 : 1);
+        b.wob += b.wobSp * dt;
+        b.x += Math.sin(b.wob) * 14 * dt;
+      }
+      if(b.y < -60) removeBubble(b); // 飘走了，不惩罚
+    }
+  }
+
+  if(mode === 'sleeping'){
+    G.fade = Math.min(1, G.fade + dt / 3);
+    for(const b of G.bubbles){ b.y -= 20 * dt; }
+    if(G.fade >= 1) startDream();
+  }
+
+  // 粒子与浮字
+  const arr = G ? G : null;
+  if(arr){
+    for(const p of [...arr.particles]){
+      p.t += dt;
+      p.x += p.vx * dt; p.y += p.vy * dt; p.vy += 30 * dt;
+      if(p.t >= p.life) arr.particles.splice(arr.particles.indexOf(p), 1);
+    }
+    for(const p of [...arr.popups]){
+      p.t += dt; p.y -= 22 * dt;
+      if(p.t >= p.life) arr.popups.splice(arr.popups.indexOf(p), 1);
+    }
+  }
+}
+
+/* ---------- 绘制 ---------- */
+const CATCOL = ['#7f9cf5', '#f5c97f', '#f59ab5', '#9fe0c8', '#c39bf5'];
+
+function roundRect(x, y, w, h, r){
+  ctx.beginPath();
+  ctx.moveTo(x + r, y);
+  ctx.arcTo(x + w, y, x + w, y + h, r);
+  ctx.arcTo(x + w, y + h, x, y + h, r);
+  ctx.arcTo(x, y + h, x, y, r);
+  ctx.arcTo(x, y, x + w, y, r);
+  ctx.closePath();
+}
+
+function drawBG(t){
+  const g = ctx.createLinearGradient(0, 0, 0, H);
+  g.addColorStop(0, '#0a0d1f'); g.addColorStop(0.6, '#0b0e1e'); g.addColorStop(1, '#070912');
+  ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
+  for(const s of bgStars){
+    const a = 0.25 + 0.35 * Math.abs(Math.sin(t / 900 + s.p));
+    ctx.globalAlpha = a; ctx.fillStyle = '#cdd6f4';
+    ctx.beginPath(); ctx.arc(s.x, s.y, s.r, 0, 6.29); ctx.fill();
+  }
+  ctx.globalAlpha = 1;
+  // 月亮
+  ctx.fillStyle = 'rgba(242,233,201,.9)';
+  ctx.beginPath(); ctx.arc(52, 108, 20, 0, 6.29); ctx.fill();
+  ctx.fillStyle = 'rgba(10,13,31,.55)';
+  ctx.beginPath(); ctx.arc(60, 102, 17, 0, 6.29); ctx.fill();
+}
+
+function drawDropZone(){
+  const hot = ptr && ptr.bubble && ptr.inDrop;
+  ctx.save();
+  ctx.setLineDash([8, 6]);
+  ctx.lineWidth = hot ? 3 : 1.6;
+  ctx.strokeStyle = hot ? '#f2e9c9' : 'rgba(139,147,179,.55)';
+  roundRect(DROP.x + 6, DROP.y, DROP.w - 12, DROP.h, 14); ctx.stroke();
+  ctx.setLineDash([]);
+  if(hot){ ctx.fillStyle = 'rgba(242,233,201,.08)'; roundRect(DROP.x + 6, DROP.y, DROP.w - 12, DROP.h, 14); ctx.fill(); }
+  ctx.fillStyle = hot ? '#f2e9c9' : '#8b93b3';
+  ctx.font = '20px "PingFang SC","Microsoft YaHei",sans-serif';
+  ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+  ctx.fillText(T('dropA'), DROP.x + DROP.w/2, DROP.y + 60);
+  ctx.fillText(T('dropB'), DROP.x + DROP.w/2, DROP.y + 92);
+  ctx.font = '11px "PingFang SC","Microsoft YaHei",sans-serif';
+  ctx.fillStyle = '#6b7396';
+  ctx.fillText(T('dropHint1'), DROP.x + DROP.w/2, DROP.y + 126);
+  ctx.fillText(T('dropHint2'), DROP.x + DROP.w/2, DROP.y + 144);
+  ctx.restore();
+}
+
+function drawBubble(b){
+  const col = CATCOL[b.cat];
+  ctx.save();
+  if(b.held){ ctx.shadowColor = col; ctx.shadowBlur = 18; }
+  ctx.globalAlpha = 0.16; ctx.fillStyle = col;
+  ctx.beginPath(); ctx.arc(b.x, b.y, b.r, 0, 6.29); ctx.fill();
+  ctx.globalAlpha = 0.85; ctx.strokeStyle = col; ctx.lineWidth = 1.4;
+  ctx.beginPath(); ctx.arc(b.x, b.y, b.r, 0, 6.29); ctx.stroke();
+  // 高光
+  ctx.globalAlpha = 0.5; ctx.fillStyle = '#fff';
+  ctx.beginPath(); ctx.arc(b.x - b.r*0.35, b.y - b.r*0.38, b.r*0.12, 0, 6.29); ctx.fill();
+  ctx.globalAlpha = 1;
+  // 文字（过长则缩小 / 分行）
+  let fs = clamp(b.r * 0.40, 10, 16);
+  ctx.font = fs + 'px "PingFang SC","Microsoft YaHei",sans-serif';
+  ctx.fillStyle = '#eef1ff'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+  const maxW = b.r * 1.62;
+  if(ctx.measureText(b.txt).width > maxW && b.txt.length > 4){
+    const mid = Math.ceil(b.txt.length / 2);
+    ctx.fillText(b.txt.slice(0, mid), b.x, b.y - fs*0.55);
+    ctx.fillText(b.txt.slice(mid), b.x, b.y + fs*0.55);
+  } else {
+    while(ctx.measureText(b.txt).width > maxW && fs > 9){ fs--; ctx.font = fs + 'px "PingFang SC","Microsoft YaHei",sans-serif'; }
+    ctx.fillText(b.txt, b.x, b.y);
+  }
+  ctx.restore();
+}
+
+function drawBar(x, y, w, label, val, col, icon){
+  ctx.font = '12px "PingFang SC","Microsoft YaHei",sans-serif';
+  ctx.textAlign = 'left'; ctx.textBaseline = 'middle';
+  ctx.fillStyle = '#8b93b3'; ctx.fillText(icon + ' ' + label, x, y - 12);
+  ctx.fillStyle = 'rgba(255,255,255,.08)';
+  roundRect(x, y - 6, w, 12, 6); ctx.fill();
+  const bw = w * clamp(val / 100, 0, 1);
+  if(bw > 1){
+    const g = ctx.createLinearGradient(x, 0, x + w, 0);
+    g.addColorStop(0, col); g.addColorStop(1, col + 'cc');
+    ctx.fillStyle = g; roundRect(x, y - 6, Math.max(bw, 12), 12, 6); ctx.fill();
+  }
+  ctx.fillStyle = '#dfe4f2'; ctx.textAlign = 'right';
+  ctx.fillText(Math.round(val) + '', x + w, y - 12);
+  ctx.textAlign = 'left';
+}
+
+function drawHUD(t){
+  // 顶栏
+  ctx.fillStyle = 'rgba(5,7,16,.72)'; ctx.fillRect(0, 0, W, 66);
+  ctx.font = '13px "PingFang SC","Microsoft YaHei",sans-serif';
+  ctx.fillStyle = '#dfe4f2'; ctx.textAlign = 'left'; ctx.textBaseline = 'middle';
+  const label = G.zen ? T('zenHud') : (LANG==='zh'
+    ? '第' + (G.n + 1) + '夜 · ' + tx(G.night.name) + ' ' + tx(G.night.title)
+    : 'Night ' + (G.n + 1) + ' · ' + tx(G.night.name) + ': ' + tx(G.night.title));
+  ctx.fillText(label, 12, 16);
+  ctx.font = '11px "PingFang SC","Microsoft YaHei",sans-serif';
+  ctx.fillStyle = '#6b7396';
+  ctx.textAlign = 'right';
+  ctx.fillText(tx(G.night.tip), W - 108, 16);
+  ctx.textAlign = 'left';
+  drawBar(12, 52, 150, T('barSleepy'), G.sleepy, '#7f9cf5', '🌙');
+  drawBar(178, 52, 130, T('barHr'), G.hr, '#e08a8a', '💗');
+  if(G.hr >= 75 && !G.burstOn){
+    ctx.fillStyle = '#e08a8a'; ctx.textAlign = 'left';
+    ctx.font = '11px "PingFang SC","Microsoft YaHei",sans-serif';
+    ctx.fillText(T('hrWarn'), 178, 74);
+  }
+  ctx.fillStyle = '#8b93b3';
+  ctx.textAlign = 'right';
+  ctx.fillText('⭐ ' + Math.floor(G.stars) + '/20', W - 70, 40);
+  ctx.textAlign = 'left';
+  // 右上：静音 / 禅定退出
+  ctx.font = '20px sans-serif'; ctx.textAlign = 'center';
+  ctx.fillText(muted ? '🔇' : '🔊', W - 30, 24);
+  G._muteRect = {x: W - 52, y: 8, w: 44, h: 32};
+  ctx.font = '13px sans-serif'; ctx.fillStyle = '#8b93b3'; ctx.textAlign = 'center';
+  ctx.fillText(LANG === 'zh' ? 'EN' : '中', W - 76, 24);
+  G._langRect = {x: W - 98, y: 8, w: 44, h: 32};
+  if(G.zen){
+    ctx.font = '12px "PingFang SC","Microsoft YaHei",sans-serif';
+    ctx.fillStyle = '#8b93b3';
+    ctx.fillText(T('exitBtn'), W - 30, 52);
+    G._exitRect = {x: W - 52, y: 38, w: 44, h: 28};
+  }
+  // 爆发提示条
+  if(G.burstOn){
+    ctx.fillStyle = 'rgba(224,138,138,.12)'; ctx.fillRect(0, 66, W, 30);
+    ctx.fillStyle = '#e08a8a'; ctx.font = '13px "PingFang SC","Microsoft YaHei",sans-serif'; ctx.textAlign = 'center';
+    ctx.fillText(T('racing') + ' ' + Math.ceil(G.burstT) + 's', W/2, 82);
+    ctx.textAlign = 'left';
+  }
+}
+
+function drawBreathGuide(t){
+  const cx = W/2 - 43, cy = H - 52; // 避开右侧放下区
+  const cyc = 4000, now = performance.now();
+  const ph = ((now - (G ? G.lastBeat : now)) % cyc) / cyc;
+  const R = 26 + beatFlash * 22;
+  ctx.save();
+  ctx.globalAlpha = 0.25 + beatFlash * 0.5;
+  ctx.strokeStyle = '#9fe0c8'; ctx.lineWidth = 2;
+  ctx.beginPath(); ctx.arc(cx, cy, R, 0, 6.29); ctx.stroke();
+  ctx.globalAlpha = 0.9;
+  ctx.beginPath(); ctx.arc(cx, cy, 16 + 4 * Math.sin(ph * 6.28), 0, 6.29); ctx.stroke();
+  ctx.restore();
+  // 节拍瞬间：圆圈中央闪"呼"，告诉玩家此刻松手最准
+  if(beatFlash > 0.55){
+    ctx.globalAlpha = Math.min(1, (beatFlash - 0.55) / 0.45);
+    ctx.fillStyle = '#9fe0c8';
+    ctx.font = '16px "PingFang SC","Microsoft YaHei",sans-serif';
+    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    ctx.fillText(T('breathCue'), cx, cy);
+    ctx.globalAlpha = 1;
+  }
+  ctx.font = '12px "PingFang SC","Microsoft YaHei",sans-serif';
+  ctx.fillStyle = '#8b93b3'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+  ctx.fillText(T('breathHint'), cx, cy + 34);
+  if(G && G.combo >= 5){
+    ctx.fillStyle = '#9fe0c8';
+    ctx.fillText(T('comboX') + G.combo, cx, cy - 34);
+  }
+  ctx.textAlign = 'left';
+}
+
+function drawParticles(){
+  for(const p of G.particles){
+    ctx.globalAlpha = 1 - p.t / p.life;
+    ctx.fillStyle = p.col;
+    ctx.beginPath(); ctx.arc(p.x, p.y, p.r, 0, 6.29); ctx.fill();
+  }
+  ctx.globalAlpha = 1;
+  ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+  for(const p of G.popups){
+    ctx.globalAlpha = 1 - p.t / p.life;
+    ctx.font = p.size + 'px "PingFang SC","Microsoft YaHei",sans-serif';
+    ctx.fillStyle = p.col;
+    ctx.fillText(p.text, p.x, p.y);
+  }
+  ctx.globalAlpha = 1; ctx.textAlign = 'left';
+}
+
+function draw(){
+  const t = performance.now();
+  ctx.clearRect(0, 0, W, H);
+  if(mode === 'dream'){ drawDream(); return; }
+  if(mode === 'start'){ drawBG(t); return; }
+  drawBG(t);
+  if(G){
+    drawDropZone();
+    for(const b of G.bubbles) drawBubble(b);
+    drawParticles();
+    drawHUD(t);
+    drawBreathGuide(t);
+    if(mode === 'sleeping'){
+      ctx.fillStyle = 'rgba(2,3,8,' + G.fade + ')';
+      ctx.fillRect(0, 0, W, H);
+      if(G.fade > 0.6){
+        ctx.globalAlpha = (G.fade - 0.6) / 0.4;
+        ctx.fillStyle = '#f2e9c9'; ctx.textAlign = 'center';
+        ctx.font = '22px "PingFang SC","Microsoft YaHei",sans-serif';
+        ctx.fillText(T('goodNight'), W/2, H/2);
+        ctx.globalAlpha = 1; ctx.textAlign = 'left';
+      }
+    }
+  }
+}
+
+function loop(){
+  const now = performance.now();
+  let dt = (now - lastT) / 1000; lastT = now;
+  if(dt > 0.05) dt = 0.05;
+  if(mode === 'night' || mode === 'zen' || mode === 'sleeping') update(dt);
+  draw();
+  requestAnimationFrame(loop);
+}
+</script>
+
+<script>
+"use strict";
+/* ================= 梦境构筑 · 晨光结算 · 界面 ================= */
+
+/* ---------- 第二阶段：梦境构筑 ---------- */
+const DONE_RECT = { x: W - 116, y: H - 116, w: 100, h: 52 };
+const TRAY = { x: 16, y: H - 116, w: 200, h: 52 };
+
+function startDream(){
+  const starTotal = Math.min(30, Math.floor(G.stars + G.perfect * 0.5));
+  D = { left: starTotal, total: starTotal, placed: [], drag: null };
+  mode = 'dream';
+  tone(523,.8,'sine',.04); setTimeout(()=>tone(659,.8,'sine',.04),200); setTimeout(()=>tone(784,1,'sine',.04),400);
+}
+function dreamDown(p){
+  if(p.x >= DONE_RECT.x && p.x <= DONE_RECT.x + DONE_RECT.w &&
+     p.y >= DONE_RECT.y && p.y <= DONE_RECT.y + DONE_RECT.h){
+    finishDream(); return;
+  }
+  if(D.left > 0 && p.x >= TRAY.x && p.x <= TRAY.x + TRAY.w &&
+     p.y >= TRAY.y - 20 && p.y <= TRAY.y + TRAY.h + 20){
+    D.drag = { x: p.x, y: p.y };
+    tone(700,.15,'sine',.04);
+  }
+}
+function dreamMove(p){ if(D && D.drag){ D.drag.x = p.x; D.drag.y = p.y; } }
+function dreamUp(p){
+  if(!D || !D.drag) return;
+  if(p.y < H - 140 && D.left > 0){
+    D.placed.push({ x: clamp(p.x, 20, W-20), y: clamp(p.y, 80, H-150) });
+    D.left--;
+    tone(880,.2,'sine',.05);
+    for(let i=0;i<8;i++) G.particles.push({x:p.x, y:p.y, vx:rand(-50,50), vy:rand(-50,50), life:rand(.4,.8), t:0, col:'#f2e9c9', r:rand(1,2.4)});
+  }
+  D.drag = null;
+}
+
+function drawStarShape(x, y, r, col, alpha){
+  ctx.save();
+  ctx.globalAlpha = alpha == null ? 1 : alpha;
+  const g = ctx.createRadialGradient(x, y, 0, x, y, r*3);
+  g.addColorStop(0, col); g.addColorStop(1, 'rgba(242,233,201,0)');
+  ctx.fillStyle = g;
+  ctx.beginPath(); ctx.arc(x, y, r*3, 0, 6.29); ctx.fill();
+  ctx.fillStyle = '#fff8e3';
+  ctx.beginPath(); ctx.arc(x, y, r, 0, 6.29); ctx.fill();
+  ctx.strokeStyle = col; ctx.lineWidth = 1.4;
+  ctx.beginPath();
+  ctx.moveTo(x - r*2.2, y); ctx.lineTo(x + r*2.2, y);
+  ctx.moveTo(x, y - r*2.2); ctx.lineTo(x, y + r*2.2);
+  ctx.stroke();
+  ctx.restore();
+}
+
+function drawDream(){
+  const t = performance.now();
+  const g = ctx.createLinearGradient(0, 0, 0, H);
+  g.addColorStop(0, '#060818'); g.addColorStop(1, '#0d1230');
+  ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
+  for(const s of bgStars){
+    ctx.globalAlpha = 0.25 + 0.35 * Math.abs(Math.sin(t/900 + s.p));
+    ctx.fillStyle = '#cdd6f4';
+    ctx.beginPath(); ctx.arc(s.x, s.y, s.r, 0, 6.29); ctx.fill();
+  }
+  ctx.globalAlpha = 1;
+  // 星座连线
+  ctx.strokeStyle = 'rgba(242,233,201,.4)'; ctx.lineWidth = 1.2;
+  for(let i=0;i<D.placed.length;i++){
+    let bestJ = -1, bestD = 150*150;
+    for(let j=0;j<D.placed.length;j++){
+      if(i === j) continue;
+      const dx = D.placed[i].x - D.placed[j].x, dy = D.placed[i].y - D.placed[j].y;
+      const d2 = dx*dx + dy*dy;
+      if(d2 < bestD){ bestD = d2; bestJ = j; }
+    }
+    if(bestJ > i){
+      ctx.beginPath();
+      ctx.moveTo(D.placed[i].x, D.placed[i].y);
+      ctx.lineTo(D.placed[bestJ].x, D.placed[bestJ].y);
+      ctx.stroke();
+    }
+  }
+  for(const s of D.placed) drawStarShape(s.x, s.y, 4, '#f2e9c9');
+  if(D.drag) drawStarShape(D.drag.x, D.drag.y, 5, '#f2e9c9');
+  // 粒子
+  for(const p of G.particles){
+    ctx.globalAlpha = 1 - p.t / p.life;
+    ctx.fillStyle = p.col;
+    ctx.beginPath(); ctx.arc(p.x, p.y, p.r, 0, 6.29); ctx.fill();
+  }
+  ctx.globalAlpha = 1;
+  // 顶栏
+  ctx.fillStyle = 'rgba(5,7,16,.72)'; ctx.fillRect(0, 0, W, 60);
+  ctx.font = '14px "PingFang SC","Microsoft YaHei",sans-serif';
+  ctx.fillStyle = '#f2e9c9'; ctx.textAlign = 'left'; ctx.textBaseline = 'middle';
+  ctx.fillText(T('dreamTitle').replace('{p}', Math.min(100, Math.round(D.placed.length/20*100))), 14, 24);
+  ctx.font = '11px "PingFang SC","Microsoft YaHei",sans-serif';
+  ctx.fillStyle = '#8b93b3';
+  ctx.fillText(T('dreamHint'), 14, 44);
+  // 托盘
+  ctx.fillStyle = 'rgba(20,26,48,.8)';
+  roundRect(TRAY.x, TRAY.y, TRAY.w, TRAY.h, 12); ctx.fill();
+  ctx.strokeStyle = '#2a3358'; ctx.lineWidth = 1; roundRect(TRAY.x, TRAY.y, TRAY.w, TRAY.h, 12); ctx.stroke();
+  const show = Math.min(D.left, 10);
+  for(let i=0;i<show;i++) drawStarShape(TRAY.x + 24 + i*17, TRAY.y + TRAY.h/2, 3, '#f2e9c9', .9);
+  ctx.font = '11px "PingFang SC","Microsoft YaHei",sans-serif';
+  ctx.fillStyle = '#8b93b3'; ctx.textAlign = 'left';
+  ctx.fillText(T('leftCount') + D.left, TRAY.x + TRAY.w + 8, TRAY.y + TRAY.h/2);
+  // 完成按钮
+  ctx.fillStyle = D.placed.length ? '#33407a' : '#1a2140';
+  roundRect(DONE_RECT.x, DONE_RECT.y, DONE_RECT.w, DONE_RECT.h, 12); ctx.fill();
+  ctx.strokeStyle = '#5a6cab'; roundRect(DONE_RECT.x, DONE_RECT.y, DONE_RECT.w, DONE_RECT.h, 12); ctx.stroke();
+  ctx.fillStyle = '#eef1ff'; ctx.font = '14px "PingFang SC","Microsoft YaHei",sans-serif'; ctx.textAlign = 'center';
+  ctx.fillText(T('dreamDone'), DONE_RECT.x + DONE_RECT.w/2, DONE_RECT.y + DONE_RECT.h/2 + 1);
+  ctx.textAlign = 'left';
+}
+
+/* ---------- 晨光结算 ---------- */
+function finishDream(){
+  const placed = D.placed.length;
+  const score = Math.round(
+    Math.min(80, placed / 20 * 80) +
+    Math.min(15, G.perfect) +
+    Math.max(0, 15 - G.bursts * 7)
+  );
+  mode = 'morning';
+  stopAmbient();
+  if(score > best){ best = score; store.set('best', best); }
+  if(!G.zen){
+    if(G.n === unlocked && unlocked < 7){ unlocked = G.n + 1; store.set('unlocked', unlocked); }
+    selNight = Math.min(unlocked, 6); store.set('selNight', selNight);
+  }
+  if(score >= 90) grantAchv('sleep90');
+  if(codex.length >= 40) grantAchv('col40');
+  if(G.maxCombo >= 20) grantAchv('breath20');
+
+  lastMorning = { score, sStar: Math.round(Math.min(80, placed / 20 * 80)), sBreath: Math.min(15, G.perfect),
+    sCalm: Math.max(0, 15 - G.bursts * 7), total: D.total, perfect: G.perfect, bursts: G.bursts, zen: G.zen, n: G.n };
+  renderMorning();
+}
+let lastMorning = null;
+function renderMorning(){
+  const m = lastMorning; if(!m) return;
+  $('mScore').textContent = m.score;
+  let cmt;
+  if(m.score >= 90) cmt = T('cmt90');
+  else if(m.score >= 70) cmt = T('cmt70');
+  else if(m.score >= 50) cmt = T('cmt50');
+  else cmt = T('cmtLow');
+  $('mComment').innerHTML = cmt;
+  $('mDetail').innerHTML = T('scoreLine').replace('{a}', m.sStar).replace('{b}', m.sBreath).replace('{c}', m.sCalm).replace('{d}', m.score) + '<br>'
+    + '<span style="color:#6b7396">' + T('scoreSub').replace('{a}', m.total).replace('{b}', m.perfect).replace('{c}', m.bursts).replace('{d}', best) + '</span>';
+  const bn = $('btnNext');
+  if(m.zen){ bn.textContent = T('backHome'); }
+  else if(m.n >= 6){ bn.textContent = T('clearHome'); }
+  else { bn.textContent = T('goNight').replace('{n}', tx(NIGHTS[m.n+1].name)); }
+  showOv('ov-morning');
+}
+
+/* ---------- 界面 ---------- */
+const OVS = ['ov-start','ov-codex','ov-achv','ov-morning'];
+function hideAllOv(){ OVS.forEach(id=>$(id).classList.add('hidden')); }
+function showOv(id){ hideAllOv(); $(id).classList.remove('hidden'); }
+
+function renderNights(){
+  const grid = $('nightGrid'); grid.innerHTML = '';
+  NIGHTS.forEach((n, i)=>{
+    const d = document.createElement('div');
+    d.className = 'night' + (i < unlocked ? ' done' : '') + (i > unlocked ? ' lock' : '') + (i === selNight ? ' cur' : '');
+    d.innerHTML = tx(n.name) + '<small>' + (i > unlocked ? '🔒' : tx(n.title)) + '</small>';
+    if(i <= unlocked){ d.onclick = ()=>{ selNight = i; store.set('selNight', i); renderNights(); tone(600,.12,'sine',.05); }; }
+    grid.appendChild(d);
+  });
+  const zb = $('btnZen');
+  zb.disabled = unlocked < 7;
+  zb.textContent = unlocked >= 7 ? T('btnZen') : T('btnZenLocked');
+}
+function renderCodex(){
+  const grid = $('codexGrid'); grid.innerHTML = '';
+  $('codexCount').textContent = T('codexCount').replace('{n}', codex.length);
+  THOUGHTS.forEach((th, i)=>{
+    const d = document.createElement('div');
+    const known = codex.indexOf(i) >= 0;
+    d.className = 'th' + (known ? '' : ' unk');
+    d.innerHTML = (known ? tx(th.t) : T('unknown')) + '<small>' + CATS[LANG][th.c] + '</small>';
+    grid.appendChild(d);
+  });
+}
+function renderAchv(){
+  const list = $('achvList'); list.innerHTML = '';
+  ACHVS.forEach(a=>{
+    const got = !!achv[a.id];
+    const d = document.createElement('div');
+    d.className = 'ac' + (got ? '' : ' lock');
+    d.innerHTML = '<b>' + (got ? '✓ ' : '') + tx(a.name) + '</b><small>' + tx(a.desc) + ' · ' + tx(a.hint) + '</small>';
+    list.appendChild(d);
+  });
+}
+function toggleMute(){
+  muted = !muted; store.set('muted', muted);
+  $('btnMute').textContent = muted ? T('btnMuteOff') : T('btnMuteOn');
+  if(muted) stopAmbient();
+  else if(mode === 'night' || mode === 'zen') startAmbient();
+}
+function backToStart(){
+  mode = 'start'; G = null; D = null;
+  stopAmbient(); renderNights(); showOv('ov-start');
+}
+
+/* 画布上的静音 / 禅定退出按钮（pointerup 补充监听） */
+cv.addEventListener('pointerup', e=>{
+  if((mode !== 'night' && mode !== 'zen') || !G) return;
+  const p = toGame(e);
+  const m = G._muteRect;
+  if(m && p.x >= m.x && p.x <= m.x + m.w && p.y >= m.y && p.y <= m.y + m.h){ toggleMute(); return; }
+  const lg = G._langRect;
+  if(lg && p.x >= lg.x && p.x <= lg.x + lg.w && p.y >= lg.y && p.y <= lg.y + lg.h){ setLang(LANG==='zh'?'en':'zh'); return; }
+  const x = G._exitRect;
+  if(x && p.x >= x.x && p.x <= x.x + x.w && p.y >= x.y && p.y <= x.y + x.h){ backToStart(); }
+});
+
+/* ---------- 接线 ---------- */
+$('btnStart').onclick = ()=>{ audio(); newNight(Math.min(selNight, unlocked > 6 ? 6 : unlocked)); };
+$('btnZen').onclick = ()=>{ if(unlocked >= 7){ audio(); newZen(); } };
+$('btnCodex').onclick = ()=>{ renderCodex(); showOv('ov-codex'); };
+$('btnAchv').onclick = ()=>{ renderAchv(); showOv('ov-achv'); };
+$('btnMute').onclick = toggleMute;
+$('btnLang').onclick = ()=>{ audio(); setLang(LANG==='zh'?'en':'zh'); tone(600,.12,'sine',.05); };
+$('btnCodexBack').onclick = ()=>showOv('ov-start');
+$('btnAchvBack').onclick = ()=>showOv('ov-start');
+$('btnNext').onclick = ()=>{
+  if(G.zen || G.n >= 6){ backToStart(); }
+  else { newNight(G.n + 1); }
+};
+$('btnMorningBack').onclick = backToStart;
+if(muted) $('btnMute').textContent = T('btnMuteOff');
+
+/* ---------- 启动 ---------- */
+applyLang();
+showOv('ov-start');
+requestAnimationFrame(loop);
+</script>
+</body>
+</html>

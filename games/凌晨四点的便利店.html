@@ -1,0 +1,1187 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>凌晨四点的便利店</title>
+<style>
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;padding:0}
+body{background:#0d1017;color:#e9ecf3;font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Hiragino Sans GB","Microsoft YaHei","Noto Sans SC",sans-serif;font-size:15px;line-height:1.65}
+#app{max-width:520px;margin:0 auto;min-height:100dvh;padding:0 14px 40px;position:relative}
+h1{font-size:26px;margin:0}
+h2{font-size:19px;margin:0 0 8px}
+.sub{color:#9aa3b5;font-size:13px}
+.card{background:#171c28;border:1px solid #242c3f;border-radius:14px;padding:14px;margin:12px 0;animation:fadein .35s ease}
+@keyframes fadein{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+#topbar{position:sticky;top:0;z-index:50;background:rgba(13,16,23,.96);backdrop-filter:blur(6px);padding:10px 0 8px;border-bottom:1px solid #1f2635;margin:0 -14px;padding-left:14px;padding-right:14px}
+.trow{display:flex;gap:8px;align-items:center;flex-wrap:wrap;font-size:13px}
+.chip{background:#1d2333;border:1px solid #2b3450;border-radius:20px;padding:3px 10px;white-space:nowrap}
+.chip b{color:#ffcf7d}
+.barwrap{flex:1;min-width:90px}
+.barlabel{font-size:11px;color:#9aa3b5;display:flex;justify-content:space-between}
+.bar{height:8px;background:#262d42;border-radius:6px;overflow:hidden;margin-top:2px}
+.bar>i{display:block;height:100%;border-radius:6px;transition:width .4s}
+#sleepFill{background:linear-gradient(90deg,#7c6ff0,#b39dff)}
+#stamFill{background:linear-gradient(90deg,#3ecf8e,#a7f3c7)}
+.cust-head{display:flex;gap:12px;align-items:center}
+.avatar{font-size:52px;line-height:1;filter:drop-shadow(0 4px 10px rgba(0,0,0,.5))}
+.cust-name{font-size:18px;font-weight:700}
+.moodtag{font-size:12px;color:#ffcf7d;border:1px solid #4a3d22;background:#241d10;border-radius:12px;padding:1px 9px;margin-top:4px;display:inline-block}
+.moodtag.good{color:#7fd6a4;border-color:#2f6b4a;background:#1d2f24}
+.clue{background:#1f2637;border-left:3px solid #ffb347;border-radius:8px;padding:9px 11px;margin:8px 0;font-size:14px}
+.steps{display:flex;align-items:center;gap:6px;margin-bottom:8px}
+.step{background:#232b3f;border:1px solid #33405c;border-radius:20px;padding:4px 12px;font-size:13px;color:#8b93a7}
+.step.on{background:#2c4a35;border-color:#4caf7d;color:#7fd6a4;font-weight:700}
+.step-arrow{color:#4a5468;font-size:12px}
+.howrow{display:flex;gap:10px;align-items:flex-start;margin:10px 0}
+.howic{font-size:22px;flex:0 0 auto;line-height:1.4}
+.howrow b{font-size:15px}
+.winline{background:#1d2f24;border:1px solid #3f5a3a;border-radius:10px;padding:10px 12px;margin:10px 0 6px;font-size:14px;color:#7fd6a4}
+.loseline{background:#2f1d1d;border:1px solid #5a3a3a;border-radius:10px;padding:10px 12px;margin:0 0 4px;font-size:14px;color:#e89a9a}
+.clue .ask{display:block;margin-top:7px;background:#2a1f3d;border:1px dashed #8b6fd8;border-radius:8px;padding:8px 10px;color:#d9c9ff;font-size:13px}
+.kwbtn{display:inline-block;margin-left:6px;background:#3a2c12;color:#ffcf7d;border:1px solid #8a6a2a;border-radius:12px;padding:1px 10px;font-size:12px;cursor:pointer}
+.kwbtn:disabled{opacity:.35;cursor:default}
+.kwbtn.done{background:#233026;color:#7fd6a4;border-color:#2f6b4a}
+button{font-family:inherit}
+.resp{display:block;width:100%;text-align:left;background:#202941;border:1px solid #31405f;color:#e9ecf3;border-radius:12px;padding:12px;margin:9px 0;font-size:14.5px;cursor:pointer;line-height:1.6}
+.resp:active{transform:scale(.985)}
+.resp:disabled{opacity:.5}
+.resp:hover{border-color:#ffb347}
+.btnrow{display:flex;gap:8px;flex-wrap:wrap;margin:10px 0}
+.abtn{flex:1;min-width:120px;background:#2a3349;border:1px solid #3b4a6b;color:#e9ecf3;border-radius:12px;padding:11px;font-size:14px;cursor:pointer}
+.abtn.primary{background:#ffb347;border-color:#ffb347;color:#23180a;font-weight:700}
+.abtn:disabled{opacity:.4}
+.abtn.small{flex:0 1 auto;min-width:0;padding:8px 12px;font-size:13px}
+.dlg{background:#141926;border:1px solid #2a3350;border-radius:12px;padding:12px;margin:10px 0;font-size:14.5px}
+.dlg .who{color:#ffcf7d;font-size:12px;margin-bottom:4px}
+.shopitem{display:flex;justify-content:space-between;align-items:center;gap:10px;background:#1a2132;border:1px solid #2b3550;border-radius:12px;padding:11px;margin:9px 0}
+.shopitem .desc{font-size:13px;color:#aeb7cc}
+.shopitem.bought{opacity:.55}
+.overlay{position:fixed;inset:0;background:rgba(5,7,12,.82);z-index:100;display:flex;align-items:center;justify-content:center;padding:18px}
+.sheet{background:#171d2b;border:1px solid #2c3550;border-radius:16px;padding:18px;max-width:480px;width:100%;max-height:88dvh;overflow:auto}
+.center{text-align:center}
+.bigemoji{font-size:64px}
+.stat-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:10px 0}
+.stat-grid .cell{background:#1c2334;border-radius:10px;padding:10px;text-align:center}
+.stat-grid .cell b{font-size:20px;color:#ffcf7d;display:block}
+.frag{background:#1d1526;border:1px solid #43305e;border-radius:10px;padding:9px 11px;margin:7px 0;font-size:13.5px;color:#d9c9ff}
+.codex-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin:10px 0}
+.codex-cell{background:#1a2133;border-radius:10px;padding:8px 4px;text-align:center;font-size:11px;color:#9aa3b5}
+.codex-cell .e{font-size:26px;display:block}
+.codex-cell.got{color:#e9ecf3;border:1px solid #3f5a3a}
+.codex-cell.lock{filter:grayscale(1);opacity:.45}
+.toast{position:fixed;left:50%;bottom:26px;transform:translateX(-50%);background:#2c2113;border:1px solid #8a6a2a;color:#ffd98a;border-radius:12px;padding:10px 18px;z-index:200;font-size:14px;animation:fadein .3s;max-width:90vw;text-align:center}
+#shelfArea{position:relative;height:340px;background:#141a28;border-radius:12px;overflow:hidden;touch-action:none;margin:10px 0}
+.shelf-slot{position:absolute;bottom:8px;width:19%;height:74px;border:2px dashed #3b4a6b;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:11px;color:#8b95ad;text-align:center}
+.shelf-item{position:absolute;width:56px;height:56px;font-size:34px;display:flex;align-items:center;justify-content:center;background:#232c44;border-radius:12px;cursor:grab;user-select:none;touch-action:none;z-index:5}
+.shelf-item.locked{opacity:.35;cursor:default}
+.timer{font-size:13px;color:#ffcf7d}
+.hidden{display:none!important}
+.foot{color:#5c6579;font-size:11px;text-align:center;margin-top:26px}
+a{color:#8fb7ff}
+</style>
+</head>
+<body>
+<div id="app"></div>
+<script>
+"use strict";
+/* ============ 凌晨四点的便利店 · 单文件版 ============ */
+
+/* ---------- 客人数据（12位手写） ---------- */
+var CUSTOMERS=[
+{id:"c1",name:"程序员小赵",emoji:"🧑‍💻",mood:70,
+ intro:"凌晨，他抱着几罐啤酒走进来，手机屏幕还亮着。",
+ clues:[
+  {t:"他盯着手机，聊天框停在「我们分手吧」四个字上。",kw:"我们分手吧",ask:"三个月前他们还计划去大理。她说：你陪我的时间，还没有bug多。"},
+  {t:"拿了六罐啤酒，又默默放回去两罐：「一个人，喝不完。」"},
+  {t:"工牌还挂在脖子上，眼睛通红。",kw:"眼睛通红",ask:"今晚提交了三次代码，回回被打回。bug没修完，女朋友先没了。"}],
+ resps:[
+  {t:"「分手了还会难过，说明你认真爱过。酒少喝点，明天太阳照常升起。」",q:"best"},
+  {t:"「要不要来根烤肠？难过的时候，吃点热的。」",q:"mid"},
+  {t:"「嗨，旧的不去新的不来，下一个更乖！」",q:"bad"}],
+ relief:"他愣了一下，忽然笑了：「你说得对……至少代码不会跟我说分手。」",
+ storm:"他皱起眉，抓起啤酒转身就走：「你不懂。」",
+ calm:"他点点头，抱着啤酒在窗边坐了很久，临走时说了声谢谢。",
+ frag:"凌晨一点，有人把失恋和没修完的bug一起打包带走。这座城市的深夜，藏着很多没说完的「我们」。"},
+
+{id:"c2",name:"晓雨",emoji:"👩",mood:66,
+ intro:"她买了醒酒药和创可贴，围巾上有一点酒气。",
+ clues:[
+  {t:"购物篮里有醒酒药、创可贴，还有一瓶水。",kw:"创可贴",ask:"创可贴不是给她自己的——「那个傻子喝多了，总摔跤。」"},
+  {t:"手机里存着打车软件，目的地：城西某小区。",kw:"城西某小区",ask:"那个地址，和刚才买啤酒的程序员手机里的定位，是同一个小区。"},
+  {t:"她反复点开聊天框，输入了，又一个字一个字删掉。"}],
+ resps:[
+  {t:"「去找他吧。有些话，醒酒药是醒不了的。」",q:"best"},
+  {t:"「先喝口水，跑过去也来得及。」",q:"mid"},
+  {t:"「分都分了，还管他死活？」",q:"bad"}],
+ relief:"她抓起袋子就往外跑：「谢谢你！他要是敢睡大街，我饶不了他！」",
+ storm:"她攥紧袋子，低头快步离开：「……不用你管。」",
+ calm:"她在门口站了一会儿，还是上了那辆出租车。",
+ frag:"凌晨两点，有人把「分手吧」三个字，连同醒酒药一起，跑着送了回去。"},
+
+{id:"c3",name:"广告人老周",emoji:"🧑‍💼",mood:64,
+ intro:"他一口气拿了三罐咖啡、两个饭团，领带松垮地挂着。",
+ clues:[
+  {t:"笔记本摊开着，每一页都写着「推翻重来」。",kw:"推翻重来",ask:"这是今晚第三版方案。甲方说明早九点要，「就改几个字」。"},
+  {t:"皮鞋上沾了灰，西装裤脚有点潮——他是跑着赶末班地铁的，没赶上。"},
+  {t:"他看了眼手表，又看了眼咖啡，像在计算自己还能撑几轮。"}],
+ resps:[
+  {t:"「方案会过去的。先吃口热的，胃是你自己的。」",q:"best"},
+  {t:"「咖啡第二件半价，要不再拿一罐？」",q:"mid"},
+  {t:"「甲方虐我千百遍，习惯就好啦，哈哈。」",q:"bad"}],
+ relief:"他撕开饭团狼吞虎咽：「你说得对。先活着，明天再死。」",
+ storm:"他扯了扯嘴角：「站着说话不腰疼。」拎着咖啡走了。",
+ calm:"他坐在窗边，一边吃一边改PPT，背影有点佝偻。",
+ frag:"凌晨三点，有人用饭团续命。「就改几个字」，是成年人世界最大的谎言。"},
+
+{id:"c4",name:"护士林晚",emoji:"👩‍⚕️",mood:60,
+ intro:"白大褂里面是洗得发白的T恤，她要了一份关东煮。",
+ clues:[
+  {t:"她挑了萝卜和海带结，「好消化，夜里吃不胀。」"},
+  {t:"手背上用圆珠笔写着：6床 2:00 换药。",kw:"6床",ask:"6床的老奶奶今晚情况不太好。她每隔一小时，就去看一眼。"},
+  {t:"她捧着纸杯暖手，指节有点发白。"}],
+ resps:[
+  {t:"「你们守着病房，我们守着便利店——今晚，一起加油。」",q:"best"},
+  {t:"「多给你盛点汤，暖暖手。」",q:"mid"},
+  {t:"「上夜班真辛苦，工资一定很高吧？」",q:"bad"}],
+ relief:"她眼睛弯起来：「第一次有人跟我说，一起加油。」",
+ storm:"她抿了抿嘴，端着关东煮走了，没再说话。",
+ calm:"她安静地吃完，把纸杯扔进垃圾桶，摆了摆手。",
+ frag:"凌晨，有人把病房的灯，守成了便利店的灯。"},
+
+{id:"c5",name:"陈伯",emoji:"👴",mood:55,
+ intro:"穿中山装的老人，准时出现，拿了一瓶纯牛奶。",
+ clues:[
+  {t:"「睡不着，出来走走，怕吵着老伴。」"},
+  {t:"他把牛奶捂在手里，等它不太凉了才喝。",kw:"老伴",ask:"老伴去年冬天走的。他说：「房子太大，一个人睡不踏实。」"},
+  {t:"他总坐在靠窗的位置，看着街对面那盏路灯。"}],
+ resps:[
+  {t:"「牛奶趁热喝。陈伯，明晚还来，我给你留靠窗的位置。」",q:"best"},
+  {t:"「办张会员卡吧，牛奶第二件半价。」",q:"mid"},
+  {t:"「年纪大了就这样，早点睡吧。」",q:"bad"}],
+ relief:"他摆摆手，笑得像个孩子：「中！明晚还来！」",
+ storm:"他摇摇头，慢慢走出去，背影比来时更弯了些。",
+ calm:"他喝完牛奶，把瓶子整齐地放在回收箱里。",
+ frag:"有人用一瓶热牛奶，对抗一整栋楼的空。"},
+
+{id:"c6",name:"少年阿杰",emoji:"🧑",mood:72,
+ intro:"蹲在门口台阶上的少年，买了泡面和火腿肠。",
+ clues:[
+  {t:"手机只剩3%的电，他舍不得看。"},
+  {t:"书包上别着一枚「三好学生」奖章。",kw:"三好学生",ask:"奖章是初中的。「上了高中，我就没拿过奖了。」今晚，和爸妈大吵了一架。"},
+  {t:"他把泡面抱在怀里，像抱着什么宝贝。"}],
+ resps:[
+  {t:"「天亮就回去吧。你爸妈现在，肯定也没睡。」",q:"best"},
+  {t:"「泡面我给你泡，开水免费。」",q:"mid"},
+  {t:"「小小年纪离什么家？回去挨顿打就老实了。」",q:"bad"}],
+ relief:"他低头扒着泡面，含糊地说：「……嗯，天亮就回。」",
+ storm:"他猛地站起来，泡面差点打翻：「你们大人都一样！」",
+ calm:"他吃完泡面，把汤都喝干净了，轻声说了句谢谢。",
+ frag:"凌晨，有人用一碗泡面的时间，原谅了全世界，也包括自己。"},
+
+{id:"c7",name:"代驾王师傅",emoji:"🧑‍✈️",mood:58,
+ intro:"折叠电动车停在门口，他买了水和面包，在等单。",
+ clues:[
+  {t:"「今晚第三单还没来，前两单都是醉汉。」",kw:"第三单",ask:"「吐我一身，洗车费还得自己掏。这行，赚的是辛苦钱。」"},
+  {t:"他把电动车推进了店门口的屋檐下，怕淋着。"},
+  {t:"手机支架擦得很干净，屏幕上是接单页面。"}],
+ resps:[
+  {t:"「单会来的。王师傅，面包趁热吃，电先充上。」",q:"best"},
+  {t:"「门口有插座，电动车放心充。」",q:"mid"},
+  {t:"「代驾挺赚钱的吧？一单一两百呢。」",q:"bad"}],
+ relief:"「借你吉言！」他啃着面包，手机突然响了——来单了。",
+ storm:"他摆摆手：「你们坐办公室的，哪懂。」转身去看电动车了。",
+ calm:"他喝完水，把空瓶扔进回收箱，继续盯着接单页面。",
+ frag:"城市的夜晚，是由无数个「等单」的人撑起来的。"},
+
+{id:"c8",name:"博士生苏晴",emoji:"👩‍🎓",mood:74,
+ intro:"她抱着笔记本电脑，拿了黑巧克力和美式，眼睛里有血丝。",
+ clues:[
+  {t:"电脑屏保是一张实验数据图，曲线乱得像心电图。"},
+  {t:"「第六次预实验，又失败了。」",kw:"预实验",ask:"导师说再做不出来，毕业就悬了。她已经两周没睡过一个整觉。"},
+  {t:"她把巧克力掰成小块，一块一块数着吃，像在做什么仪式。"}],
+ resps:[
+  {t:"「爱迪生失败了上千次。你这才第六次，急什么。」",q:"best"},
+  {t:"「这块巧克力我请了，算夜班姐妹的支援。」",q:"mid"},
+  {t:"「读博这么苦，当初为啥想不开？」",q:"bad"}],
+ relief:"她掰了一半巧克力递过来：「说得对。第七次，说不定就成了。」",
+ storm:"她抱起电脑：「你说得轻松。」头也不回地走了。",
+ calm:"她点点头，在窗边打开电脑，又开始敲键盘。",
+ frag:"凌晨，有人把第六次失败嚼碎咽下去，准备迎接第七次。"},
+
+{id:"c9",name:"中介阿强",emoji:"👨‍💼",mood:62,
+ intro:"西装革履但头发乱了，他拿了便当和可乐，一屁股坐在窗边。",
+ clues:[
+  {t:"「带客户看到半夜，单子还是黄了。」"},
+  {t:"领带被扯开，衬衫第二颗扣子系错了。",kw:"黄了",ask:"客户临门一脚嫌「风水不好」。「我查了三天资料，他一句话就否了。」"},
+  {t:"他盯着便当加热的微波炉，像在等一个宣判。"}],
+ resps:[
+  {t:"「黄的单子会再来，凉的便当可不会。趁热吃。」",q:"best"},
+  {t:"「可乐加冰吗？冰可乐治百病。」",q:"mid"},
+  {t:"「卖房提成那么高，洒洒水啦。」",q:"bad"}],
+ relief:"他大口扒饭：「你这话我爱听——单子会再来的！」",
+ storm:"他冷笑一声：「你卖过房吗？」拎着便当走了。",
+ calm:"他安静地吃完便当，把垃圾收拾得干干净净。",
+ frag:"有人把「风水不好」四个字，就着便当一起消化了。"},
+
+{id:"c10",name:"旅人老K",emoji:"🧳",mood:56,
+ intro:"拖着行李箱的男人，航班延误五小时，第一次来杭州。",
+ clues:[
+  {t:"他买了数据线和饭团，充电宝已经彻底罢工。"},
+  {t:"「本来约了朋友吃宵夜，结果人家等到两点先睡了。」",kw:"宵夜",ask:"「这座城市给我的第一面，有点狼狈啊。」他自嘲地笑了笑。"},
+  {t:"他举着手机拍店门口的灯箱，「挺好看的，赛博朋克。」"}],
+ resps:[
+  {t:"「那我请你吃份关东煮——就当杭州先请你吃了顿宵夜。」",q:"best"},
+  {t:"「店里有WiFi，密码是今天的日期。」",q:"mid"},
+  {t:"「延误很正常，习惯就好。」",q:"bad"}],
+ relief:"「哈哈，那我就不客气了！杭州，我记住你了！」",
+ storm:"他耸耸肩：「行吧。」拖着箱子消失在夜色里。",
+ calm:"他充上电，坐在窗边看这座陌生的城市。",
+ frag:"有人在延误的航班里，意外收获了一座城市的善意。"},
+
+{id:"c11",name:"环卫李大姐",emoji:"🧹",mood:52,
+ intro:"四点半开工，她提前来吃早饭：包子加豆浆。",
+ clues:[
+  {t:"「扫了十年这条街，闭着眼都知道哪儿有坑。」",kw:"十年",ask:"「这条街的早餐店换了三茬，就你们家灯，一直亮着。」"},
+  {t:"她的手套洗得发白，整齐地叠放在桌角。"},
+  {t:"她把找零的硬币，一枚一枚码整齐才装进口袋。"}],
+ resps:[
+  {t:"「李大姐，这条街干净了十年。今早的包子，我请。」",q:"best"},
+  {t:"「豆浆加糖吗？要热的还是温的？」",q:"mid"},
+  {t:"「扫大街也挺自由的哈，不用看人脸色。」",q:"bad"}],
+ relief:"她摆摆手，硬是扫码付了钱：「一码归一码，心意我领了！」",
+ storm:"她没说话，拿着包子走了，脚步比平时快。",
+ calm:"她吃完早饭，戴上手套，推着车走进微亮的天色。",
+ frag:"天还没亮，有人已经把城市打扫了一遍。"},
+
+{id:"c12",name:"常客老陈",emoji:"🕶️",mood:66,
+ intro:"每晚都来，买同一包烟，话很少。今晚却在门口站了很久。",
+ clues:[
+  {t:"他捏着烟，在门口站了十分钟，没进来。",kw:"没进来",ask:"其实今晚没下雨，他只是在想要不要戒烟——女儿说：「再抽，就不让抱孙子。」"},
+  {t:"他摩挲着手机屏保，是个刚满月的小婴儿。"},
+  {t:"「老样子」——这是他每晚说的唯一三个字。"}],
+ resps:[
+  {t:"「陈叔，孙子重要。从今晚开始，我帮你记着——第1天。」",q:"best"},
+  {t:"「还是老样子？要不要换薄荷味过渡一下。」",q:"mid"},
+  {t:"「抽烟有害健康，你不知道吗？」",q:"bad"}],
+ relief:"他把烟揣进口袋，没拆：「行。从今晚开始记，第1天。」",
+ storm:"他看了你一眼，拿起烟走了，背有点驼。",
+ calm:"他点点头，拿着烟走了，脚步比平时轻快了些。",
+ frag:"有人把一包没拆的烟，变成了和孙子的约定。"}
+];
+
+/* ---------- 12位变体客人（紧凑数据） ---------- */
+var VARIANTS=[
+{id:"v1",name:"夜跑青年",emoji:"🏃",mood:54,intro:"他跑完5公里，直接拐进店里买水，汗还没干。",
+ clues:[{t:"运动手环显示：5.2公里，配速5分半。",kw:"配速",ask:"「失恋第三天，跑步是唯一的安眠药。」"},
+  {t:"他买了两瓶水，一瓶直接浇在了头上。"}],
+ resps:[{t:"「能跑5公里的人，没什么过不去的。」",q:"best"},{t:"「水管够，慢慢喝。」",q:"mid"},{t:"「大半夜跑步，不怕遇到坏人啊？」",q:"bad"}],
+ relief:"他咧嘴一笑：「也是！明天继续跑！」",storm:"他翻了个白眼，拿着水跑走了。",calm:"他靠着冰柜拉伸，汗水滴在地板上。",
+ frag:"有人把失恋，跑成了5分半的配速。"},
+{id:"v2",name:"留学生小林",emoji:"🎧",mood:60,intro:"倒时差的留学生，拿了两罐咖啡，耳机里漏出英文歌。",
+ clues:[{t:"「这边凌晨四点，家里那边是下午。」",kw:"家里",ask:"妈妈每天这个点跟他视频，「怕我在外面学坏。」"},
+  {t:"他买了咖啡，还拿了一包薯片，「给室友带的，他也没睡。」"}],
+ resps:[{t:"「替我谢谢你妈妈——有人惦记，是福气。」",q:"best"},{t:"「薯片第二件半价，再拿一包？」",q:"mid"},{t:"「留学生活挺爽的吧？」",q:"bad"}],
+ relief:"他笑了：「我会跟她说的。她肯定高兴。」",storm:"他戴上耳机，不再说话。",calm:"他点点头，抱着咖啡回了出租屋。",
+ frag:"隔着十二小时时差，有人被准时惦记着。"},
+{id:"v3",name:"主播桃子",emoji:"🎙️",mood:58,intro:"刚下播的女主播，买了卸妆湿巾和面包，妆都花了。",
+ clues:[{t:"「谢谢榜一大哥，谢谢家人们——」她还在 condition反射。",kw:"榜一大哥",ask:"「下了播，才发现嗓子哑得说不出话。榜一？早睡了。」"},
+  {t:"她对着冰柜玻璃照了照，赶紧别开脸。"}],
+ resps:[{t:"「下了播就不用演了。面包趁热，嗓子要紧。」",q:"best"},{t:"「卸妆湿巾在第二排，温和不刺激。」",q:"mid"},{t:"「做主播很赚钱吧？」",q:"bad"}],
+ relief:"她卸了妆，长舒一口气：「还是做自己舒服。」",storm:"她勉强笑笑，拿着东西走了。",calm:"她坐在角落，慢慢啃着面包。",
+ frag:"镜头关掉之后，她才敢做回自己。"},
+{id:"v4",name:"保安老刘",emoji:"👮",mood:50,intro:"巡逻间隙来买泡面，帽檐压得很低。",
+ clues:[{t:"「这片儿我守了八年，哪家灯几点灭，我都知道。」",kw:"八年",ask:"「儿子在外地读大学，学费是我一宿一宿守出来的。」"},
+  {t:"他把泡面端到门口吃，「看着街，心里踏实。」"}],
+ resps:[{t:"「刘叔，这条街交给你，居民们放心。」",q:"best"},{t:"「开水在这边，随便用。」",q:"mid"},{t:"「当保安挺清闲的哈。」",q:"bad"}],
+ relief:"他挺了挺腰：「那是！这片儿的安全，我包了。」",storm:"他没吭声，端着泡面走了。",calm:"他吃完泡面，戴上帽子继续巡逻。",
+ frag:"有人用八年的夜班，守出了儿子的大学通知书。"},
+{id:"v5",name:"冷战夫妻",emoji:"👫",mood:68,intro:"一男一女，前后脚进店，各买各的水，互相不说话。",
+ clues:[{t:"两人各拿一瓶水，分开结账。",kw:"分开结账",ask:"「为了一点小事吵到半夜，谁也不肯先低头。」"},
+  {t:"女人的眼睛有点红，男人的手里攥着车钥匙，攥得很紧。"}],
+ resps:[{t:"「两瓶水，我请。吵架归吵架，别渴着。」",q:"best"},{t:"「要冰的还是常温的？」",q:"mid"},{t:"「夫妻嘛，床头吵架床尾和。」",q:"bad"}],
+ relief:"两人对视一眼，都笑了。男人把水拧开，递了过去。",storm:"女人瞪了男人一眼，两人一前一后走了。",calm:"两人拿着水，并肩走进夜色里，距离近了些。",
+ frag:"一瓶水拧开的瞬间，冷战就输了。"},
+{id:"v6",name:"自由撰稿人",emoji:"💻",mood:56,intro:"抱着电脑的自由职业者，买了三明治，找插座。",
+ clues:[{t:"「甲方在美国，时差完美——就是我的时差不完美。」",kw:"时差",ask:"「稿费拖了两个月，房租可不等人。」"},
+  {t:"他一边吃，一边还在回邮件。"}],
+ resps:[{t:"「先吃饭，邮件不会跑。身体是自己的。」",q:"best"},{t:"「靠窗有插座，网速快。」",q:"mid"},{t:"「自由职业真好，不用打卡。」",q:"bad"}],
+ relief:"他合上电脑：「你说得对，先吃饭！」",storm:"他苦笑：「你不懂。」",calm:"他点点头，继续一边吃一边改稿。",
+ frag:"有人在时差里讨生活，在三明治里找平衡。"},
+{id:"v7",name:"备考的姑娘",emoji:"📚",mood:64,intro:"抱着行测书的姑娘，买了咖啡和巧克力，书页都卷了。",
+ clues:[{t:"「行测模考，又错了8个。」",kw:"8个",ask:"「这是第三次考了。爸妈说再考不上，就回老家。」"},
+  {t:"她的笔袋上贴着：「上岸」两个字。"}],
+ resps:[{t:"「错8个说明还有8个进步空间。上岸那天，我请你喝奶茶。」",q:"best"},{t:"「巧克力补充脑力，慢慢来。」",q:"mid"},{t:"「考公这么卷，不如早点认命。」",q:"bad"}],
+ relief:"她握了握拳：「嗯！上岸那天，我请你喝两杯！」",storm:"她低下头，快步离开。",calm:"她翻开书，又开始刷题。",
+ frag:"有人把「上岸」两个字，贴在了笔袋上，也贴进了心里。"},
+{id:"v8",name:"求婚成功的男人",emoji:"💍",mood:40,intro:"他买了两瓶气泡水，笑得合不拢嘴。",
+ clues:[{t:"「她答应了！刚才，在江边！」",kw:"江边",ask:"「戒指是我攒了半年工资买的。她说：你怎么才来。」"},
+  {t:"他举着气泡水，像举着香槟。"}],
+ resps:[{t:"「恭喜！这顿我请——替杭州祝福你们。」",q:"best"},{t:"「气泡水要冰的吗？」",q:"mid"},{t:"「结婚就是爱情的坟墓，哈哈。」",q:"bad"}],
+ relief:"「谢谢！」他开了一瓶，对着夜空干杯。",storm:"他的笑容僵了一下：「……你不懂。」",calm:"他哼着歌，抱着气泡水走了。",
+ frag:"凌晨，有人把半年的工资，变成了一生的承诺。"},
+{id:"v9",name:"失眠的作家",emoji:"✍️",mood:62,intro:"头发乱糟糟的中年人，买了速溶咖啡，笔记本不离手。",
+ clues:[{t:"「人物不听话，非要按自己的想法走。」",kw:"人物",ask:"「写了三年，编辑说再交不出稿，就解约。」"},
+  {t:"他的笔记本上，画满了人物关系图。"}],
+ resps:[{t:"「人物有自己的命，说明你写活了。咖啡趁热。」",q:"best"},{t:"「这边安静，慢慢写。」",q:"mid"},{t:"「写小说能养活自己吗？」",q:"bad"}],
+ relief:"他眼睛一亮：「对！写活了！」埋头狂写起来。",storm:"他合上本子，走了。",calm:"他点点头，继续在本子上写写画画。",
+ frag:"凌晨，有人的人物活了过来，替他继续往前走。"},
+{id:"v10",name:"夜班司机",emoji:"🚕",mood:54,intro:"开了12年夜班的出租车司机，买口香糖和水。",
+ clues:[{t:"「这城市的夜，我比导航熟。」",kw:"12年",ask:"「女儿今年高考，说考上大学，要请我吃大餐。」"},
+  {t:"他嚼着口香糖，提神，也解乏。"}],
+ resps:[{t:"「那这顿我请——预祝闺女金榜题名！」",q:"best"},{t:"「口香糖薄荷味最提神。」",q:"mid"},{t:"「开出租挺辛苦的，考虑转行吗？」",q:"bad"}],
+ relief:"「哈哈，借你吉言！她要是考上了，我拉着你去吃大餐！」",storm:"他摆摆手，发动了车子。",calm:"他点点头，开车汇入夜色。",
+ frag:"有人开了12年夜班，只为等一句金榜题名。"},
+{id:"v11",name:"遛狗的夜猫子",emoji:"🐕",mood:48,intro:"牵着柯基的年轻人，买了火腿肠，分给狗一半。",
+ clues:[{t:"「它白天不敢出门，人太多，会社恐。」",kw:"社恐",ask:"「其实社恐的是我。狗只是借口。」"},
+  {t:"一人一狗，在凌晨的街上走得很慢。"}],
+ resps:[{t:"「能承认社恐，就已经比很多人勇敢了。」",q:"best"},{t:"「火腿肠再拿一根？狗狗爱吃。」",q:"mid"},{t:"「年轻人要多社交，别总闷着。」",q:"bad"}],
+ relief:"他摸摸狗头：「听见没，我们很勇敢。」",storm:"他牵着狗，快步走了。",calm:"一人一狗，继续慢慢往前走。",
+ frag:"凌晨，一人一狗，互相治愈着社恐。"},
+{id:"v12",name:"早餐店老板",emoji:"🥟",mood:52,intro:"凌晨来进货的早餐店老板，买了两包盐，风风火火。",
+ clues:[{t:"「忘买盐了！明早的包子，就靠这两包了。」",kw:"包子",ask:"「我家包子，这条街的人都认。做了十五年了。」"},
+  {t:"他的围裙上，还沾着面粉。"}],
+ resps:[{t:"「十五年的包子，靠得住！明早我去捧场。」",q:"best"},{t:"「盐在调料区，拿好了？」",q:"mid"},{t:"「起这么早，钱也没多赚吧？」",q:"bad"}],
+ relief:"「哈哈，来！给你留笼刚出锅的！」",storm:"他拎着盐走了，嘟囔着什么。",calm:"他点点头，骑上三轮车走了。",
+ frag:"天没亮，有人已经在为别人的早餐忙碌。"}
+];
+var ALL= CUSTOMERS.concat(VARIANTS);
+var ALL= CUSTOMERS.concat(VARIANTS);
+
+/* ---------- 存档 ---------- */
+var LS="bianlidian_";
+function lsGet(k,d){try{var v=localStorage.getItem(LS+k);return v==null?d:JSON.parse(v);}catch(e){return d;}}
+function lsSet(k,v){try{localStorage.setItem(LS+k,JSON.stringify(v));}catch(e){}}
+var codex=lsGet("codex",[]), fragsTotal=lsGet("frags",[]), ach=lsGet("ach",{}), bestWarm=lsGet("best",0);
+function unlockCodex(id){if(codex.indexOf(id)<0){codex.push(id);lsSet("codex",codex);}}
+function addFragTotal(f){if(fragsTotal.indexOf(f)<0){fragsTotal.push(f);lsSet("frags",fragsTotal);}}
+function unlockAch(id,name){if(!ach[id]){ach[id]=1;lsSet("ach",ach);toast(t("achToast")+name);}}
+
+/* ---------- 状态 ---------- */
+var S=null, shakeTimer=null, shakeLeft=0;
+/* ================= i18n ================= */
+var LANG=(function(){var l=lsGet("lang",null);if(l==="en"||l==="zh")return l;try{var n=(navigator.language||"zh").toLowerCase();if(n.indexOf("en")===0)return "en";}catch(e){}return "zh";})();
+function t(k,p){var o=I18N[LANG]||I18N.zh;var s=(o&&o[k]!==undefined)?o[k]:I18N.zh[k];if(s===undefined)return k;if(p){for(var key in p){s=String(s).split("{"+key+"}").join(p[key]);}}return s;}
+function G_(g){return (LANG==="en"&&typeof EN_G!=="undefined"&&EN_G[g.id])?EN_G[g.id]:null;}
+var VIEW="start";
+function setLang(l){LANG=l;lsSet("lang",l);try{document.documentElement.lang=l==="zh"?"zh-CN":"en";document.title=t("appTitle");}catch(e){}renderView();}
+function toggleLang(){setLang(LANG==="zh"?"en":"zh");}
+function renderView(){
+  if(VIEW==="shop"){renderShop();return;}
+  if(VIEW==="guest"&&S&&S.cur){renderGuest();return;}
+  if(VIEW==="rest"&&S&&S._rest){renderRest();return;}
+  if(VIEW==="settle"&&S){settle();return;}
+  if(VIEW==="codex"){showCodex();return;}
+  if(VIEW==="radio"){showRadio();return;}
+  showStart();
+}
+var I18N={
+zh:{
+appTitle:"凌晨四点的便利店",tagline:"在城市睡着之后，替陌生人守住一点光",
+howPlay:"📋 怎么玩",
+how1b:"观察线索",how1s:"读客人的故事，点关键词<b>追问</b>，挖出他的真实需求",
+how2b:"三选一回应",how2s:"凭线索判断哪句最走心 —— 走心的话能大幅降低心事",
+how3b:"攒温暖度",how3s:"心事降到 <b>10 以下</b>，客人释然离店，温暖度 +1",
+how4b:"别睡着",how4s:"困意到 100 会趴在收银台上：喝咖啡压制，整理货架回体力",
+winLine:'🏆 胜利：天亮时 <b>温暖度 ≥ 3</b> 且没睡着',
+loseLine:"💤 失败：困意到 100，当场睡着",
+ruleBtn:"📖 详细规则",ruleBtnHide:"📖 收起详细规则",
+rd1:'· 一晚 0:00 → 6:00，共接待 <b style="color:#ffcf7d">8 位客人</b>',
+rd2:'· 追问每次耗 <b style="color:#ffcf7d">8 体力</b>（暖光灯免费）；追问后，走心回应心事 <b style="color:#7fd6a4">再 -10</b>',
+rd3:'· 回应效果：走心 <b style="color:#7fd6a4">-50</b> / 还行 -25 / 糟糕 <b style="color:#ff6b6b">+20</b>；心事 ≥85 时回应太糟会被气走',
+rd4:'· 走心回应消耗 <b style="color:#ffcf7d">5 体力</b>（全情投入的共情）',
+rd5:"· 咖啡：困意 -40 / -25 / -10（效果递减）；第 4 杯起手抖，下次回应限时 10 秒",
+rd6:"· 整理货架：20 秒拖放小游戏，成功体力 +15，放弃 +5",
+rd7:"· 客人之间藏着故事线，集碎片拼出《城市夜话》",
+startShift:"🌙 开始值夜班",codexBtn:"📖 图鉴",radioBtn:"📻 深夜电台",
+bestWarmT:"历史最佳温暖度",foot:"单机 H5 · 单文件本地可玩 · 原创设计",
+shopTitle:"🛒 开店准备",
+shopSub:'店长预支了 <b style="color:#ffcf7d">{n} 元</b> 设备费，只能重点投入一处——余额 <b style="color:#ffcf7d" id="shopMoney">{n}</b> 元',
+price:"{n}元",
+itemGz:"🍢 关东煮机",itemGzD:"每位客人进店时，心事-6。「热汤的香气能安抚人心。」",
+itemWl:"💡 暖光灯",itemWlD:"追问免费，且每次追问客人心事-5。「暖光下，人更愿意开口。」",
+buy:"购买",bought:"已购",noMoney:"钱不够",openShop:"🌙 开门营业",
+toastNoBudget:"💸 预算不够，只能重点投入一处",
+toastGz:"🍢 关东煮机就位，热汤翻滚",toastWl:"💡 暖光灯亮起，店里暖洋洋的",
+gzCard:"🍢 关东煮的香气飘过去，客人的肩膀松了些。",
+step1:"① 观察",step2:"② 追问",step3:"③ 回应",
+goalLine:'🎯 目标：把他的 <b style="color:#ffcf7d">心事降到 10 以下</b>，他就会释然（❤+1）。先观察线索，可追问挖出真实需求，再选一句最走心的话回应。',
+observeT:"🔍 观察",askedBtn:"已追问",noStamBtn:"体力不足",askBtn:"追问：",
+askTip:"💡 追问能揭示真实需求，但会消耗体力",askTipWl:"（暖光灯：免费，心事-5）",askTipStam:"（-8体力）",askDot:"。",
+askTipTail:'<b style="color:#7fd6a4">用心倾听后，你的回应会更有力量。</b>',
+respT:"💬 回应",
+respHintAsked:"💡 你已追问出他的真实处境——对照上面的线索，选一句最走心的话。追问让走心回应效果更强（心事再-10）。",
+respHint:"💡 没追问也可以直接回应，但你可能猜不中他真正的心事。追问（②）能揭示真实需求，让走心回应更有力量。",
+shakeT:"🤲 手抖得厉害，10秒内必须开口（否则语无伦次）…",
+shakeTN:"🤲 手抖得厉害，{n}秒内必须开口（否则语无伦次）…",
+timeoutResp:"「呃……这个……」",youSaid:"你说",
+bestCostT:"💪 全情投入的共情消耗了 5 点体力",
+stormSub:"💔 回应太糟，客人拂袖而去。本晚失误：{n} 次",
+relievedT:"释然了",fragGet:"📻 电台碎片+1：",warmGet:"❤ 温暖度 +1（当前 {n}）",
+calmSub:"客人离开了，似乎好受了一点，但还差一把火候。",
+egg1msg:"隐藏故事线「分手」圆满！温暖度+1",
+egg1frag:"凌晨四点的和解：四点十七分，便利店门口，两个人影抱在了一起。原来有些「分手吧」，只是缺一个人先回头。",
+egg2msg:"隐藏故事线「深夜的善意」被点亮！",
+egg2frag:"两瓶牛奶：陈伯多买了一瓶，放在门口台阶上。「给那孩子，长身体。」",
+restT:"🌙 休整",restSub:"下一位客人还没来，抓紧时间——",
+coffeeN:"☕ 喝咖啡（第{n}杯，困意-{e}）",coffeeMax:"☕ 再来一杯（已耐受，手会抖！）",
+shelfBtn:"🧹 整理货架（体力+15）",nextGuestBtn:"迎接下一位客人 →",dawnBtn:"🌅 天亮了，结算 →",
+toastCoffee:"☕ 咖啡下肚，困意-{n}",toastShake:"⚠️ 咖啡因耐受拉满！手开始抖了，下次回应限时10秒",
+shelfTitle:"🧹 整理货架",shelfSub:"把商品拖到对应的货架区",giveUp:"放弃（体力+5）",
+shelfWin:"🧹 货架整齐了，体力+15",shelfQuit:"🧹 随便理了理，体力+5",
+shZone:"区",sh_nm0:"饭团",sh_nm1:"面包",sh_nm2:"牛奶",sh_nm3:"巧克力",sh_nm4:"泡面",
+settleWinT:"天亮了，你守住了这一夜",settleLoseT:"这一夜，没能守住",
+settleWinS:"晨光漫进便利店，关东煮还在咕嘟。",
+settleAsleepS:"你在收银台前睡着了。还好，店没被搬空。",
+settleLoseS:"城市醒了，而你错过了几个人的心事。",
+settleStat:"📊 本晚结算",stWarm:"温暖度",stStorm:"气走客人",stFrag:"电台碎片",stWage:"夜班补贴",
+rate0:"城市树洞",rateQ0:"整座城市的秘密，都敢放心交给你。",
+rate1:"深夜灯塔",rateQ1:"你的灯，为很多人照过路。",
+rate2:"守夜人",rateQ2:"今夜，你是合格的守夜人。",
+rate3:"打烊学徒",rateQ3a:"咖啡会有的，下次别硬撑。",rateQ3b:"温暖度≥3才能通关，多追问、多倾听。",
+againBtn:"🌙 再值一晚",homeBtn:"🏠 首页",
+achWatch:"深夜守望者（单晚温暖≥5）",achPerfect:"金牌店员（整晚零失误）",achDj:"电台主播（累计10个碎片）",
+achToast:"🏆 成就解锁：",newAchT:"🏆 新成就",
+codexTitle:"📖 客人图鉴",unknownT:"？？？",backBtn:"← 返回",
+radioTitle:"📻 深夜电台 · 城市夜话",
+radioSub:'已收集 {n} 个故事碎片（主播成就已解锁）',radioSub2:'已收集 {n} 个故事碎片（集齐10个解锁「电台主播」）',
+radioEmpty:"还没有碎片。今晚多温暖几位客人吧。",
+tonightFrag:"📻 今晚收集的碎片",
+mood0:"眉头舒展",mood1:"略显低落",mood2:"心事重重",mood3:"满腹心事",
+guestN:"第{n}位客人",drowsyT:"困意",energyT:"体力",
+askNoStam:"体力不足，去整理一下货架吧",
+askFree:"💭 捕捉到关键信息（免费，心事-5）",askCost:"💭 捕捉到关键信息（体力-8）"
+},
+en:{
+appTitle:"The 4 AM Convenience Store",tagline:"After the city falls asleep, keep a little light on for strangers",
+howPlay:"📋 How to play",
+how1b:"Read the clues",how1s:"Read each guest's story, tap keywords to <b>ask</b>, uncover what they really need",
+how2b:"Pick a response",how2s:"Judge which line is most heartfelt — heartfelt words melt worries away",
+how3b:"Warm their hearts",how3s:"Bring worries <b>below 10</b> and they'll leave at peace — Warmth +1",
+how4b:"Don't doze off",how4s:"At 100 drowsiness you'll pass out at the register: coffee helps, tidying shelves restores energy",
+winLine:'🏆 Win: at dawn, <b>Warmth ≥ 3</b> and still awake',
+loseLine:"💤 Lose: drowsiness hits 100 and you doze off on the spot",
+ruleBtn:"📖 Details",ruleBtnHide:"📖 Hide details",
+rd1:'· One night, 0:00 → 6:00, serving <b style="color:#ffcf7d">8 guests</b>',
+rd2:'· Each question costs <b style="color:#ffcf7d">8 energy</b> (free with Warm Lamp); after asking, heartfelt responses cut worries by <b style="color:#7fd6a4">an extra 10</b>',
+rd3:'· Response effects: heartfelt <b style="color:#7fd6a4">−50</b> / okay −25 / awful <b style="color:#ff6b6b">+20</b>; a terrible response at worries ≥ 85 drives them away',
+rd4:'· Heartfelt responses cost <b style="color:#ffcf7d">5 energy</b> (empathy takes effort)',
+rd5:"· Coffee: −40 / −25 / −10 drowsiness (diminishing); from the 4th cup your hands shake — next response is timed (10s)",
+rd6:"· Tidy shelves: 20s drag-and-drop mini-game, +15 energy on success, +5 if you quit",
+rd7:'· Hidden storylines link the guests — collect fragments to complete "City Night Tales"',
+startShift:"🌙 Start the night shift",codexBtn:"📖 Guest Book",radioBtn:"📻 Night Radio",
+bestWarmT:"Best warmth",foot:"Offline H5 · Single-file game · Original design",
+shopTitle:"🛒 Store Setup",
+shopSub:'The manager gave you <b style="color:#ffcf7d">${n}</b> for equipment — invest it where it matters most. Balance: <b style="color:#ffcf7d" id="shopMoney">${n}</b>',
+price:"${n}",
+itemGz:"🌭 Hot Dog Roller",itemGzD:'Each guest arrives with −6 worries. "The smell of grilled hot dogs soothes the soul."',
+itemWl:"💡 Warm Lamp",itemWlD:'Questions are free, and each one cuts worries by 5. "Under warm light, people open up."',
+buy:"Buy",bought:"Owned",noMoney:"Can't afford",openShop:"🌙 Open for business",
+toastNoBudget:"💸 Not enough budget — invest where it matters most",
+toastGz:"🌭 Hot dog roller installed, sausages sizzling",toastWl:"💡 Warm lamp on — the store feels cozy",
+gzCard:"🌭 The smell of hot dogs drifts over; the guest's shoulders relax a little.",
+step1:"① Observe",step2:"② Ask",step3:"③ Respond",
+goalLine:'🎯 Goal: bring their <b style="color:#ffcf7d">worries below 10</b> and they\'ll leave at peace (❤+1). Study the clues, ask to uncover their real need, then pick the most heartfelt line.',
+observeT:"🔍 Observe",askedBtn:"Asked",noStamBtn:"Low energy",askBtn:"Ask: ",
+askTip:"💡 Asking reveals real needs but costs energy",askTipWl:" (Warm Lamp: free, −5 worries)",askTipStam:" (−8 energy)",askDot:".",
+askTipTail:'<b style="color:#7fd6a4">Listening well makes your response stronger.</b>',
+respT:"💬 Respond",
+respHintAsked:"💡 You've uncovered their real situation — match it against the clues above and pick the most heartfelt line. Asking makes heartfelt responses even stronger (−10 more).",
+respHint:"💡 You can respond without asking, but you might miss what truly troubles them. Asking (step ②) reveals their real need and empowers heartfelt responses.",
+shakeT:"🤲 Hands shaking — speak within 10 seconds (or you'll ramble)…",
+shakeTN:"🤲 Hands shaking — {n} seconds left (or you'll ramble)…",
+timeoutResp:"\"Uh... um...\"",youSaid:"You say",
+bestCostT:"💪 Wholehearted empathy costs 5 energy",
+stormSub:"💔 That landed badly — the guest stormed off. Mistakes tonight: {n}",
+relievedT:"at peace",fragGet:"📻 Story fragment +1: ",warmGet:"❤ Warmth +1 (now {n})",
+calmSub:"They leave looking a little better — but not quite at peace.",
+egg1msg:'Hidden storyline "The Breakup" complete! Warmth +1',
+egg1frag:"Reconciliation at 4 AM: at 4:17, two figures embraced outside the store. Some \"let's break up\"s just need someone to turn back first.",
+egg2msg:'Hidden storyline "Midnight Kindness" unlocked!',
+egg2frag:"Two bottles of milk: Uncle Chen bought an extra one and left it on the steps. \"For the kid — he's still growing.\"",
+restT:"🌙 Break",restSub:"No one's here yet — make the most of it.",
+coffeeN:"☕ Coffee (cup {n}, −{e} drowsiness)",coffeeMax:"☕ One more (tolerant — hands will shake!)",
+shelfBtn:"🧹 Tidy shelves (+15 energy)",nextGuestBtn:"Greet the next guest →",dawnBtn:"🌅 Dawn — settle up →",
+toastCoffee:"☕ Coffee down — drowsiness −{n}",toastShake:"⚠️ Maxed out on caffeine! Hands shaking — next response is timed (10s)",
+shelfTitle:"🧹 Tidy the Shelves",shelfSub:"Drag each item to its shelf zone",giveUp:"Give up (+5 energy)",
+shelfWin:"🧹 Shelves tidied — energy +15",shelfQuit:"🧹 A quick tidy — energy +5",
+shZone:" zone",sh_nm0:"Rice ball",sh_nm1:"Bread",sh_nm2:"Milk",sh_nm3:"Chocolate",sh_nm4:"Noodles",
+settleWinT:"Dawn breaks — you made it through the night",settleLoseT:"The night slipped away",
+settleWinS:"Morning light fills the store; hot dogs still turning on the roller.",
+settleAsleepS:"You dozed off at the register. At least the store wasn't looted.",
+settleLoseS:"The city woke up — and you missed a few people's troubles.",
+settleStat:"📊 Tonight's tally",stWarm:"Warmth",stStorm:"Guests upset",stFrag:"Story fragments",stWage:"Night pay",
+rate0:"City Confidant",rateQ0:"\"This whole city's secrets are safe with you.\"",
+rate1:"Midnight Lighthouse",rateQ1:"\"Your light guided many people home.\"",
+rate2:"Night Watcher",rateQ2:"\"Tonight, you were a true night watcher.\"",
+rate3:"Closing-Time Rookie",rateQ3a:"\"There'll be coffee next time — don't push yourself so hard.\"",rateQ3b:"\"You need Warmth ≥ 3 to clear — ask more, listen more.\"",
+againBtn:"🌙 Another night",homeBtn:"🏠 Home",
+achWatch:"Night Watcher (Warmth ≥ 5 in one night)",achPerfect:"Star Clerk (zero mistakes all night)",achDj:"Radio Host (10 fragments total)",
+achToast:"🏆 Achievement unlocked: ",newAchT:"🏆 New achievements",
+codexTitle:"📖 Guest Book",unknownT:"???",backBtn:"← Back",
+radioTitle:"📻 Night Radio · City Night Tales",
+radioSub:'Collected {n} fragments ("Radio Host" unlocked)',radioSub2:'Collected {n} fragments (collect 10 to unlock "Radio Host")',
+radioEmpty:"No fragments yet. Warm a few more hearts tonight.",
+tonightFrag:"📻 Tonight's fragments",
+mood0:"At ease",mood1:"A little down",mood2:"Weighed down",mood3:"Full of worries",
+guestN:"Guest #{n}",drowsyT:"Drowsy",energyT:"Energy",
+askNoStam:"Low energy — go tidy the shelves",
+askFree:"💭 Key insight caught (free, −5 worries)",askCost:"💭 Key insight caught (−8 energy)"
+}};
+
+/* ---------- EN guest stories (globalized) ---------- */
+var EN_G={
+c1:{intro:"He walks in hugging several cans of beer, phone screen still glowing.",
+clues:[
+{t:"He stares at his phone, the chat frozen on the words: \"Let's break up.\"",kw:"Let's break up",ask:"Three months ago they were planning a road trip. She said: \"You spend less time with me than with your bugs.\""},
+{t:"He grabs six cans of beer, then quietly puts two back. \"Alone, I can't finish them.\""},
+{t:"His work badge still hangs around his neck, eyes bloodshot.",kw:"bloodshot eyes",ask:"Three code submissions tonight, all rejected. The bugs aren't fixed — and now the girlfriend is gone too."}],
+resps:[{t:"\"If a breakup still hurts, it means you loved for real. Easy on the beer — the sun still rises tomorrow.\"",q:"best"},
+{t:"\"Want a grilled sausage? When you're sad, eat something hot.\"",q:"mid"},
+{t:"\"Eh, out with the old, in with the new — the next one's always better!\"",q:"bad"}],
+relief:"He freezes, then suddenly laughs. \"You're right... at least code never breaks up with me.\"",
+storm:"He frowns, grabs his beer and walks off. \"You don't get it.\"",
+calm:"He nods, sits by the window hugging his beer for a long time, and says thanks on his way out.",
+frag:"At 1 AM, someone packed up a heartbreak and a pile of unfixed bugs. This city's nights are full of unfinished \"we\"s."},
+c2:{intro:"She buys hangover pills and band-aids; her scarf smells faintly of alcohol.",
+clues:[
+{t:"Her basket holds hangover pills, band-aids, and a bottle of water.",kw:"band-aids",ask:"The band-aids aren't for her — \"That idiot drinks too much and keeps falling over.\""},
+{t:"Her ride-hailing app is open, destination: an address across town.",kw:"the address",ask:"That address matches the location on the beer-buying programmer's phone. Same neighborhood."},
+{t:"She opens the chat box again and again, types, then deletes it letter by letter."}],
+resps:[{t:"\"Go find him. Some words can't be sobered up with pills.\"",q:"best"},
+{t:"\"Have some water first — you'll still make it if you run.\"",q:"mid"},
+{t:"\"You broke up — why do you care what happens to him?\"",q:"bad"}],
+relief:"She grabs the bag and runs out. \"Thank you! If he dares sleep on the street, I'll kill him!\"",
+storm:"She clutches the bag and hurries out, head down. \"...None of your business.\"",
+calm:"She lingers at the door, then gets into the taxi after all.",
+frag:"At 2 AM, someone ran the words \"let's break up\" — along with hangover pills — all the way back."},
+c3:{intro:"He grabs three coffees and two rice balls in one go, tie hanging loose.",
+clues:[
+{t:"His notebook lies open, every page reading \"START OVER\".",kw:"start over",ask:"This is tonight's third draft. The client wants it by 9 AM — \"just a few tweaks,\" they said."},
+{t:"Dust on his dress shoes, damp trouser cuffs — he ran for the last train and missed it."},
+{t:"He glances at his watch, then at his coffee, as if calculating how many more rounds he can survive."}],
+resps:[{t:"\"The deadline will pass. Eat something hot first — the stomach is yours.\"",q:"best"},
+{t:"\"Second coffee's half price — want another can?\"",q:"mid"},
+{t:"\"The client tortures me a thousand times — you get used to it, haha.\"",q:"bad"}],
+relief:"He tears into the rice ball. \"You're right. Survive first, die tomorrow.\"",
+storm:"He forces a smirk. \"Easy for you to say.\" Grabs his coffee and leaves.",
+calm:"He sits by the window, eating while editing slides, shoulders a little hunched.",
+frag:"At 3 AM, someone survives on a rice ball. \"Just a few tweaks\" — the biggest lie in the adult world."},
+c4:{intro:"Under her white coat, a faded T-shirt. She buys a hot dog and a cup of hot soup.",
+clues:[
+{t:"She cradles the hot soup. \"Warming, and it won't sit heavy at night.\""},
+{t:"On the back of her hand, ballpoint ink: \"Bed 6 — change dressing at 2:00.\"",kw:"Bed 6",ask:"The elderly lady in Bed 6 isn't doing well tonight. She checks on her every hour."},
+{t:"She warms her hands on the paper cup, knuckles a little white."}],
+resps:[{t:"\"You watch the ward, we watch the store — tonight, let's keep going together.\"",q:"best"},
+{t:"\"Let me pour you extra soup — warm those hands.\"",q:"mid"},
+{t:"\"Night shifts must be rough — but the pay's good, right?\"",q:"bad"}],
+relief:"Her eyes crinkle. \"First time anyone's said — let's keep going together.\"",
+storm:"She presses her lips together and walks off with her hot dog, saying nothing more.",
+calm:"She finishes quietly, tosses the cup, and waves goodbye.",
+frag:"At dawn's edge, someone carried the ward's lamplight into the convenience store's glow."},
+c5:{intro:"An elderly man in a neat old-style jacket appears right on time, taking a bottle of plain milk.",
+clues:[
+{t:"\"Can't sleep — out for a walk, don't want to wake my wife.\""},
+{t:"He warms the milk in his hands, waiting till it's less cold before drinking.",kw:"his wife",ask:"His wife passed away last winter. He says: \"The house is too big — I can't sleep soundly alone.\""},
+{t:"He always sits by the window, gazing at the streetlamp across the road."}],
+resps:[{t:"\"Drink the milk while it's warm. Uncle Chen, come again tomorrow night — I'll save you the window seat.\"",q:"best"},
+{t:"\"Get a membership card — second milk's half price.\"",q:"mid"},
+{t:"\"That's just old age. Get to bed early.\"",q:"bad"}],
+relief:"He waves it off, grinning like a kid. \"Deal! See you tomorrow night!\"",
+storm:"He shakes his head and shuffles out, his back a little more bent than when he came.",
+calm:"He finishes the milk and places the bottle neatly in the recycling bin.",
+frag:"Someone fights a whole empty building with one bottle of warm milk."},
+c6:{intro:"A teenager squatting on the steps, buying instant noodles and a sausage.",
+clues:[
+{t:"His phone's at 3% — he can't bear to look at it."},
+{t:"A \"Model Student\" medal pinned to his backpack.",kw:"model student",ask:"The medal's from middle school. \"Haven't won anything since high school.\" Tonight, a huge fight with his parents."},
+{t:"He hugs the noodles to his chest like something precious."}],
+resps:[{t:"\"Go home at dawn. Your parents definitely aren't sleeping either.\"",q:"best"},
+{t:"\"I'll make the noodles for you — hot water's free.\"",q:"mid"},
+{t:"\"Running away at your age? Go home, take your punishment, and behave.\"",q:"bad"}],
+relief:"Head down over his noodles, he mumbles: \"...Yeah. Home at dawn.\"",
+storm:"He jumps up, nearly knocking the noodles over. \"You adults are all the same!\"",
+calm:"He finishes the noodles, drinks all the broth, and whispers thanks.",
+frag:"In the small hours, someone used one bowl of noodles to forgive the whole world — himself included."},
+c7:{intro:"His folding e-bike leans by the door; he buys water and bread, waiting for his next ride request.",
+clues:[
+{t:"\"Third ride of the night hasn't come. First two were drunks.\"",kw:"third ride",ask:"\"One threw up all over the seat — I paid for the cleaning myself. This job pays in sweat.\""},
+{t:"He wheels his e-bike under the store's awning, afraid it'll get rained on."},
+{t:"His phone mount is polished clean, the ride-request screen glowing."}],
+resps:[{t:"\"Rides will come. Driver Wang, eat the bread while it's warm — and charge up first.\"",q:"best"},
+{t:"\"There's an outlet by the door — charge the bike, no worries.\"",q:"mid"},
+{t:"\"Driving pays well, right? A couple hundred a ride?\"",q:"bad"}],
+relief:"\"From your lips!\" He bites into the bread — and his phone rings. A ride!",
+storm:"He waves it off. \"You office folks wouldn't get it.\" Turns back to his e-bike.",
+calm:"He finishes the water, bins the bottle, and keeps watching for requests.",
+frag:"The city's nights are held up by countless people waiting for the next order."},
+c8:{intro:"Hugging her laptop, she grabs dark chocolate and a black coffee, eyes bloodshot.",
+clues:[
+{t:"Her screensaver is an experimental data graph, the curve as messy as an ECG."},
+{t:"\"Sixth pilot experiment. Failed again.\"",kw:"pilot experiment",ask:"Her advisor says if she can't crack it, graduation's at risk. She hasn't had a full night's sleep in two weeks."},
+{t:"She breaks the chocolate into small pieces, eating them one by one like a ritual."}],
+resps:[{t:"\"Edison failed a thousand times. This is only number six — what's the rush?\"",q:"best"},
+{t:"\"This chocolate's on me — solidarity from the night shift.\"",q:"mid"},
+{t:"\"A PhD's this miserable — what were you thinking?\"",q:"bad"}],
+relief:"She breaks off half the chocolate and hands it over. \"You're right. Maybe the seventh time's the charm.\"",
+storm:"She hugs her laptop. \"Easy for you to say.\" Walks off without looking back.",
+calm:"She nods, opens her laptop by the window, and starts typing again.",
+frag:"In the small hours, someone chewed up failure number six and swallowed it, ready for number seven."},
+c9:{intro:"Suited up but hair a mess, he grabs a bento and a cola and drops into the window seat.",
+clues:[
+{t:"\"Showed apartments till midnight — the deal still fell through.\""},
+{t:"Tie yanked loose, second shirt button done up wrong.",kw:"fell through",ask:"At the last minute the client balked at the \"bad feng shui.\" \"Three days of research, killed by one sentence.\""},
+{t:"He stares at the microwave heating his bento like he's awaiting a verdict."}],
+resps:[{t:"\"Lost deals come back; cold bentos don't. Eat while it's hot.\"",q:"best"},
+{t:"\"Ice in the cola? Ice-cold cola cures everything.\"",q:"mid"},
+{t:"\"Real estate commissions are huge — this is nothing to you.\"",q:"bad"}],
+relief:"He shovels rice. \"I like the sound of that — deals will come back!\"",
+storm:"He sneers. \"Have YOU ever sold a house?\" Grabs his bento and leaves.",
+calm:"He finishes quietly and tidies all his trash away.",
+frag:"Someone digested the words \"bad feng shui\" along with his bento."},
+c10:{intro:"A man dragging a suitcase, flight delayed five hours, first time in Hangzhou.",
+clues:[
+{t:"He buys a charging cable and a rice ball — his power bank has fully given up."},
+{t:"\"Was supposed to meet a friend for late-night food — they waited till 2 AM and went to bed.\"",kw:"late-night food",ask:"\"Not the smoothest first impression of this city, huh.\" He laughs at himself."},
+{t:"He photographs the store's glowing sign. \"Nice — very cyberpunk.\""}],
+resps:[{t:"\"Then let me treat you to a hot dog — call it Hangzhou buying you that late-night meal.\"",q:"best"},
+{t:"\"We have WiFi — password's today's date.\"",q:"mid"},
+{t:"\"Delays are normal. You'll get used to it.\"",q:"bad"}],
+relief:"\"Haha, don't mind if I do! Hangzhou — I'll remember you!\"",
+storm:"He shrugs. \"Fine.\" Drags his suitcase off into the night.",
+calm:"He plugs in and sits by the window, watching the unfamiliar city.",
+frag:"In a delayed flight's wreckage, someone found a city's kindness."},
+c11:{intro:"Her shift starts at 4:30; she comes early for breakfast: steamed buns and soy milk.",
+clues:[
+{t:"\"Swept this street for ten years — I know every pothole blindfolded.\"",kw:"ten years",ask:"\"Breakfast joints on this street have turned over three times — but your light's always been on.\""},
+{t:"Her gloves, washed pale, sit folded neatly on the table corner."},
+{t:"She stacks her change coin by coin before pocketing it."}],
+resps:[{t:"\"Sister Li, this street's been clean for ten years. This morning's buns are on me.\"",q:"best"},
+{t:"\"Sugar in the soy milk? Hot or warm?\"",q:"mid"},
+{t:"\"Street sweeping's pretty free, huh — no boss to please.\"",q:"bad"}],
+relief:"She waves it off and pays by QR code anyway. \"Business is business — but I appreciate it!\"",
+storm:"She says nothing, takes her buns and leaves, steps quicker than usual.",
+calm:"She finishes, pulls on her gloves, and pushes her cart into the brightening sky.",
+frag:"Before dawn, someone has already swept the whole city clean."},
+c12:{intro:"Every night he comes, buys the same pack of cigarettes, says little. Tonight he lingers at the door.",
+clues:[
+{t:"Cigarettes in hand, he stands at the door for ten minutes without coming in.",kw:"didn't come in",ask:"It's not even raining tonight — he's just debating quitting. His daughter said: \"One more cigarette and you don't get to hold your grandkid.\""},
+{t:"He strokes his phone wallpaper — a one-month-old baby."},
+{t:"\"The usual\" — the only three words he says each night."}],
+resps:[{t:"\"Uncle Chen, the grandkid matters. Starting tonight, I'll keep count for you — Day 1.\"",q:"best"},
+{t:"\"The usual? Or switch to menthol to ease off?\"",q:"mid"},
+{t:"\"Smoking kills — didn't you know?\"",q:"bad"}],
+relief:"He pockets the cigarettes, unopened. \"Deal. Count from tonight — Day 1.\"",
+storm:"He glances at you, takes the cigarettes and leaves, back a little hunched.",
+calm:"He nods and leaves with his cigarettes, steps a touch lighter than usual.",
+frag:"Someone turned an unopened pack of cigarettes into a promise to a grandchild."},
+v1:{intro:"Fresh off a 5K, he ducks in for water, sweat still dripping.",
+clues:[
+{t:"His fitness band reads: 5.2 km, 5:30 pace.",kw:"pace",ask:"\"Day three of the breakup — running's my only sleeping pill.\""},
+{t:"He buys two bottles of water and pours one straight over his head."}],
+resps:[{t:"\"Anyone who can run 5K can get through anything.\"",q:"best"},
+{t:"\"Plenty of water — take your time.\"",q:"mid"},
+{t:"\"Running at this hour — aren't you scared of creeps?\"",q:"bad"}],
+relief:"He grins. \"True! Running again tomorrow!\"",
+storm:"He rolls his eyes and jogs off with his water.",
+calm:"He stretches against the freezer, sweat dripping on the floor.",
+frag:"Someone ran their heartbreak into a 5:30 pace."},
+v2:{intro:"A jet-lagged exchange student grabs two coffees, English songs leaking from his earbuds.",
+clues:[
+{t:"\"It's 4 AM here — back home it's afternoon.\"",kw:"home",ask:"His mom video-calls every day at this hour — \"afraid I'll pick up bad habits abroad.\""},
+{t:"He grabs coffee plus chips — \"for my roommate, he's up too.\""}],
+resps:[{t:"\"Thank your mom for me — being missed is a blessing.\"",q:"best"},
+{t:"\"Second chips half price — grab another?\"",q:"mid"},
+{t:"\"Exchange student life must be sweet, huh?\"",q:"bad"}],
+relief:"He smiles. \"I'll tell her. She'll be happy.\"",
+storm:"He puts his earbuds in and goes silent.",
+calm:"He nods and heads back to his flat, hugging his coffee.",
+frag:"Across a twelve-hour time difference, someone is missed right on schedule."},
+v3:{intro:"A streamer fresh off broadcast buys makeup wipes and bread, makeup smudged.",
+clues:[
+{t:"\"Thanks top donor, thanks fam —\" She's still on autopilot.",kw:"top donor",ask:"\"Off stream, her throat's too hoarse to speak. The top donor? Asleep hours ago.\""},
+{t:"She catches her reflection in the freezer glass and quickly looks away."}],
+resps:[{t:"\"Off stream, no need to perform. Eat the bread warm — take care of that throat.\"",q:"best"},
+{t:"\"Makeup wipes are on the second shelf — gentle kind.\"",q:"mid"},
+{t:"\"Streaming must pay well, huh?\"",q:"bad"}],
+relief:"She wipes her face clean and exhales. \"Being myself feels best.\"",
+storm:"She forces a smile and leaves with her things.",
+calm:"She sits in the corner, slowly nibbling her bread.",
+frag:"Only after the camera's off does she dare to be herself."},
+v4:{intro:"On patrol break, he buys instant noodles, cap pulled low.",
+clues:[
+{t:"\"I've watched this block for eight years — I know when every light goes out.\"",kw:"eight years",ask:"\"My son's at college out of town — his tuition came from my night shifts, one by one.\""},
+{t:"He eats his noodles by the door. \"Watching the street keeps me grounded.\""}],
+resps:[{t:"\"Uncle Liu, this block's in your hands — the neighbors rest easy.\"",q:"best"},
+{t:"\"Hot water's over here — help yourself.\"",q:"mid"},
+{t:"\"Being a guard's pretty chill, huh.\"",q:"bad"}],
+relief:"He straightens up. \"You bet! This block's safety is on me.\"",
+storm:"He says nothing and walks off with his noodles.",
+calm:"He finishes, puts his cap back on, and resumes patrol.",
+frag:"Someone's eight years of night shifts guarded his son's college acceptance letter."},
+v5:{intro:"A man and a woman enter one after the other, each buying their own water, not a word between them.",
+clues:[
+{t:"Two bottles, paid for separately.",kw:"paying separately",ask:"\"A silly argument dragged past midnight — neither will back down first.\""},
+{t:"Her eyes are a little red; he grips the car keys tight."}],
+resps:[{t:"\"Both waters on me. Fight all you want — don't go thirsty.\"",q:"best"},
+{t:"\"Chilled or room temp?\"",q:"mid"},
+{t:"\"Couples always make up by morning, right?\"",q:"bad"}],
+relief:"They glance at each other and both laugh. He twists a bottle open and hands it over.",
+storm:"She glares at him; they leave one after the other.",
+calm:"Bottles in hand, they walk into the night side by side — a little closer than before.",
+frag:"The moment a bottle cap twists open, the silent treatment loses."},
+v6:{intro:"A freelancer hugging a laptop buys a sandwich and hunts for an outlet.",
+clues:[
+{t:"\"My client's in the US — the time difference works great. For them.\"",kw:"time difference",ask:"\"My fee's two months late — but rent waits for no one.\""},
+{t:"He eats while still answering emails."}],
+resps:[{t:"\"Eat first — emails won't run away. Your body's your own.\"",q:"best"},
+{t:"\"Outlet by the window, fast WiFi.\"",q:"mid"},
+{t:"\"Freelancing's great — no clocking in.\"",q:"bad"}],
+relief:"He closes the laptop. \"You're right — food first!\"",
+storm:"He smiles bitterly. \"You don't get it.\"",
+calm:"He nods and keeps editing between bites.",
+frag:"Someone makes a living across time zones and finds balance in a sandwich."},
+v7:{intro:"A girl clutching an exam-prep book buys coffee and chocolate, pages dog-eared.",
+clues:[
+{t:"\"Mock exam again — 8 wrong.\"",kw:"8 wrong",ask:"\"Third attempt. My parents say if I fail again, I'm moving back home.\""},
+{t:"Her pencil case has a sticker: \"PASS\"."}],
+resps:[{t:"\"Eight wrong means eight chances to improve. When you pass, bubble tea's on me.\"",q:"best"},
+{t:"\"Chocolate fuels the brain — take it slow.\"",q:"mid"},
+{t:"\"That exam's brutal — maybe just accept it.\"",q:"bad"}],
+relief:"She pumps her fist. \"Yeah! When I pass, I'll buy you TWO!\"",
+storm:"She lowers her head and hurries off.",
+calm:"She opens the book and starts drilling again.",
+frag:"Someone stuck the word \"PASS\" on her pencil case — and in her heart."},
+v8:{intro:"He buys two sparkling waters, grinning ear to ear.",
+clues:[
+{t:"\"She said yes! Just now, by the river!\"",kw:"the river",ask:"\"The ring took six months of savings. She said: what took you so long.\""},
+{t:"He holds the sparkling water up like champagne."}],
+resps:[{t:"\"Congrats! This one's on me — Hangzhou's blessing to you both.\"",q:"best"},
+{t:"\"Chilled sparkling water?\"",q:"mid"},
+{t:"\"Marriage is the grave of love, haha.\"",q:"bad"}],
+relief:"\"Thank you!\" He cracks one open and toasts the night sky.",
+storm:"His smile freezes. \"...You don't get it.\"",
+calm:"Humming, he walks off hugging his sparkling water.",
+frag:"In the small hours, someone turned six months' pay into a lifelong promise."},
+v9:{intro:"A disheveled middle-aged man buys instant coffee, notebook never leaving his hand.",
+clues:[
+{t:"\"My characters won't listen — they insist on going their own way.\"",kw:"characters",ask:"\"Three years writing. My editor says: miss the deadline again and we're done.\""},
+{t:"His notebook is covered in character relationship maps."}],
+resps:[{t:"\"Characters with minds of their own mean you've written them alive. Drink the coffee hot.\"",q:"best"},
+{t:"\"It's quiet here — write at your pace.\"",q:"mid"},
+{t:"\"Can novels even pay the bills?\"",q:"bad"}],
+relief:"His eyes light up. \"Right — they're alive!\" He dives back into writing.",
+storm:"He closes the notebook and leaves.",
+calm:"He nods and keeps scribbling in his notebook.",
+frag:"In the small hours, someone's characters came alive and walked on ahead of him."},
+v10:{intro:"A taxi driver on twelve years of night shifts buys gum and water.",
+clues:[
+{t:"\"I know this city's nights better than any GPS.\"",kw:"twelve years",ask:"\"My daughter takes the college entrance exam this year — says she'll treat me to a feast if she gets in.\""},
+{t:"He chews gum — keeps him alert, keeps him going."}],
+resps:[{t:"\"Then this one's on me — here's to her acing the exam!\"",q:"best"},
+{t:"\"Mint gum works best for staying awake.\"",q:"mid"},
+{t:"\"Driving's rough — ever think of switching jobs?\"",q:"bad"}],
+relief:"\"Haha, I'll take those words! If she gets in, I'm dragging you to that feast!\"",
+storm:"He waves and starts the engine.",
+calm:"He nods and drives off into the night.",
+frag:"Someone drove twelve years of nights, all for one acceptance letter."},
+v11:{intro:"A young person walking a corgi buys sausages and shares half with the dog.",
+clues:[
+{t:"\"He's scared of daytime crowds — gets anxious around people.\"",kw:"social anxiety",ask:"\"Honestly, the anxious one's me. The dog's just my excuse.\""},
+{t:"Human and dog walk the empty street very slowly."}],
+resps:[{t:"\"Admitting it already makes you braver than most.\"",q:"best"},
+{t:"\"Another sausage? The pup loves them.\"",q:"mid"},
+{t:"\"Young people should socialize more — don't bottle up.\"",q:"bad"}],
+relief:"Patting the dog's head: \"Hear that? We're brave.\"",
+storm:"They walk off briskly, leash in hand.",
+calm:"Human and dog keep ambling on.",
+frag:"In the small hours, a human and a dog heal each other's anxiety."},
+v12:{intro:"A breakfast-shop owner here for supplies buys two bags of salt in a whirlwind.",
+clues:[
+{t:"\"Forgot the salt! Tomorrow's buns depend on these two bags.\"",kw:"buns",ask:"\"Everyone on this street knows my buns. Fifteen years and counting.\""},
+{t:"Flour still dusts his apron."}],
+resps:[{t:"\"Fifteen years of buns — solid! I'll be there tomorrow morning.\"",q:"best"},
+{t:"\"Salt's in the seasoning aisle — got it?\"",q:"mid"},
+{t:"\"Up this early — can't be earning much more, huh?\"",q:"bad"}],
+relief:"\"Haha, come! I'll save you a fresh steamer!\"",
+storm:"He leaves with his salt, muttering something.",
+calm:"He nods and pedals off on his tricycle.",
+frag:"Before dawn, someone's already busy making breakfast for others."}
+};
+try{document.documentElement.lang=LANG==="zh"?"zh-CN":"en";document.title=t("appTitle");}catch(e){}
+
+function newNight(){
+  var pool=ALL.slice();
+  for(var i=pool.length-1;i>0;i--){var j=Math.floor(Math.random()*(i+1));var t=pool[i];pool[i]=pool[j];pool[j]=t;}
+  S={guests:pool.slice(0,8),gi:0,warmth:0,storms:0,sleep:0,stam:80,coffee:0,shake:false,
+     items:{gz:false,wl:false},frags:[],relieved:{},e1:false,e2:false,asked:false,
+     timeMin:0,asleep:false,cur:null,money:1500};
+}
+function $(id){return document.getElementById(id);}
+function esc(s){return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;");}
+function fmtT(m){var h=Math.floor(m/60),mm=m%60;return h+":"+(mm<10?"0":"")+mm;}
+function moodTag(m){if(m<=10)return t("mood0");if(m<=35)return t("mood1");if(m<=60)return t("mood2");return t("mood3");}
+function toast(msg){var d=document.createElement("div");d.className="toast";d.textContent=msg;document.body.appendChild(d);setTimeout(function(){d.remove();},2600);}
+
+/* ---------- 顶栏 ---------- */
+function topbar(){
+  var adv=S?(" · "+t("guestN",{n:S.gi+1})): "";
+  return '<div id="topbar"><div class="trow">'
+  +'<span class="chip">🕓 '+(S?fmtT(S.timeMin):"--")+adv+'</span>'
+  +'<span class="chip">❤ <b>'+(S?S.warmth:0)+'</b></span>'
+  +'<span class="chip">☕×'+(S?S.coffee:0)+'</span>'
+  +(S&&S.items.gz?'<span class="chip">🍢</span>':"")
+  +(S&&S.items.wl?'<span class="chip">💡</span>':"")
+  +'<span class="chip small abtn" style="padding:2px 10px;flex:0 1 auto" onclick="toggleMute()">'+(muted?"🔇":"🔊")+'</span>'
+  +'<span class="chip small abtn" style="padding:2px 10px;flex:0 1 auto" onclick="toggleLang()">'+(LANG==="zh"?"EN":"中文")+'</span>'
+  +'</div><div class="trow" style="margin-top:6px">'
+  +'<div class="barwrap"><div class="barlabel"><span>'+t("drowsyT")+'</span><span>'+(S?S.sleep:0)+'/100</span></div><div class="bar"><i id="sleepFill" style="width:'+(S?S.sleep:0)+'%"></i></div></div>'
+  +'<div class="barwrap"><div class="barlabel"><span>'+t("energyT")+'</span><span>'+(S?S.stam:0)+'/100</span></div><div class="bar"><i id="stamFill" style="width:'+(S?S.stam:0)+'%"></i></div></div>'
+  +'</div></div>';
+}
+
+/* ---------- 开始屏 ---------- */
+function showStart(){
+  clearInterval(shakeTimer);
+  S=null;VIEW="start";
+  $("app").innerHTML=topbar()
+  +'<div class="card center" style="margin-top:14px"><div class="bigemoji">🏪</div>'
+  +'<h1>'+t("appTitle")+'</h1>'
+  +'<p class="sub">'+t("tagline")+'</p></div>'
+  +'<div class="card"><h2>'+t("howPlay")+'</h2>'
+  +'<div class="howrow"><span class="howic">🔍</span><div><b>'+t("how1b")+'</b><div class="sub">'+t("how1s")+'</div></div></div>'
+  +'<div class="howrow"><span class="howic">💬</span><div><b>'+t("how2b")+'</b><div class="sub">'+t("how2s")+'</div></div></div>'
+  +'<div class="howrow"><span class="howic">❤</span><div><b>'+t("how3b")+'</b><div class="sub">'+t("how3s")+'</div></div></div>'
+  +'<div class="howrow"><span class="howic">☕</span><div><b>'+t("how4b")+'</b><div class="sub">'+t("how4s")+'</div></div></div>'
+  +'<div class="winline">'+t("winLine")+'</div>'
+  +'<div class="loseline">'+t("loseLine")+'</div>'
+  +'<div class="center" style="margin-top:8px"><button class="abtn small" onclick="var d=$(\'ruleDetail\');d.classList.toggle(\'hidden\');this.textContent=d.classList.contains(\'hidden\')?t(\'ruleBtn\'):t(\'ruleBtnHide\')\">'+t("ruleBtn")+'</button></div>'
+  +'<div id="ruleDetail" class="hidden" style="margin-top:10px"><div class="sub" style="font-size:13px;line-height:1.9">'
+  +t("rd1")+"<br>"
+  +t("rd2")+"<br>"
+  +t("rd3")+"<br>"
+  +t("rd4")+"<br>"
+  +t("rd5")+"<br>"
+  +t("rd6")+"<br>"
+  +t("rd7")
+  +'</div></div></div>'
+  +'<div class="card"><div class="btnrow"><button class="abtn primary" onclick="initAudio();showShop()">'+t("startShift")+'</button></div>'
+  +'<div class="btnrow"><button class="abtn small" onclick="showCodex()">'+t("codexBtn")+'（'+codex.length+'/24）</button>'
+  +'<button class="abtn small" onclick="showRadio()">'+t("radioBtn")+'（'+fragsTotal.length+'）</button>'
+  +'<button class="abtn small" onclick="toggleLang()">🌐 '+(LANG==="zh"?"EN":"中文")+'</button></div>'
+  +(bestWarm>0?'<div class="sub center">'+t("bestWarmT")+'：<b style="color:#ffcf7d">'+bestWarm+'</b></div>':"")
+  +'</div><div class="foot">'+t("foot")+'</div>';
+}
+
+/* ---------- 开店准备：设备商店 ---------- */
+function showShop(){newNight();renderShop();}
+function renderShop(){VIEW="shop";
+  $("app").innerHTML=topbar()
+  +'<div class="card"><h2>'+t("shopTitle")+'</h2>'
+  +'<p class="sub">'+t("shopSub",{n:1500})+'</p>'
+  +'<div class="shopitem" id="shopGz"><div><b>'+t("itemGz")+'</b> <b style="color:#ffcf7d">'+t("price",{n:1200})+'</b><div class="desc">'+t("itemGzD")+'</div></div><button class="abtn small primary" id="buyGz" onclick="buyItem(\'gz\')">'+t("buy")+'</button></div>'
+  +'<div class="shopitem" id="shopWl"><div><b>'+t("itemWl")+'</b> <b style="color:#ffcf7d">'+t("price",{n:800})+'</b><div class="desc">'+t("itemWlD")+'</div></div><button class="abtn small primary" id="buyWl" onclick="buyItem(\'wl\')">'+t("buy")+'</button></div>'
+  +'<div class="btnrow"><button class="abtn primary" onclick="nextGuest()">'+t("openShop")+'</button></div></div>';
+  refreshShop();
+}
+function refreshShop(){
+  var m=S.money;
+  var me=$("shopMoney");if(me)me.textContent=m;
+  var gz=$("buyGz"),wl=$("buyWl");
+  if(S.items.gz){gz.disabled=true;gz.textContent=t("bought");$("shopGz").classList.add("bought");}
+  else if(m<1200){gz.disabled=true;gz.textContent=t("noMoney");}
+  if(S.items.wl){wl.disabled=true;wl.textContent=t("bought");$("shopWl").classList.add("bought");}
+  else if(m<800){wl.disabled=true;wl.textContent=t("noMoney");}
+}
+function buyItem(k){
+  var cost=k=="gz"?1200:800;
+  if(S.items[k]||S.money<cost){toast(t("toastNoBudget"),"bad");return;}
+  S.money-=cost;
+  S.items[k]=true;
+  refreshShop();
+  $("app").querySelector("#topbar").outerHTML=topbar();
+  toast(k=="gz"?t("toastGz"):t("toastWl"));
+}
+
+/* ---------- 接待流程 ---------- */
+function nextGuest(){
+  clearInterval(shakeTimer);
+  if(S.gi>=8){settle();return;}
+  var g=S.guests[S.gi];
+  unlockCodex(g.id);
+  S.timeMin=S.gi*45;
+  S.sleep+=8;
+  if(S.sleep>=100){S.sleep=100;asleepFail();return;}
+  var mood=g.mood+(S.items.gz?-6:0);
+  var ord=[0,1,2];for(var i=2;i>0;i--){var j=Math.floor(Math.random()*(i+1));var t=ord[i];ord[i]=ord[j];ord[j]=t;}
+  S.cur={g:g,mood:mood,askedMap:{},order:ord};
+  S.asked=false;
+  renderGuest();
+}
+function renderGuest(){
+  VIEW="guest";var c=S.cur,g=c.g,GE=G_(g)||g;
+  var h=topbar()
+  +'<div class="card"><div class="cust-head"><div class="avatar">'+g.emoji+'</div>'
+  +'<div><div class="cust-name">'+esc(g.name)+'</div><div class="sub">'+esc(GE.intro)+'</div>'
+  +'<span class="moodtag'+(c.mood<=10?" good":"")+'">'+moodTag(c.mood)+' · '+c.mood+'</span></div></div></div>'
+  +(S.items.gz?'<div class="card" style="border-color:#4a3d22"><span class="sub">'+t("gzCard")+'</span></div>':"")
+  +'<div class="card"><div class="steps">'
+  +'<span class="step on">'+t("step1")+'</span><span class="step-arrow">→</span>'
+  +'<span class="step'+(S.asked?" on":"")+'">'+t("step2")+'</span><span class="step-arrow">→</span>'
+  +'<span class="step'+(S.asked?" on":"")+'">'+t("step3")+'</span></div>'
+  +'<div class="sub">'+t("goalLine")+'</div></div>'
+  +'<div class="card"><h2>'+t("observeT")+'</h2><div id="clues">'
+  +GE.clues.map(function(cl,i){
+    var asked=c.askedMap[i];
+    var noStam=!asked&&!S.items.wl&&S.stam<8;
+    return '<div class="clue">'+esc(cl.t)
+    +(cl.kw?'<button class="kwbtn'+(asked?" done":"")+'" '+((asked||noStam)?"disabled":"")+' onclick="ask('+i+')">'
+      +(asked?t("askedBtn"):(noStam?t("noStamBtn"):t("askBtn")+esc(cl.kw)))+'</button>':"")
+    +(asked?'<span class="ask">'+esc(cl.ask)+'</span>':"")
+    +'</div>';
+  }).join("")
+  +'</div><div class="sub">'+t("askTip")+(S.items.wl?t("askTipWl"):t("askTipStam"))+t("askDot")+(S.asked?t("askTipTail"):"")+'</div></div>'
+  +'<div class="card"><h2>'+t("respT")+'</h2>'
+  +(S.asked?'<div class="sub" style="color:#7fd6a4">'+t("respHintAsked")+'</div>'
+    :'<div class="sub">'+t("respHint")+'</div>')
+  +'<div id="respZone">'
+  +c.order.map(function(oi){var r=GE.resps[oi];return '<button class="resp" onclick="respond('+oi+')">'+esc(r.t)+'</button>';}).join("")
+  +'</div>'+(S.shake?'<div class="timer" id="shakeTimer">'+t("shakeT")+'</div>':"")
+  +'</div>';
+  $("app").innerHTML=h;
+  if(S.shake)startShakeTimer();
+}
+function ask(i){
+  var c=S.cur,cl=c.g.clues[i];
+  if(c.askedMap[i])return;
+  if(!S.items.wl){
+    if(S.stam<8){toast(t("askNoStam"));return;}
+    S.stam=Math.max(0,S.stam-8);S.sleep=Math.min(99,S.sleep+3);
+  }
+  c.askedMap[i]=1;S.asked=true;
+  if(S.items.wl){c.mood=Math.max(0,c.mood-5);}
+  renderGuest();
+  toast(S.items.wl?t("askFree"):t("askCost"));
+}
+
+/* ---------- 回应 ---------- */
+function startShakeTimer(){
+  shakeLeft=10;
+  clearInterval(shakeTimer);
+  shakeTimer=setInterval(function(){
+    shakeLeft--;
+    var t=$("shakeTimer");
+    if(t)t.textContent=t("shakeTN",{n:shakeLeft});
+    if(shakeLeft<=0){clearInterval(shakeTimer);respond(-1);}
+  },1000);
+}
+function respond(idx){
+  clearInterval(shakeTimer);VIEW="rest";
+  var c=S.cur,g=c.g,GE=G_(g)||g,r=idx<0?{t:t("timeoutResp"),q:"mid",timeout:true}:GE.resps[idx];
+  var d=r.q=="best"?-50:(r.q=="mid"?-25:20);
+  if(r.q=="best"&&S.asked)d-=10;
+  if(r.timeout)d=-10;
+  c.mood+=d;
+  S.shake=false;
+  var bestCost=false;
+  if(r.q=="best"&&!r.timeout){S.stam=Math.max(0,S.stam-5);bestCost=true;}
+  var outcome;
+  if(r.q=="bad"&&c.mood>=85){S.storms++;outcome="storm";}
+  else if(c.mood<=10){
+    S.warmth++;S.relieved[g.id]=true;
+    if(S.frags.indexOf(GE.frag)<0)S.frags.push(GE.frag);
+    addFragTotal(GE.frag);
+    checkEggs();
+    outcome="relief";
+  }else outcome="calm";
+  S._rest={ri:idx,bestCost:bestCost,outcome:outcome,eggMsg:S._eggMsg||null};
+  S._eggMsg=null;
+  renderRest();
+}
+function renderRest(){
+  var c=S.cur,g=c.g,GE=G_(g)||g,R=S._rest;
+  var r=R.ri<0?{t:t("timeoutResp"),q:"mid",timeout:true}:GE.resps[R.ri];
+  var h=topbar()
+  +'<div class="card"><div class="cust-head"><div class="avatar">'+g.emoji+'</div>'
+  +'<div><div class="cust-name">'+esc(g.name)+'</div><span class="moodtag'+(c.mood<=10?" good":"")+'">'+moodTag(c.mood)+' · '+c.mood+'</span></div></div>'
+  +'<div class="dlg"><div class="who">'+t("youSaid")+'</div>'+esc(r.t)+'</div>'
+  +(R.bestCost?'<div class="sub">'+t("bestCostT")+'</div>':"");
+  if(R.outcome==="storm"){
+    h+='<div class="dlg"><div class="who">'+esc(g.name)+'</div>'+esc(GE.storm)+'</div>'
+    +'<div class="sub">'+t("stormSub",{n:S.storms})+'</div>';
+  }else if(R.outcome==="relief"){
+    h+='<div class="dlg" style="border-color:#3f5a3a"><div class="who">'+esc(g.name)+' · '+t("relievedT")+'</div>'+esc(GE.relief)+'</div>'
+    +'<div class="frag">'+t("fragGet")+esc(GE.frag)+'</div>'
+    +'<div class="sub">'+t("warmGet",{n:S.warmth})+'</div>';
+    if(R.eggMsg){h+='<div class="frag" style="border-color:#8a6a2a">✨ '+esc(R.eggMsg)+'</div>';}
+  }else{
+    h+='<div class="dlg"><div class="who">'+esc(g.name)+'</div>'+esc(GE.calm)+'</div>'
+    +'<div class="sub">'+t("calmSub")+'</div>';
+  }
+  h+='</div>'+interstitial();
+  S._restH=h;$("app").innerHTML=h;
+}
+function checkEggs(){
+  if(!S.e1&&S.relieved["c1"]&&S.relieved["c2"]){
+    S.e1=true;S.warmth++;
+    var f=t("egg1frag");
+    S.frags.push(f);addFragTotal(f);
+    S._eggMsg=t("egg1msg");
+  }
+  if(!S.e2&&S.relieved["c5"]&&S.relieved["c6"]){
+    S.e2=true;
+    var f2=t("egg2frag");
+    S.frags.push(f2);addFragTotal(f2);
+    S._eggMsg=t("egg2msg");
+  }
+}
+
+/* ---------- 客人之间的休整 ---------- */
+function interstitial(){
+  var ceff=[40,25,10],cn=S.coffee;
+  var coffeeTxt=cn<3?t("coffeeN",{n:cn+1,e:ceff[cn]}):t("coffeeMax");
+  return '<div class="card"><h2>'+t("restT")+'</h2><div class="sub">'+t("restSub")+'</div>'
+  +'<div class="btnrow"><button class="abtn" onclick="drinkCoffee()">'+coffeeTxt+'</button>'
+  +'<button class="abtn" onclick="openShelf()">'+t("shelfBtn")+'</button></div>'
+  +(S.gi<7?'<div class="btnrow"><button class="abtn primary" onclick="S.gi++;nextGuest()">'+t("nextGuestBtn")+'</button></div>'
+    :'<div class="btnrow"><button class="abtn primary" onclick="settle()">'+t("dawnBtn")+'</button></div>')
+  +'</div>';
+}
+function drinkCoffee(){
+  var ceff=[40,25,10],cn=S.coffee;
+  if(cn<3){S.sleep=Math.max(0,S.sleep-ceff[cn]);toast(t("toastCoffee",{n:ceff[cn]}));}
+  else{S.shake=true;toast(t("toastShake"));}
+  S.coffee++;
+  $("app").querySelector("#topbar").outerHTML=topbar();
+  var zone=$("app").querySelector(".card:last-child .btnrow");
+  if(zone){var b=zone.querySelector("button");if(b){var n=S.coffee;
+    b.textContent=n<3?t("coffeeN",{n:n+1,e:ceff[n]}):t("coffeeMax");}}
+}
+
+/* ---------- 整理货架小游戏 ---------- */
+function shelfItems(){return [["🍙",t("sh_nm0")],["🍞",t("sh_nm1")],["🥛",t("sh_nm2")],["🍫",t("sh_nm3")],["🍜",t("sh_nm4")]];}
+function openShelf(){
+  var ov=document.createElement("div");ov.className="overlay";ov.id="shelfOv";
+  var slots=shelfItems().map(function(it,i){
+    return '<div class="shelf-slot" data-name="'+it[1]+'" style="left:'+(1+i*20.2)+'%">'+it[1]+'<br>'+t("shZone")+'</div>';
+  }).join("");
+  ov.innerHTML='<div class="sheet"><h2 class="center">'+t("shelfTitle")+'</h2>'
+  +'<div class="sub center">'+t("shelfSub")+' <span class="timer" id="shelfTimer">20s</span></div>'
+  +'<div id="shelfArea">'+slots+'</div>'
+  +'<div class="btnrow"><button class="abtn" onclick="closeShelf(false)">'+t("giveUp")+'</button></div></div>';
+  document.body.appendChild(ov);
+  var area=$("shelfArea"),done=0,left=20;
+  var timer=setInterval(function(){left--;var t=$("shelfTimer");if(t)t.textContent=left+"s";
+    if(left<=0){clearInterval(timer);closeShelf(done>=5);}},1000);
+  ov._timer=timer;ov._done=function(){return done;};
+  shelfItems().forEach(function(it){
+    var d=document.createElement("div");d.className="shelf-item";d.textContent=it[0];d.dataset.name=it[1];
+    d.style.left=(5+Math.random()*75)+"%";d.style.top=(5+Math.random()*45)+"%";
+    area.appendChild(d);
+    var sx,sy,ox,oy,drag=false;
+    d.addEventListener("pointerdown",function(e){drag=true;sx=e.clientX;sy=e.clientY;
+      var r=d.getBoundingClientRect(),ar=area.getBoundingClientRect();
+      ox=r.left-ar.left;oy=r.top-ar.top;d.setPointerCapture(e.pointerId);e.preventDefault();});
+    d.addEventListener("pointermove",function(e){if(!drag)return;
+      var ar=area.getBoundingClientRect();
+      var nx=ox+e.clientX-sx,ny=oy+e.clientY-sy;
+      nx=Math.max(0,Math.min(ar.width-56,nx));ny=Math.max(0,Math.min(ar.height-56,ny));
+      d.style.left=nx+"px";d.style.top=ny+"px";});
+    d.addEventListener("pointerup",function(e){if(!drag)return;drag=false;
+      var dr=d.getBoundingClientRect();
+      var ok=false;
+      area.querySelectorAll(".shelf-slot").forEach(function(s){
+        if(s.dataset.name!=d.dataset.name||s.dataset.full)return;
+        var sr=s.getBoundingClientRect();
+        var cx=dr.left+dr.width/2,cy=dr.top+dr.height/2;
+        if(cx>sr.left&&cx<sr.right&&cy>sr.top&&cy<sr.bottom){ok=true;
+          s.dataset.full="1";s.style.borderStyle="solid";s.style.borderColor="#3ecf8e";
+          d.classList.add("locked");d.style.left=(sr.left-area.getBoundingClientRect().left+ (sr.width-56)/2)+"px";
+          d.style.top=(sr.top-area.getBoundingClientRect().top+9)+"px";done++;}
+      });
+      if(done>=5){clearInterval(timer);setTimeout(function(){closeShelf(true);},350);}
+    });
+  });
+}
+function closeShelf(win){
+  var ov=$("shelfOv");if(!ov)return;
+  clearInterval(ov._timer);ov.remove();
+  if(win){S.stam=Math.min(100,S.stam+15);toast(t("shelfWin"));}
+  else{S.stam=Math.min(100,S.stam+5);toast(t("shelfQuit"));}
+  $("app").querySelector("#topbar").outerHTML=topbar();
+}
+
+/* ---------- 结算 ---------- */
+function asleepFail(){S.asleep=true;settle();}
+function settle(){
+  clearInterval(shakeTimer);VIEW="settle";
+  var win=!S.asleep&&S.warmth>=3;
+  var rating=S.warmth>=7?t("rate0"):S.warmth>=5?t("rate1"):S.warmth>=3?t("rate2"):t("rate3");
+  var rateQ=S.warmth>=7?t("rateQ0"):S.warmth>=5?t("rateQ1"):S.warmth>=3?t("rateQ2"):(S.asleep?t("rateQ3a"):t("rateQ3b"));
+  var wage=200+S.warmth*50+(S.storms==0&&!S.asleep?100:0);
+  if(S.warmth>bestWarm){bestWarm=S.warmth;lsSet("best",bestWarm);}
+  var newAch=[];
+  function chk(id,name,cond){if(cond&&!ach[id]){unlockAch(id,name);newAch.push(name);}}
+  chk("watcher",t("achWatch"),S.warmth>=5);
+  chk("perfect",t("achPerfect"),S.storms==0&&!S.asleep);
+  chk("dj",t("achDj"),fragsTotal.length>=10);
+  var h=topbar()
+  +'<div class="card center"><div class="bigemoji">'+(win?"🌅":"😴")+'</div>'
+  +'<h1>'+(win?t("settleWinT"):t("settleLoseT"))+'</h1>'
+  +'<p class="sub">'+(S.asleep?t("settleAsleepS"):(win?t("settleWinS"):t("settleLoseS")))+'</p></div>'
+  +'<div class="card"><h2>'+t("settleStat")+'</h2><div class="stat-grid">'
+  +'<div class="cell"><b>'+S.warmth+'</b>'+t("stWarm")+'</div>'
+  +'<div class="cell"><b>'+S.storms+'</b>'+t("stStorm")+'</div>'
+  +'<div class="cell"><b>'+S.frags.length+'</b>'+t("stFrag")+'</div>'
+  +'<div class="cell"><b>'+t("price",{n:wage})+'</b>'+t("stWage")+'</div></div>'
+  +'<div class="dlg"'+(win?' style="border-color:#3f5a3a"':'')+'><div class="who">'+(LANG==="zh"?"评级":"Rating")+'</div>'+(win?'🏮 ':'🌙 ')+'<b>'+rating+'</b> —— '+rateQ+'</div>'
+  +(S._eggMsg?"": "")
+  +'</div>'
+  +(S.frags.length?'<div class="card"><h2>'+t("tonightFrag")+'</h2>'+S.frags.map(function(f){return '<div class="frag">'+esc(f)+'</div>';}).join("")+'</div>':"")
+  +(newAch.length?'<div class="card"><h2>'+t("newAchT")+'</h2>'+newAch.map(function(a){return '<div class="sub">· '+esc(a)+'</div>';}).join("")+'</div>':"")
+  +'<div class="card"><div class="btnrow"><button class="abtn primary" onclick="showShop()">'+t("againBtn")+'</button></div>'
+  +'<div class="btnrow"><button class="abtn small" onclick="showCodex()">'+t("codexBtn")+'（'+codex.length+'/24）</button>'
+  +'<button class="abtn small" onclick="showRadio()">'+t("radioBtn")+'（'+fragsTotal.length+'）</button>'
+  +'<button class="abtn small" onclick="showStart()">'+t("homeBtn")+'</button></div></div>'
+  +'<div class="foot">'+t("foot")+'</div>';
+  $("app").innerHTML=h;
+}
+
+/* ---------- 图鉴 / 电台 ---------- */
+function showCodex(){
+  clearInterval(shakeTimer);VIEW="codex";
+  var h=topbar()+'<div class="card"><h2>'+t("codexTitle")+' '+codex.length+'/24</h2><div class="codex-grid">'
+  +ALL.map(function(g){var got=codex.indexOf(g.id)>=0;
+    return '<div class="codex-cell'+(got?" got":" lock")+'"><span class="e">'+(got?g.emoji:"❔")+'</span>'+(got?esc(g.name):t("unknownT"))+'</div>';}).join("")
+  +'</div><div class="btnrow"><button class="abtn" onclick="'+(S?"settle":"showStart")+'()">'+t("backBtn")+'</button></div></div>';
+  $("app").innerHTML=h;
+}
+function showRadio(){
+  clearInterval(shakeTimer);VIEW="radio";
+  var h=topbar()+'<div class="card"><h2>'+t("radioTitle")+'</h2>'
+  +'<p class="sub">'+(fragsTotal.length>=10?t("radioSub",{n:fragsTotal.length}):t("radioSub2",{n:fragsTotal.length}))+'</p>'
+  +(fragsTotal.length?fragsTotal.map(function(f){return '<div class="frag">'+esc(f)+'</div>';}).join(""):'<div class="sub">'+t("radioEmpty")+'</div>')
+  +'<div class="btnrow"><button class="abtn" onclick="'+(S?"settle":"showStart")+'()">'+t("backBtn")+'</button></div></div>';
+  $("app").innerHTML=h;
+}
+
+/* ---------- 环境音 ---------- */
+var AC=null,acGain=null,muted=false;
+function initAudio(){if(AC)return;try{AC=new (window.AudioContext||window.webkitAudioContext)();startHum();}catch(e){}}
+function startHum(){
+  var len=AC.sampleRate*2,buf=AC.createBuffer(1,len,AC.sampleRate),d=buf.getChannelData(0),last=0;
+  for(var i=0;i<len;i++){var w=Math.random()*2-1;last=(last+0.02*w)/1.02;d[i]=last*2.6;}
+  var src=AC.createBufferSource();src.buffer=buf;src.loop=true;
+  var f=AC.createBiquadFilter();f.type="lowpass";f.frequency.value=380;
+  acGain=AC.createGain();acGain.gain.value=muted?0:0.045;
+  src.connect(f);f.connect(acGain);acGain.connect(AC.destination);src.start();
+}
+function toggleMute(){muted=!muted;if(acGain)acGain.gain.value=muted?0:0.045;
+  var t=$("app").querySelector("#topbar");if(t)t.outerHTML=topbar();}
+
+/* ---------- 启动 ---------- */
+showStart();
+</script>
+</body>
+</html>

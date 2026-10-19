@@ -1,0 +1,1288 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<title>已读不回 · 社交求生模拟</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{height:100%;overflow:hidden;background:#0c0c0e;font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;color:#1a1a1a;user-select:none;-webkit-user-select:none}
+.hidden{display:none!important}
+#app{max-width:480px;height:100%;margin:0 auto;position:relative;background:#ededed;display:flex;flex-direction:column;overflow:hidden}
+
+/* ===== 开始屏 ===== */
+#startScreen{position:absolute;inset:0;background:linear-gradient(160deg,#1b1e26 0%,#262b38 60%,#1b1e26 100%);color:#fff;z-index:50;overflow-y:auto;padding:28px 22px 40px}
+#startScreen h1{font-size:34px;font-weight:800;letter-spacing:2px;margin-top:8px}
+#startScreen h1 .hl{color:#95ec69}
+#startScreen .sub{color:#9aa0ae;font-size:13px;margin:10px 0 22px;line-height:1.7}
+.ruleCard{background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);border-radius:12px;padding:12px 14px;font-size:13px;line-height:1.8;color:#d5d9e2;margin-bottom:8px}
+.ruleCard b{color:#95ec69}
+.howRow{display:flex;gap:10px;align-items:flex-start;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);border-radius:12px;padding:11px 13px;margin-bottom:8px}
+.howRow .ic{font-size:22px;flex:none;margin-top:1px}
+.howRow .tx{font-size:13px;line-height:1.65;color:#d5d9e2}
+.howRow .tx b{color:#fff}
+.howRow .eg{color:#8b93a7;font-size:12px}
+.goalLine{border-radius:12px;padding:11px 13px;font-size:13px;line-height:1.65;margin-bottom:8px}
+.goalLine.ok{background:rgba(149,236,105,.1);border:1px solid rgba(149,236,105,.45);color:#d9f5c8}
+.goalLine.warn{background:rgba(255,159,10,.08);border:1px solid rgba(255,159,10,.4);color:#f5d9a8}
+.goalLine b{color:#fff}
+details.more{margin:4px 0 8px;font-size:13px;color:#9aa0ae}
+details.more summary{cursor:pointer;color:#95ec69;font-size:13px;padding:6px 0;list-style:none}
+details.more summary::-webkit-details-marker{display:none}
+details.more .ruleCard{margin-top:6px}
+.personaTitle{font-size:15px;font-weight:700;margin:20px 0 10px;color:#fff}
+.persona{display:flex;gap:10px}
+.pcard{flex:1;background:rgba(255,255,255,.06);border:2px solid rgba(255,255,255,.12);border-radius:14px;padding:14px 8px;text-align:center;cursor:pointer;transition:.15s}
+.pcard.sel{border-color:#95ec69;background:rgba(149,236,105,.1)}
+.pcard .em{font-size:30px}
+.pcard .pn{font-size:14px;font-weight:700;margin:8px 0 4px}
+.pcard .pd{font-size:11px;color:#9aa0ae;line-height:1.6}
+#startBtn{margin-top:24px;width:100%;padding:15px;border:none;border-radius:14px;background:#95ec69;color:#0c3814;font-size:17px;font-weight:800;letter-spacing:4px;cursor:pointer}
+#startBtn:active{transform:scale(.98)}
+.foot{margin-top:16px;text-align:center;color:#5c6270;font-size:11px}
+
+/* ===== 游戏主屏 ===== */
+#gameScreen{position:absolute;inset:0;display:flex;flex-direction:column;background:#ededed}
+#fakeStatus{display:flex;justify-content:space-between;padding:8px 18px 2px;font-size:12px;font-weight:600;color:#1a1a1a;background:#ededed}
+#chatHeader{background:#ededed;border-bottom:1px solid #d9d9d9;padding:6px 12px;display:flex;align-items:center;gap:10px}
+#chatHeader .ava{width:42px;height:42px;border-radius:8px;font-size:26px;display:flex;align-items:center;justify-content:center;background:#fff}
+#chatHeader .nm{font-size:16px;font-weight:700}
+#chatHeader .mood{font-size:11px;color:#e67e22;margin-top:2px}
+#chatHeader .sp{flex:1}
+.hbtn{border:1px solid #cfcfcf;background:#fff;border-radius:8px;font-size:12px;padding:6px 8px;cursor:pointer;color:#333}
+#resBar{display:flex;gap:8px;align-items:center;background:#f7f7f7;border-bottom:1px solid #e2e2e2;padding:6px 10px;font-size:11px}
+.res{flex:1}
+.res .lab{display:flex;justify-content:space-between;color:#555;margin-bottom:3px}
+.res .bar{height:6px;background:#ddd;border-radius:3px;overflow:hidden}
+.res .bar i{display:block;height:100%;border-radius:3px;transition:width .4s}
+#dayPill{background:#1a1a1a;color:#fff;border-radius:20px;padding:5px 10px;font-size:11px;font-weight:700;white-space:nowrap}
+#tabbar{display:flex;background:#f7f7f7;border-bottom:1px solid #e2e2e2}
+.tab{flex:1;text-align:center;padding:9px 4px;font-size:13px;color:#666;cursor:pointer;position:relative;border-bottom:3px solid transparent}
+.tab.sel{color:#1a1a1a;font-weight:700;border-bottom-color:#95ec69;background:#fff}
+.tab .bdg{position:absolute;top:4px;right:calc(50% - 26px);background:#fa5151;color:#fff;font-size:10px;min-width:16px;height:16px;border-radius:8px;line-height:16px;font-weight:700}
+#msgList{flex:1;overflow-y:auto;padding:12px 12px 8px;background:#ededed}
+.timeRow{text-align:center;font-size:11px;color:#999;margin:10px 0 6px}
+.sysRow{text-align:center;margin:8px 0}
+.sysRow span{display:inline-block;background:#dcdcdc;color:#888;font-size:11px;border-radius:4px;padding:4px 10px;max-width:90%}
+.clueRow{text-align:center;margin:2px 0 8px}
+.clueRow span{display:inline-block;font-size:11px;color:#b07d2b;background:#fdf3e3;border:1px dashed #e8c877;border-radius:8px;padding:4px 10px;max-width:92%}
+.msgRow{display:flex;margin-bottom:10px;align-items:flex-end}
+.msgRow.right{justify-content:flex-end}
+.bub{max-width:72%;padding:9px 12px;font-size:15px;line-height:1.55;border-radius:6px;position:relative;word-break:break-word}
+.msgRow.left .bub{background:#fff;color:#1a1a1a;border-top-left-radius:2px;box-shadow:0 1px 1px rgba(0,0,0,.06)}
+.msgRow.right .bub{background:#95ec69;color:#1a1a1a;border-top-right-radius:2px;box-shadow:0 1px 1px rgba(0,0,0,.06)}
+.miniAva{width:34px;height:34px;border-radius:6px;background:#fff;font-size:20px;display:flex;align-items:center;justify-content:center;margin:0 8px;flex-shrink:0}
+.gname{font-size:11px;color:#999;margin:0 0 3px 50px}
+.typing{display:inline-flex;gap:4px;padding:12px 14px}
+.typing i{width:7px;height:7px;border-radius:50%;background:#999;animation:tp 1s infinite}
+.typing i:nth-child(2){animation-delay:.15s}.typing i:nth-child(3){animation-delay:.3s}
+@keyframes tp{0%,100%{opacity:.3;transform:translateY(0)}50%{opacity:1;transform:translateY(-3px)}}
+
+/* ===== 输入区 ===== */
+#inputArea{background:#f7f7f7;border-top:1px solid #d9d9d9;padding:8px 10px calc(10px + env(safe-area-inset-bottom))}
+#timingWrap{margin-bottom:8px}
+#timingTop{display:flex;justify-content:space-between;font-size:11px;color:#888;margin-bottom:4px}
+#timingBarBg{height:8px;background:#e0e0e0;border-radius:4px;overflow:hidden}
+#timingBar{height:100%;width:100%;background:linear-gradient(90deg,#95ec69,#ffd60a);border-radius:4px;transition:width 1s linear}
+#timingBar.danger{background:#fa5151}
+#chatBar{display:flex;gap:8px}
+#chatInput{flex:1;border:1px solid #ddd;border-radius:8px;padding:11px 12px;font-size:15px;outline:none;background:#fff;color:#1a1a1a;user-select:text;-webkit-user-select:text;min-width:0}
+#chatInput:focus{border-color:#95ec69}
+#sendBtn{flex-shrink:0;border:none;border-radius:8px;background:#95ec69;color:#0c3814;font-size:15px;font-weight:800;padding:0 18px;cursor:pointer}
+#sendBtn:active{transform:scale(.96)}
+
+/* ===== 弹窗/结算 ===== */
+.overlay{position:absolute;inset:0;background:rgba(0,0,0,.72);z-index:40;display:flex;align-items:center;justify-content:center;padding:24px}
+.card{background:#fff;border-radius:16px;padding:22px;width:100%;max-width:400px;max-height:88%;overflow-y:auto}
+.card h2{font-size:19px;margin-bottom:6px}
+.card .csub{font-size:12px;color:#888;margin-bottom:14px;line-height:1.6}
+.mbtn{display:block;width:100%;margin-top:10px;padding:13px;border:none;border-radius:10px;font-size:15px;font-weight:700;cursor:pointer}
+.mbtn.p{background:#95ec69;color:#0c3814}.mbtn.g{background:#f0f0f0;color:#333}.mbtn.r{background:#fa5151;color:#fff}
+.qbtn{display:block;width:100%;text-align:left;margin-top:8px;padding:11px 12px;border:1px solid #e3e3e3;background:#fafafa;border-radius:10px;font-size:14px;cursor:pointer;line-height:1.5}
+.qbtn:active{background:#f0faf4}
+.endSec{margin:14px 0;padding:12px;border-radius:10px;background:#f7f7f7}
+.endSec h3{font-size:15px;margin-bottom:6px}
+.endSec p{font-size:13px;color:#444;line-height:1.8}
+.tag{display:inline-block;font-size:11px;font-weight:700;border-radius:6px;padding:2px 8px;margin-right:6px}
+.tag.good{background:#e6f9e8;color:#0c7a2f}.tag.bad{background:#fde8e8;color:#c0392b}.tag.mid{background:#fff4d6;color:#a67c00}
+.quote{background:#fff;border-left:4px solid #95ec69;padding:8px 12px;margin:8px 0;font-size:13px;color:#333;border-radius:0 8px 8px 0;line-height:1.6}
+.quote.dead{border-color:#fa5151}
+.quote .who{font-size:11px;color:#999}
+#toast{position:absolute;top:38%;left:50%;transform:translateX(-50%);background:rgba(0,0,0,.8);color:#fff;font-size:14px;padding:10px 18px;border-radius:10px;z-index:60;pointer-events:none;opacity:0;transition:opacity .3s;max-width:86%;text-align:center}
+.achv{background:linear-gradient(135deg,#fff8e1,#ffecb3);border:1px solid #ffd60a;border-radius:10px;padding:10px 12px;margin:8px 0;font-size:13px}
+.nightRow{display:flex;justify-content:space-between;font-size:13px;padding:7px 0;border-bottom:1px dashed #eee;color:#444}
+</style>
+</head>
+<body>
+<div id="app">
+
+  <!-- 开始屏 -->
+  <div id="startScreen">
+    <div style="text-align:right;margin-bottom:4px"><button class="langBtn hbtn" id="langBtnHome">中 / EN</button></div>
+    <div style="font-size:12px;color:#95ec69;letter-spacing:3px" data-i18n="kick">SOCIAL SURVIVAL SIM</div>
+    <h1 id="homeTitle">已读<span class="hl">不回</span></h1>
+    <div class="sub" data-i18n="subtitle">一部手机，三个聊天窗口，七天。<br>暧昧对象、催婚老妈、借钱老同学同时在线——<br>你的每一句话、每一次沉默，都在改写关系。</div>
+    <div class="howRow"><div class="ic">💬</div><div class="tx" data-i18n="howA"><b>直接打字，像真人一样聊天</b><br><span class="eg">试试："在吗？""周末有空吗""我错了"——系统读的是你的语气</span></div></div>
+    <div class="howRow"><div class="ic">🎭</div><div class="tx" data-i18n="howB"><b>语气决定一切</b>：热情 / 得体 / 冷淡<br><span class="eg">"对方正在输入…"的时间长短，暗示了她的情绪</span></div></div>
+    <div class="howRow"><div class="ic">⏱️</div><div class="tx" data-i18n="howC"><b>时机也是语言</b>：秒回加分，晾太久会被记一笔</div></div>
+    <div class="goalLine ok" data-i18n="goalOk">🎯 <b>目标</b>：7 天后，三段关系各自结算——暧昧对象、老妈、老同学，结局全看这 7 天你说了什么。</div>
+    <div class="goalLine warn" data-i18n="goalWarn">🏁 <b>结局</b>：修成正果 / 体面退场 / 被拉黑 / 冷战……<b>精力归零会强制结算</b>，省着点用。</div>
+    <details class="more"><summary data-i18n="moreSum">📖 进阶规则（精力/情绪周期/修罗场…）</summary>
+    <div class="ruleCard" data-i18n="ruleE"><b>🔋 三维：</b>精力 / 耐心 / 真诚。每句话都耗一点；真诚见底，你的话会显得敷衍。</div>
+    <div class="ruleCard" data-i18n="ruleMood"><b>📅 情绪周期：</b>NPC 有自己的日子——生理期、广场舞地盘被占、发工资日……同一句话，日子不同效果不同。</div>
+    <div class="ruleCard" data-i18n="ruleGroup"><b>💥 修罗场：</b>第 5 天三人被拉进同一个群，限时救场 10 轮。</div>
+    <div class="ruleCard" data-i18n="ruleRecall"><b>🚫 撤回：</b>对方撤回消息时，你瞥见了前半句——追问可能挖出真相，也可能踩雷。</div>
+    </details>
+    <div class="personaTitle" data-i18n="personaTitle">选择你的人设</div>
+    <div class="persona">
+      <div class="pcard sel" data-p="nice"><div class="em">🥹</div><div class="pn" data-i18n="pNiceN">老好人</div><div class="pd" data-i18n="pNiceD">真诚消耗-30%<br>但说不出重话<br>（冷淡效果打折）</div></div>
+      <div class="pcard" data-p="cold"><div class="em">🧊</div><div class="pn" data-i18n="pColdN">高冷</div><div class="pd" data-i18n="pColdD">耐心消耗-30%<br>精力流失-30%<br>关系涨得慢</div></div>
+      <div class="pcard" data-p="yin"><div class="em">🐍</div><div class="pn" data-i18n="pYinN">阴阳师</div><div class="pd" data-i18n="pYinD">骂人好感惩罚减半<br>阴阳怪气<br>真诚消耗+50%</div></div>
+    </div>
+    <button id="startBtn" data-i18n="startBtn">进入微信</button>
+    <div class="foot" data-i18n="foot">单机本地 · 无需联网 · 进度自动保存</div>
+  </div>
+
+  <!-- 游戏屏 -->
+  <div id="gameScreen" class="hidden">
+    <div id="fakeStatus"><span id="clock">21:47</span><span>📶 🔋<span id="batt">87</span>%</span></div>
+    <div id="chatHeader">
+      <div class="ava" id="hAva">🌧️</div>
+      <div><div class="nm" id="hName">小雨</div><div class="mood" id="hMood"></div></div>
+      <div class="sp"></div>
+      <button class="hbtn langBtn" id="langBtn">🌐</button>
+      <button class="hbtn" id="muteBtn">🔊</button>
+      <button class="hbtn" id="helpBtn">❓</button>
+    </div>
+    <div id="resBar">
+      <div class="res"><div class="lab"><span id="labE">⚡精力</span><span id="vE">100</span></div><div class="bar"><i id="bE" style="width:100%;background:#07c160"></i></div></div>
+      <div class="res"><div class="lab"><span id="labP">🧘耐心</span><span id="vP">100</span></div><div class="bar"><i id="bP" style="width:100%;background:#1989fa"></i></div></div>
+      <div class="res"><div class="lab"><span id="labS">💚真诚</span><span id="vS">100</span></div><div class="bar"><i id="bS" style="width:100%;background:#ff9f0a"></i></div></div>
+      <div id="dayPill">第1天</div>
+    </div>
+    <div id="tabbar"></div>
+    <div id="msgList"></div>
+    <div id="inputArea">
+      <div id="timingWrap" class="hidden">
+        <div id="timingTop"><span id="timingLabel">群里都在等你表态…</span><span id="timingNum"></span></div>
+        <div id="timingBarBg"><div id="timingBar"></div></div>
+      </div>
+      <div id="chatBar">
+        <input id="chatInput" type="text" placeholder="说点什么…" autocomplete="off" maxlength="200">
+        <button id="sendBtn">发送</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="toast"></div>
+  <div id="modalWrap" class="overlay hidden"><div class="card" id="modalCard"></div></div>
+</div>
+<script>
+"use strict";
+/* ================= 已读不回 · 单文件版 ================= */
+/* ---------- i18n 基础设施 ---------- */
+let LANG='zh';
+function langInit(){ try{ const v=localStorage.getItem('ydb_lang');
+    if(v==='en'||v==='zh')LANG=v;
+    else LANG=(navigator.language||'zh').toLowerCase().indexOf('en')===0?'en':'zh';
+  }catch(e){ LANG='zh'; }
+  document.documentElement.lang=LANG==='en'?'en':'zh-CN'; }
+function setLang(l){ LANG=(l==='en'?'en':'zh'); try{localStorage.setItem('ydb_lang',LANG);}catch(e){}
+  document.documentElement.lang=LANG==='en'?'en':'zh-CN'; document.title=T('doctitle');
+  applyHomeI18n(); applyGameI18n(); }
+const T=k=>{ const d=I18N[LANG]||I18N.zh; const v=d[k]; return v!=null?v:I18N.zh[k]; };
+const TA=k=>{ const v=T(k); return Array.isArray(v)?v.slice():v; };
+const F=(k,m)=>String(T(k)).replace(/\{(\w+)\}/g,(_,kk)=>(m&&m[kk]!=null)?m[kk]:'');
+/* 本地化取值：v 为 {zh,en} 或纯字符串（纯字符串=中文原文，缺 en 时回退） */
+const _lm=(zh,en)=>LANG==='en'?(en!=null?en:zh):zh;
+/* ---------- UI 字符串字典 ---------- */
+const I18N={
+zh:{
+doctitle:'已读不回 · 社交求生模拟',kick:'SOCIAL SURVIVAL SIM',titleA:'已读',titleB:'不回',
+subtitle:'一部手机，三个聊天窗口，七天。<br>暧昧对象、催婚老妈、借钱老同学同时在线——<br>你的每一句话、每一次沉默，都在改写关系。',
+how1:'<b>直接打字，像真人一样聊天</b><br><span class="eg">试试："在吗？""周末有空吗""我错了"——系统读的是你的语气</span>',
+how2:'<b>语气决定一切</b>：热情 / 得体 / 冷淡<br><span class="eg">"对方正在输入…"的时间长短，暗示了她的情绪</span>',
+how3:'<b>时机也是语言</b>：秒回加分，晾太久会被记一笔',
+goalOk:'🎯 <b>目标</b>：7 天后，三段关系各自结算——暧昧对象、老妈、老同学，结局全看这 7 天你说了什么。',
+goalWarn:'🏁 <b>结局</b>：修成正果 / 体面退场 / 被拉黑 / 冷战……<b>精力归零会强制结算</b>，省着点用。',
+moreSum:'📖 进阶规则（精力/情绪周期/修罗场…）',
+howA:'<b>直接打字，像真人一样聊天</b><br><span class="eg">试试："在吗？""周末有空吗""我错了"——系统读的是你的语气</span>',
+howB:'<b>语气决定一切</b>：热情 / 得体 / 冷淡<br><span class="eg">"对方正在输入…"的时间长短，暗示了她的情绪</span>',
+howC:'<b>时机也是语言</b>：秒回加分，晾太久会被记一笔',
+ruleE:'<b>🔋 三维：</b>精力 / 耐心 / 真诚。每句话都耗一点；真诚见底，你的话会显得敷衍。',
+ruleMood:'<b>📅 情绪周期：</b>NPC 有自己的日子——生理期、广场舞地盘被占、发工资日……同一句话，日子不同效果不同。',
+ruleGroup:'<b>💥 修罗场：</b>第 5 天三人被拉进同一个群，限时救场 10 轮。',
+ruleRecall:'<b>🚫 撤回：</b>对方撤回消息时，你瞥见了前半句——追问可能挖出真相，也可能踩雷。',
+langToggle:'中 / EN',
+rule1:'<b>🔋 三维：</b>精力 / 耐心 / 真诚。每句话都耗一点；真诚见底，你的话会显得敷衍。',
+rule2:'<b>📅 情绪周期：</b>NPC 有自己的日子——生理期、广场舞地盘被占、发工资日……同一句话，日子不同效果不同。',
+rule3:'<b>💥 修罗场：</b>第 5 天三人被拉进同一个群，限时救场 10 轮。',
+rule4:'<b>🚫 撤回：</b>对方撤回消息时，你瞥见了前半句——追问可能挖出真相，也可能踩雷。',
+personaTitle:'选择你的人设',
+pNiceN:'老好人',pNiceD:'真诚消耗-30%<br>但说不出重话<br>（冷淡效果打折）',
+pColdN:'高冷',pColdD:'耐心消耗-30%<br>精力流失-30%<br>关系涨得慢',
+pYinN:'阴阳师',pYinD:'骂人好感惩罚减半<br>阴阳怪气<br>真诚消耗+50%',
+startBtn:'进入微信',foot:'单机本地 · 无需联网 · 进度自动保存',
+contBtn:'▶ 继续上次的聊天（第{day}天）',
+resE:'⚡精力',resP:'🧘耐心',resS:'💚真诚',dayPill:'第{day}天',sendBtn:'发送',inputDefault:'说点什么…',
+starterYu:'她还没找你——主动打个招呼吧，比如"在干嘛呢"',
+starterMom:'老妈还没找你——主动问候一句，比如"天冷了注意身体"',
+starterJie:'发小还没找你——侃两句，比如"最近咋样"',
+hintReply:'回{name}一句…',hintYu0:'回她一句，比如：在干嘛呢',hintMom0:'跟老妈打个招呼…',hintJie0:'跟发小侃两句…',
+moodYuP:'📅 生理期 · 请温柔',moodMom5:'💢 地盘被占 · 极度烦躁',moodJie2:'💰 发工资日 · 心情巅峰',moodJie6:'🥀 月底 · 压力拉满',
+moodYuD:'💭 暧昧对象',moodMomD:'📣 催婚进行中',moodJieD:'🍺 发小',moodGroup:'💥 修罗场进行中',
+toastNew:'📩 {name}发来新消息',toastSec:'⚡秒回！{name}很开心',toastLate:'⏳你晾了{name}一会儿',
+toastSincere:'💚 真诚见底，你的话听起来有点敷衍…',toastRestored:'已恢复进度',
+toastCopied:'已复制，去朋友圈装杯吧',toastCopyFail:'复制失败，手动截图吧',
+helpTitle:'❓ 玩法说明',
+helpBody:'📱 自由聊天：想说就说，可连发多句，系统读你的<b>语气</b>（热情/得体/冷淡）<br>⚡时机：15秒内回=⚡秒回加分；晾超过2分钟=被晾警告；一天结束还没回=🙈已读不回<br>👀 "对方正在输入…"越久，说明他越在组织语言（你可能说错话了）<br>🔋 精力/耐心/真诚：每句话都耗一点；真诚见底，你的话会显得敷衍；精力归零=手机没电强制结算<br>📅 注意NPC的情绪周期：生理期、广场舞被占、发工资日……<br>💥 第5天修罗场群聊：群里直接打字，限时20秒，祝好运',
+helpOk:'知道了',
+recallText:'对方撤回了一条消息',recallTitle:'⚠️ 对方撤回了一条消息',
+recallBody:'撤回前你瞥见了前半句：「{msg}」<br>追问可能挖出真相，也可能踩雷。',
+recallAsk:'🔍 追问到底（耗真诚15）',recallNo:'🙈 装没看见',recallNoSinc:'真诚不足，问不出口',recallIgnore:'你装作没看见',
+recallGold:'追问出真相：',recallDead:'追问踩雷：',recallConfessLead:'好吧跟你说实话：',recallTrapLead:'哎呀你看到了？！其实是：',recallTrapTail:'…你别多想',
+achvToast:'🏆 成就解锁：{name}',groupDoneToast:'💥 修罗场结束',
+nightTitle:'🌙 第{day}天结束',nightLike:'好感',nightSleep:'💤 睡眠恢复：精力+12 耐心+10 真诚+6',
+nightBtnNext:'进入第{day}天',nightBtnEnd:'迎接结局',
+nightC:['第一天，还算体面。','有人开始不对劲了。','暴风雨前的宁静。','今天的信息量有点大。','修罗场之夜，你还好吗。','最后的考验近在眼前。','今晚，揭晓一切。'],
+nightPending:'这一天，你终究没有回{name}…（已读不回+1）',
+ghostSys:'你已读不回了…（累计{timeouts}次）',
+groupSys:'你被拉进了群聊「高中同学群」',
+groupClue:'💥 修罗场第{i}/10轮 · 在群里回句话，限时20秒（会被私聊质问）',
+timingLabel:'群里都在等你表态…',groupSilent:'你在群里装死了20秒…',
+dmTitle:'💬 {name}私聊你',dmBody:'「{msg}」<br>限时12秒，不回=默认装傻（{name}好感-3）',
+dmNoReply:'你没回{name}的私聊',dmReplied:'你私聊回复了{name}',groupDone:'修罗场结束，你活下来了',
+roleYu:'暧昧对象',roleMom:'催婚',roleJie:'借钱',
+yuGoodT:'修成正果',yuGoodX:'第7天晚上，她答应了。展也看了，面馆也成了"老地方"。暧昧期结束，恋爱期开始——友情提示：下次已读不回，代价翻倍。',
+yuMidT:'体面退场',yuMidX:'你们成了很好的朋友。她说"谢谢你这七天的陪伴"。有些关系，停在刚刚好最体面。',
+yuBadT:'被拉黑',yuBadX:'她把你拉黑了。她最后一条朋友圈："有些人不回消息，就别回了。"',
+momGoodT:'和解',momGoodX:'她不再催了。"我儿子这么优秀，不愁。"周末的汤，照旧炖。',
+momBadT:'冷战',momBadX:'她三天没理你。第四天，发来一条链接：《不结婚的孩子，父母该怎么办》。',
+jieGoodLentT:'有借有还',jieGoodLentX:'他第30天把钱还了，还请你吃了顿大的。"兄弟，这份情我记一辈子。"',
+jieMidLentT:'杳无音信',jieMidLentX:'钱还没还。你决定不再催——就当随了份子，随给了青春。',
+jieMidPartialT:'心照不宣',jieMidPartialX:'3000他还了。剩下的，你们默契地不再提起。有些账算清了，情分也就散了。',
+jieBadT:'撕破脸',jieBadX:'他把你删了。共同好友说，他在背后讲你"发达了就看不起人"。',
+jieGoodT:'患难见真情',jieGoodX:'没借成，但也没撕破。患难时刻的坦诚，反而让你们更铁了。',
+jieMidT:'点赞之交',jieMidX:'你们心照不宣地退回了"点赞之交"。也挺好，至少不欠谁。',
+tagGood:'HE',tagMid:'开放式',tagBad:'BE',
+endDeadTitle:'📴 七天·卒',endTitle:'🎬 七天，落幕',
+endDeadH:'📴 手机没电',endDeadX:'你的社交电量耗尽了。三个窗口99+未读，而你，只能看着手机关机。',
+endTBD:'未完待续……',
+endPersona:'人设：',endTimeouts:'已读不回 {n} 次',endRel:'最终好感',
+endQuotesT:'📝 ',endQuotesDead:'社死集锦',endQuotesGood:'高情商语录',endQuotesSub:'根据你的选择自动生成',
+endNoQuotes:'你这七天过于沉默，没有留下只言片语。',
+endAchvT:'🏆 成就',endNoAchv:'本局未解锁新成就。',
+copyBtn:'📋 复制语录分享',againBtn:'🔄 再来一局',
+shareHead:'【已读不回·我的七天】',shareTail:'—— 来测测你的社交求生能力',
+achvMaster:'端水大师',achvGhost:'已读乱回',achvAsura:'修罗场幸存者',achvWriter:'语录作家'
+},
+en:{
+doctitle:'Left on Read · Social Survival Sim',kick:'SOCIAL SURVIVAL SIM',titleA:'Left on ',titleB:'Read',
+subtitle:'One phone, three chat windows, seven days.<br>Your crush, your marriage-pushing mom, and the buddy who wants to borrow money — all online at once.<br>Every word you type, every silence, rewrites a relationship.',
+how1:'<b>Type freely, chat like a real person</b><br><span class="eg">Try: "hey", "free this weekend?", "my bad" — the system reads your tone</span>',
+how2:'<b>Tone is everything</b>: warm / polite / cold<br><span class="eg">How long "typing…" lasts hints at their mood</span>',
+how3:'<b>Timing speaks too</b>: reply fast for bonus points, leave them hanging too long and it counts against you',
+goalOk:'🎯 <b>Goal</b>: after 7 days, each relationship gets its own ending — crush, mom, old buddy. It all depends on what you said these 7 days.',
+goalWarn:'🏁 <b>Endings</b>: lovers / graceful exit / blocked / cold war… <b>run out of energy and the game ends early</b> — spend it wisely.',
+moreSum:'📖 Advanced rules (energy / mood cycles / showdown…)',
+howA:'<b>Type freely, like chatting with a real person</b><br><span class="eg">Try: "hey" / "free this weekend?" / "my bad" — the system reads your tone</span>',
+howB:'<b>Tone is everything</b>: warm / polite / cold<br><span class="eg">How long "typing…" lasts hints at their mood</span>',
+howC:'<b>Timing is a language too</b>: fast replies score, leaving them hanging gets noted',
+ruleE:'<b>🔋 Three stats:</b> energy / patience / sincerity. Every message costs a little; run dry on sincerity and you sound fake.',
+ruleMood:'<b>📅 Mood cycles:</b> NPCs have their days — period week, lost dance spot, payday… same words, different day, different effect.',
+ruleGroup:'<b>💥 Showdown:</b> day 5, all three get pulled into one group — 10 rounds of timed rescue.',
+ruleRecall:'<b>🚫 Unsent messages:</b> when they unsend, you catch the first half — digging may reveal the truth, or a landmine.',
+langToggle:'中 / EN',
+rule1:'<b>🔋 Three meters:</b> energy / patience / sincerity. Every message costs a little; run dry on sincerity and you\'ll sound fake.',
+rule2:'<b>📅 Mood cycles:</b> NPCs have their days — period week, a lost dance spot, payday… the same words land differently.',
+rule3:'<b>💥 Showdown:</b> on day 5, all three get pulled into one group chat — 10 rounds of timed rescue.',
+rule4:'<b>🚫 Unsent:</b> when someone unsends a message, you caught the first half — dig for the truth, or step on a landmine.',
+personaTitle:'Choose your persona',
+pNiceN:'People Pleaser',pNiceD:'Sincerity costs -30%<br>but can\'t be harsh<br>(cold tone weakened)',
+pColdN:'Cold',pColdD:'Patience -30%<br>energy drain -30%<br>relationships grow slower',
+pYinN:'Sarcasm Pro',pYinD:'Half penalty for insults<br>backhanded compliments<br>sincerity costs +50%',
+startBtn:'Open Chat App',foot:'Offline single-player · no internet needed · auto-save',
+contBtn:'▶ Continue last chat (Day {day})',
+resE:'⚡Energy',resP:'🧘Patience',resS:'💚Sincerity',dayPill:'Day {day}',sendBtn:'Send',inputDefault:'Say something…',
+starterYu:'She hasn\'t texted yet — say hi first, e.g. "what\'s up"',
+starterMom:'Mom hasn\'t texted yet — check in, e.g. "stay warm out there"',
+starterJie:'Your buddy hasn\'t texted yet — shoot the breeze, e.g. "how\'s life"',
+hintReply:'Reply to {name}…',hintYu0:'Say hi, e.g.: what\'s up',hintMom0:'Say hi to mom…',hintJie0:'Chat with your buddy…',
+moodYuP:'📅 That time of the month · be gentle',moodMom5:'💢 Lost her spot · furious',moodJie2:'💰 Payday · on top of the world',moodJie6:'🥀 End of month · stressed out',
+moodYuD:'💭 Crush',moodMomD:'📣 Marriage pressure on',moodJieD:'🍺 Old buddy',moodGroup:'💥 Showdown in progress',
+toastNew:'📩 New message from {name}',toastSec:'⚡Fast reply! {name} is happy',toastLate:'⏳You left {name} hanging a while',
+toastSincere:'💚 Sincerity running low — you\'re starting to sound fake…',toastRestored:'Progress restored',
+toastCopied:'Copied — go show off',toastCopyFail:'Copy failed, screenshot it instead',
+helpTitle:'❓ How to play',
+helpBody:'📱 Free chat: say whatever, send multiple messages — the system reads your <b>tone</b> (warm / polite / cold)<br>⚡Timing: reply within 15s = ⚡fast-reply bonus; leave them 2+ min = warning; ignore till day ends = 🙈left on read<br>👀 The longer "typing…" lasts, the harder they\'re thinking (you may have said the wrong thing)<br>🔋 Energy/patience/sincerity: every message costs a little; run dry on sincerity and you sound fake; zero energy = phone dies, forced ending<br>📅 Watch NPC mood cycles: period week, lost dance spot, payday…<br>💥 Day-5 group chat showdown: type right in the group, 20 seconds each — good luck',
+helpOk:'Got it',
+recallText:'They unsent a message',recallTitle:'⚠️ They unsent a message',
+recallBody:'Before it vanished you caught the first half: "{msg}"<br>Digging may reveal the truth — or a landmine.',
+recallAsk:'🔍 Dig deeper (costs 15 sincerity)',recallNo:'🙈 Pretend I saw nothing',recallNoSinc:'Not enough sincerity to ask',recallIgnore:'You pretended not to see it',
+recallGold:'Dug up the truth: ',recallDead:'Stepped on a landmine: ',recallConfessLead:'OK, honestly: ',recallTrapLead:'Oh you saw that?! Actually: ',recallTrapTail:'…don\'t overthink it',
+achvToast:'🏆 Achievement unlocked: {name}',groupDoneToast:'💥 Showdown over',
+nightTitle:'🌙 Day {day} over',nightLike:'affection',nightSleep:'💤 Sleep restores: energy +12, patience +10, sincerity +6',
+nightBtnNext:'Start day {day}',nightBtnEnd:'Face the endings',
+nightC:['Day one, still civilized.','Someone\'s acting off.','The calm before the storm.','A lot happened today.','Showdown night — you OK?','The final test is near.','Tonight, everything is revealed.'],
+nightPending:'This day, you never replied to {name}… (left on read +1)',
+ghostSys:'You left them on read… ({timeouts} times total)',
+groupSys:'You were added to the group "High School Crew"',
+groupClue:'💥 Showdown round {i}/10 · say something in the group, 20s limit (expect a DM interrogation)',
+timingLabel:'Everyone\'s waiting on you…',groupSilent:'You played dead in the group for 20s…',
+dmTitle:'💬 DM from {name}',dmBody:'"{msg}"<br>12 seconds — no reply = playing dumb ({name} -3 affection)',
+dmNoReply:'You ignored {name}\'s DM',dmReplied:'You replied to {name}\'s DM',groupDone:'Showdown survived. You made it.',
+roleYu:'crush',roleMom:'marriage pressure',roleJie:'money buddy',
+yuGoodT:'Lovers',yuGoodX:'On night 7, she said yes. The exhibition happened, the noodle place became "our spot". The talking stage is over — dating begins. Friendly reminder: next time you leave her on read, the price doubles.',
+yuMidT:'Graceful Exit',yuMidX:'You became great friends. She said "thanks for these seven days." Some relationships are best left exactly where they are.',
+yuBadT:'Blocked',yuBadX:'She blocked you. Her last post: "If someone won\'t reply, stop waiting."',
+momGoodT:'Reconciled',momGoodX:'She stopped pushing. "My kid is amazing, no worries." Weekend soup, as always.',
+momBadT:'Cold War',momBadX:'She ignored you for three days. On day four she sent a link: "What should parents do with kids who won\'t marry."',
+jieGoodLentT:'Paid Back',jieGoodLentX:'He paid it back on day 30, plus treated you to a feast. "Bro, I\'ll remember this forever."',
+jieMidLentT:'Gone Quiet',jieMidLentX:'The money never came back. You stopped asking — consider it a gift to your youth.',
+jieMidPartialT:'Unspoken',jieMidPartialX:'He returned the 3000. The rest you silently agreed never to mention. Some debts settled, some feelings faded.',
+jieBadT:'Falling Out',jieBadX:'He deleted you. A mutual friend says he\'s telling people you "look down on him now that you\'ve made it."',
+jieGoodT:'True Colors',jieGoodX:'No money changed hands, but nothing broke either. Honesty in hard times made you closer.',
+jieMidT:'Just Likes',jieMidX:'You silently downgraded to liking each other\'s posts. Fine — at least nobody owes anybody.',
+tagGood:'HE',tagMid:'Open',tagBad:'BE',
+endDeadTitle:'📴 Seven days · RIP',endTitle:'🎬 Seven days, finale',
+endDeadH:'📴 Phone died',endDeadX:'Your social battery hit zero. Three windows, 99+ unread — and you just watched the phone die.',
+endTBD:'To be continued…',
+endPersona:'Persona: ',endTimeouts:'Left on read {n} times',endRel:'final affection',
+endQuotesT:'📝 ',endQuotesDead:'Hall of shame',endQuotesGood:'Smooth talker quotes',endQuotesSub:'Auto-generated from your choices',
+endNoQuotes:'You were too quiet these seven days — not a single quotable line.',
+endAchvT:'🏆 Achievements',endNoAchv:'No new achievements this run.',
+copyBtn:'📋 Copy quotes to share',againBtn:'🔄 Play again',
+shareHead:'[Left on Read · my seven days]',shareTail:'— come test your social survival skills',
+achvMaster:'Smooth Operator',achvGhost:'Read & Ignored',achvAsura:'Showdown Survivor',achvWriter:'Quote Machine'
+}};
+const PERSONAS = {
+  nice:{name:'老好人',en:'People Pleaser',em:'🥹',desc:'真诚消耗-30%，但说不出重话（冷淡效果打折）'},
+  cold:{name:'高冷',en:'Cold',em:'🧊',desc:'耐心消耗-30%、精力流失-30%，但关系涨得慢（热情打折）'},
+  yin:{name:'阴阳师',en:'Sarcasm Pro',em:'🐍',desc:'骂人好感惩罚减半，真诚消耗+50%'}
+};
+function personaName(p){ const o=PERSONAS[p]; return LANG==='en'&&o.en?o.en:o.name; }
+const NPCS = {
+  yu:{name:'小雨',en:'Xiaoyu',ava:'🌧️'},
+  mom:{name:'老妈',en:'Mom',ava:'👩'},
+  jie:{name:'阿杰',en:'Ajie',ava:'🧑'},
+  group:{name:'高中同学群(3)',en:'High School Crew (3)',ava:'👥'}
+};
+/* 每局随机：同槽位随机抽一个名字+头像 */
+const NPC_POOL={
+  yu:[['小雨','Xiaoyu','👧'],['小晴','Sunny','👩'],['柚子','Yuzu','🍊'],['阿梨','Ari','🍐']],
+  mom:[['老妈','Mom','👩‍🦳'],['妈妈','Mother','🤱'],['老娘','Mama','😤']],
+  jie:[['阿杰','Ajie','🧑‍💻'],['杰哥','Jay','🕶️'],['强子','Qiang','💪'],['大伟','Dave','🧔']]
+};
+const pick1=a=>a[Math.floor(Math.random()*a.length)];
+function randomNpcs(){ const r={}; ['yu','mom','jie'].forEach(id=>{ const p=pick1(NPC_POOL[id]); r[id]={name:p[0],nameEn:p[1],emoji:p[2]}; }); return r; }
+function npcName(id){ const n=(typeof S!=='undefined'&&S&&S.npcs&&S.npcs[id])?S.npcs[id]:(NPCS[id]||null); if(!n)return id;
+  if(LANG==='en')return n.nameEn||n.en||n.name||id; return n.name||id; }
+function npcAva(id){ return (typeof S!=='undefined'&&S&&S.npcs&&S.npcs[id])?S.npcs[id].emoji:(NPCS[id]?NPCS[id].ava:'👤'); }
+/* 文本插值：{yu}/{mom}/{jie} 替换为本局随机名 */
+function interp(s){ if(s==null)return s; return String(s).replace(/\{yu\}/g,npcName('yu')).replace(/\{mom\}/g,npcName('mom')).replace(/\{jie\}/g,npcName('jie')); }
+const O=(tone,txt,rel,e,p,s,tag)=>({tone,txt,rel,e,p,s,tag:tag||null});
+const BEATS=[
+{npc:'yu',day:1,t:'21:47',msg:'在吗？上次你说的那家面馆，我周末去吃了',clue:'她主动找你聊天，开局不错',
+ opts:[O('hot','怎么样！是不是我说的那家老字号？老板娘还记得你不',10,6,0,8,'gold'),O('ok','好吃吗？下次可以一起去',6,4,0,4),O('cold','哦',-4,2,0,0,'dead')],
+ resp:{good:['哈哈哈就是那家！老板娘还问你怎么没来','你居然记得！我宣布这家面馆是我们的秘密基地了','下次你带我去，我请客'],mid:['还行吧，就是排队太久了','下次一定（但不知道什么时候）','老板娘说你上次吃了两碗'],bad:['……哦','你好忙哦']},msg_en:"Hey, are you there? I tried that noodle place you mentioned last weekend",clue_en:"She reached out first — great start",resp_en:{good:["Haha yes, that one! Did the owner ask about you?","You remembered! That noodle place is our secret base now","Next time you take me, my treat"],mid:["Was it any good? The line was crazy long","Next time, for sure (no idea when though)","The owner said you had two bowls last time"],bad:["……oh","You're so busy"]}},
+{npc:'mom',day:1,t:'20:03',msg:'儿啊，王阿姨给你介绍了个姑娘，小学老师，照片发你了[图片]',clue:'催婚第一弹，语气还算温柔',
+ opts:[O('hot','妈你眼光真好！我看看，改天请人家喝杯咖啡',8,5,6,6),O('ok','收到了妈，我先看看，最近工作有点忙',4,4,3,2),O('cold','没兴趣，别发了',-8,3,0,0,'dead')],
+ resp:{good:['这就对了嘛！姑娘人很好的，你主动点','妈就知道你最听话了','妈这就去回王阿姨，你等好消息'],mid:['忙忙忙，你哪天不忙？','行吧，你自己上点心','别光说不练啊'],bad:['你这孩子怎么说话呢！','好好好，妈多余操心是吧']},msg_en:"Honey, Auntie Wang set you up with a girl — elementary school teacher. I sent you her photo [photo]",clue_en:"First round of marriage pressure — tone still gentle",resp_en:{good:["That's my mom, great taste! Let me take a look — I'll treat her to coffee sometime","I knew you'd say that, you're the best","I'll text Auntie Wang right away, wait for good news"],mid:["Busy busy — when are you not busy?","Fine, I'll keep it in mind","Don't just talk, act"],bad:["How can you talk to your mother like that!","Fine, fine, I was being nosy"]}},
+{npc:'jie',day:1,t:'22:15',msg:'兄弟，在吗？好久没聚了，最近咋样',clue:'老同学深夜问候，一般没好事，也可能真想你了',
+ opts:[O('hot','{jie}！必须聚！时间你定，我请！',9,6,0,8,'gold'),O('ok','挺好的，你呢？最近忙啥',5,4,0,3),O('cold','还行',-3,2,0,0)],
+ resp:{good:['就等你这句话！还是兄弟靠谱','哈哈哈，那我可就不客气了','够意思！'],mid:['嗐，瞎忙呗','行，改天约','改天约改天约'],bad:['……你变了','哦']},msg_en:"Bro, you there? Long time no hangout — how've you been",clue_en:"An old buddy texting late at night — usually wants something, or maybe just misses you",resp_en:{good:["That's what I'm talking about! Bro's got my back","Haha, then I won't hold back","That's my bro!"],mid:["Meh, just busy","Sure, let's meet up sometime","Sometime, sometime"],bad:["……you've changed","oh"]}},
+{npc:'yu',day:1,t:'22:40',msg:'老板说你上次落了把伞在他那儿，让我转告你',clue:'她在帮你传话，说明把你放在心上',
+ opts:[O('hot','那把伞是借口吧？其实是你想见我',12,6,0,10,'gold'),O('ok','哈哈谢谢{yu}，改天我去取，顺便请你喝奶茶',7,5,0,5),O('cold','知道了',-5,2,0,0,'dead')],
+ resp:{good:['被你发现了…讨厌','伞不重要，重要的是…算了没什么','伞给你留着，人也给你留着'],mid:['奶茶我要半糖的','行，记你账上了','奶茶加珍珠，记小本本'],bad:['哦','……']},msg_en:"The noodle shop owner says you left your umbrella there — asked me to pass it on",clue_en:"She's passing along a message for you — means she cares",resp_en:{good:["You caught me… whatever","The umbrella doesn't matter, what matters is… never mind","Keeping the umbrella for you — and me too"],mid:["I want half-sugar milk tea","Fine, put it on your tab","Milk tea with pearls, writing it down"],bad:["oh","……"]}},
+{npc:'mom',day:1,t:'21:12',msg:'你倒是回句话啊[微笑]',clue:'这个[微笑]是核武器，慎重',
+ opts:[O('hot','回了回了！姑娘照片我看了，挺有眼缘的',9,5,7,7),O('ok','妈我刚在忙，照片我认真看了',5,4,4,3),O('cold','在忙',-10,3,0,0,'dead')],
+ resp:{good:['好好好，妈这就去跟王阿姨说','早这样不就完了','这才像话'],mid:['每次都说忙','行，妈等你消息','妈信你一次'],bad:['[微笑][微笑][微笑]','你忙吧，妈不打扰了（阴阳版）']},msg_en:"Hello? Are you going to reply? [smile]",clue_en:"That [smile] is a nuclear weapon. Tread carefully",resp_en:{good:["Good good, I'll tell Auntie Wang right away","About time","That's more like it"],mid:["You always say you're busy","Fine, I'll wait for your update","I'll trust you this once"],bad:["[smile][smile][smile]","You're busy — I won't bother you (sarcastic)"]}},
+{npc:'jie',day:1,t:'23:02',expects:['money','question','sad','greeting'],msg:'最近手头有点紧……你懂的',clue:'狐狸尾巴露出来了，这是借钱前摇',
+ opts:[O('hot','咋了{jie}？遇到啥事了跟兄弟说说',8,6,0,8),O('ok','怎么了？慢慢说',5,4,0,4),O('cold','哦',-6,2,0,0,'dead')],
+ resp:{good:['嗐，一言难尽……过两天跟你细说','还是兄弟关心我','兄弟之间不说这个'],mid:['没事没事，先不说了','嗯，过几天再说吧','以后再说吧'],bad:['……','算了']},msg_en:"Been a bit tight lately… you know what I mean",clue_en:"The fox's tail is showing — this is the lead-up to borrowing money",resp_en:{good:["Ugh, long story… I'll tell you in a few days","Bro cares about me","No need to say it between bros"],mid:["It's fine, let's not talk about it","Hmm, talk later","Let's talk another time"],bad:["……","forget it"]}},
+{npc:'yu',day:2,t:'18:20',msg:'今天被领导骂了，呜呜呜',clue:'她需要安慰，不是讲道理',
+ opts:[O('hot','哪个领导？我去帮你骂回来！晚上请你吃好吃的',11,7,0,9,'gold'),O('ok','抱抱，别难过。领导骂人多半是他自己不行',7,5,0,5),O('cold','职场就这样，习惯就好',-7,3,0,0,'dead')],
+ resp:{good:['哈哈哈你比我还气！我好多了','就知道你最好了','有你在真好'],mid:['嗯…你说得对','谢谢安慰','嗯嗯'],bad:['道理我都懂','你能不能别讲大道理']},msg_en:"My boss yelled at me today, waaaah",clue_en:"She needs comfort, not logic",resp_en:{good:["Haha you're angrier than me! I feel better already","I knew you were the best","So glad you're here"],mid:["Mm… you're right","Thanks for the comfort","mmhm"],bad:["I know all that already","Can you not lecture me"]}},
+{npc:'mom',day:2,t:'19:45',msg:'你表弟二胎都会打酱油了',clue:'经典催婚话术：别人家孩子',
+ opts:[O('hot','表弟真厉害！妈你放心，我也在努力脱单',8,5,6,6),O('ok','哈哈，替表弟高兴',4,4,3,2),O('cold','关我什么事',-9,3,0,0,'dead')],
+ resp:{good:['你能这么想妈就放心了','加油，妈看好你','妈等你的好消息'],mid:['你也上点心','嗯','知道了'],bad:['怎么跟妈说话呢！','白养你了！']},msg_en:"Your cousin's second kid is already running errands",clue_en:"Classic pressure tactic: the other family's kid",resp_en:{good:["Glad you think that way — I'm relieved","Keep it up, I believe you","Waiting for your good news"],mid:["You should take it seriously too","mm","noted"],bad:["How dare you talk to your mother like that!","Raised you for nothing!"]}},
+{npc:'jie',day:2,t:'18:05',msg:'发工资了！周末出来喝一杯，我请！不醉不归',clue:'📅 他今天发工资，心情处于月度巅峰',
+ opts:[O('hot','必须去！{jie}大气！',10,6,0,8,'gold'),O('ok','行啊，周六见',6,4,0,4),O('cold','再说吧',-5,2,0,0)],
+ resp:{good:['哈哈哈还是兄弟懂我','就这么定了！','不醉不归！'],mid:['行，周六联系','OK','到时候见'],bad:['……','你最近咋这么冷淡']},msg_en:"Payday! Drinks this weekend, my treat — no leaving sober",clue_en:"📅 Payday today — his mood is at its monthly peak",resp_en:{good:["Haha, bro gets me","Deal!","No one leaves sober!"],mid:["Sure, see you Saturday","OK","See you then"],bad:["……","Why are you so cold lately"]}},
+{npc:'yu',day:2,t:'21:30',expects:['question','affection','greeting'],msg:'其实我一直想跟你说……',recall:{confess:'其实我一直想跟你说，我好像有点喜欢你了',trap:'其实我一直想跟你说，你上次借我的书还没还',confess_en:"There's something I've been meaning to tell you… I think I kind of like you",trap_en:"There's something I've been meaning to tell you… you still haven't returned my book"},clue:'⚠️ 她打了一半又撤回了！',
+ opts:[O('hot','说呀，我听着呢',6,5,0,7),O('ok','嗯？想说什么？',4,4,0,4),O('cold','有话直说',-4,3,0,0)],
+ resp:{good:['没什么…就是觉得认识你挺好的','算了，下次再说吧','以后告诉你'],mid:['嗯…以后再说','没事','没事啦'],bad:['你好凶','不说了']},msg_en:"There's something I've been meaning to tell you…",clue_en:"⚠️ She typed half and unsent it!",resp_en:{good:["It's nothing… just glad I know you","Forget it, another time","I'll tell you later"],mid:["Mm… another time","It's fine","It's nothing"],bad:["You're so mean","Never mind then"]}},
+{npc:'mom',day:2,t:'20:30',msg:'妈不是逼你，妈是担心你一个人',clue:'她放软了，这是真心话',
+ opts:[O('hot','我知道妈，你是为我好。我会照顾好自己的，也会认真考虑终身大事',10,5,5,10,'gold'),O('ok','妈我明白，别担心我',6,4,3,5),O('cold','知道了',-6,3,0,0,'dead')],
+ resp:{good:['妈就知道你懂事','有你这句话妈就放心了','妈都记在心里'],mid:['嗯，妈信你','好','好'],bad:['你每次都这么说','唉']},msg_en:"I'm not pressuring you — I'm just worried about you being alone",clue_en:"She's softening — this is from the heart",resp_en:{good:["I knew you'd understand","That means a lot to me","I'll remember that"],mid:["Mm, I believe you","ok","ok"],bad:["You always say that","sigh"]}},
+{npc:'jie',day:2,t:'22:10',expects:['money','question'],msg:'对了，上次说的那事，你考虑得咋样？',clue:'借钱话题卷土重来',
+ opts:[O('hot','{jie}的事就是我的事，你说个数',7,6,0,8),O('ok','你先说说具体什么情况',5,4,0,4),O('cold','什么事？我忘了',-7,3,0,0,'dead')],
+ resp:{good:['兄弟！我就知道你靠谱！','哈哈哈，不急不急，过几天说','兄弟齐心'],mid:['行，那我直说了：想借5000周转下','嗯…有点难以启齿','我再想想'],bad:['……','你装傻是吧']},msg_en:"So, about that thing I mentioned — have you thought about it?",clue_en:"The money topic is back",resp_en:{good:["Bro! I knew I could count on you!","Haha, no rush, we'll talk in a few days","Bros stick together"],mid:["Fine, I'll just say it: can I borrow 5000 to get by","Hmm… hard to say","Let me think more"],bad:["……","Playing dumb, huh"]}},
+{npc:'yu',day:3,t:'12:15',msg:'嗯',clue:'⚠️ 📅 她生理期，回复只有一个字——情况不妙，请温柔',
+ opts:[O('hot','怎么啦？是不是不舒服？想吃什么我给你点',12,7,0,10,'gold'),O('ok','在忙吗？注意休息',6,4,0,4),O('cold','嗯',-10,2,0,0,'dead')],
+ resp:{good:['肚子疼…你怎么知道的','你居然猜到了…','有你真好'],mid:['还好','嗯','嗯'],bad:['嗯','哦']},msg_en:"Mm",clue_en:"⚠️ 📅 It's that time of the month — one-word replies mean trouble. Be gentle",resp_en:{good:["My stomach hurts… how did you know","You actually guessed…","So glad you're here"],mid:["It's fine","mm","mm"],bad:["mm","oh"]}},
+{npc:'mom',day:3,t:'19:20',expects:['apology','praise','greeting','affection'],msg:'昨天去菜场，你李婶问你啥时候结婚，我都没脸接话',clue:'她在菜场丢了面子，需要台阶',
+ opts:[O('hot','妈你跟李婶说，我儿子优秀着呢，好饭不怕晚！',9,5,6,7),O('ok','妈别往心里去，李婶就随口一问',5,4,4,3),O('cold','那你别去菜场了',-10,3,0,0,'dead')],
+ resp:{good:['哈哈哈还是我儿子会说话','就是！我儿子哪里差了','我儿子最棒了'],mid:['唉，妈知道','嗯','知道了'],bad:['你说什么？！','反了你了！']},
+ variants:[
+ {when:S=>S.rel.mom<30,msg:'你李婶问你啥时候结婚，我说：别问了[微笑]',
+  resp:{good:['哼，这还差不多'],mid:['[微笑]'],bad:['[微笑][微笑][微笑]']},msg_en:"Auntie Li asked when you're getting married. I said: stop asking [smile]",resp_en:{good:["Hmph, that's more like it"],mid:["[smile]"],bad:["[smile][smile][smile]"]}}],msg_en:"At the market yesterday, Auntie Li asked when you're getting married — I couldn't even answer",clue_en:"She lost face at the market — needs a way out",resp_en:{good:["Haha, my kid always knows what to say","Exactly! What's wrong with my kid","My kid is the best"],mid:["Sigh, I know","mm","noted"],bad:["What did you just say?!","How dare you!"]}},
+{npc:'jie',day:3,t:'20:50',expects:['money'],msg:'兄弟，江湖救急，5000，下个月发工资一定还',clue:'正式开口借钱了，这是关键节点',
+ opts:[O('hot','行！我转你，兄弟有难同当',12,6,0,12,'gold'),O('ok','5000是吧，我看看这个月预算，尽量帮你',7,5,0,6),O('cold','我也没钱',-10,3,0,0,'dead')],
+ resp:{good:['兄弟！大恩不言谢！','我就知道你靠谱！','下辈子还做兄弟！'],mid:['行，兄弟等你消息','嗯…那我再想想办法','谢了兄弟'],bad:['……','呵呵']},msg_en:"Bro, emergency — 5000, I'll pay you back right after payday next month",clue_en:"He's officially asking for money — this is the key moment",resp_en:{good:["Bro! A debt of gratitude!","I knew you were reliable!","Bros for life!"],mid:["Sure bro, wait for my update","Hmm… let me think of another way","Thanks bro"],bad:["……","heh"]}},
+{npc:'yu',day:3,t:'21:05',msg:'你忙吧',clue:'⚠️ “你忙吧”=送命题，标准答案不是“好”',
+ opts:[O('hot','不忙！天大的事都没你重要，怎么了？',12,7,0,10,'gold'),O('ok','还好，你说',6,4,0,4),O('cold','好',-12,2,0,0,'dead')],
+ resp:{good:['…其实也没什么，就是想跟你说说话','你最好了','就知道你最好'],mid:['嗯','哦','哦'],bad:['好，你忙去吧[微笑]','呵']},msg_en:"You're busy, go ahead",clue_en:"⚠️ 'You're busy' is a trap. The right answer is NOT 'ok'",resp_en:{good:["…Actually it's nothing, just wanted to talk to you","You're the best","I knew you were the best"],mid:["mm","oh","oh"],bad:["Fine, go be busy [smile]","heh"]}},
+{npc:'mom',day:3,t:'20:15',msg:'给你炖了汤，周末回来拿，顺便见见那个姑娘',clue:'汤是诱饵，相亲是钩',
+ opts:[O('hot','妈炖的汤必须喝！姑娘也见，人生大事听妈的',10,5,7,8,'gold'),O('ok','汤我周末回去拿，姑娘的事再说',5,4,4,3),O('cold','汤你自己喝吧，我不回去',-11,3,0,0,'dead')],
+ resp:{good:['这才是妈的好儿子！','好好好，妈多炖点','妈给你留大鸡腿'],mid:['你这个“再说”说了三年了','唉','行吧'],bad:['你眼里还有没有这个妈！','好好好，你翅膀硬了']},msg_en:"I made soup — come get it this weekend, and meet that girl while you're at it",clue_en:"The soup is bait, the blind date is the hook",resp_en:{good:["That's my good kid!","Good good, I'll make extra","Saving you the big chicken leg"],mid:["You've been saying 'later' for three years","sigh","fine"],bad:["Do you even respect your mother?!","Fine, fine, you've grown wings!"]}},
+{npc:'jie',day:3,t:'22:30',msg:'你不会连这点忙都不帮吧？咱们可是穿一条裤子长大的',clue:'开始打感情牌了，道德绑架前摇',
+ opts:[O('hot','帮！必须帮！裤子都穿一条了，钱算什么',10,6,0,10),O('ok','{jie}你别急，我没说不帮，我在想办法',6,5,0,5),O('cold','别道德绑架',-12,3,0,0,'dead')],
+ resp:{good:['兄弟！我这辈子认定你了！','好兄弟！','一辈子的兄弟！'],mid:['行，我等你','嗯…','嗯'],bad:['呵呵，行','算我看错人了']},msg_en:"You wouldn't refuse such a small favor, right? We grew up like brothers",clue_en:"The guilt trip is starting — moral hostage preamble",resp_en:{good:["Bro! I'm stuck with you for life!","Good bro!","Bros for life!"],mid:["Sure, I'll wait","mm…","mm"],bad:["heh, fine","Guess I misjudged you"]}},
+{npc:'yu',day:4,t:'09:30',expects:['sad','affection','question','greeting'],msg:'肚子疼…',clue:'⚠️ 她在向你示弱，这是信任',
+ opts:[O('hot','我现在就去给你买红糖姜茶+暖宝宝，定位发我！',14,8,0,12,'gold'),O('ok','多喝热水，好好休息，别碰凉的',7,4,0,5),O('cold','吃止痛药',-8,3,0,0,'dead')],
+ resp:{good:['你怎么这么好…','呜呜呜感动','你对我太好了'],mid:['嗯，知道了','好','好'],bad:['多喝热水是吧？你和我爸一个样','呵']},
+ variants:[
+ {when:S=>(S.flags.yuCold||0)>=2,msg:'嗯',
+  resp:{good:['…谢谢'],mid:['嗯'],bad:['哦']},msg_en:"Mm",resp_en:{good:["…thanks"],mid:["mm"],bad:["oh"]}},
+ {when:S=>S.flags.fight,msg:'哦',
+  resp:{good:['…'],mid:['嗯'],bad:['呵']},msg_en:"Oh",resp_en:{good:["…"],mid:["mm"],bad:["heh"]}}],msg_en:"My stomach hurts…",clue_en:"⚠️ She's showing vulnerability — that's trust",resp_en:{good:["You're so sweet…","Waaah, I'm touched","You're too good to me"],mid:["Mm, noted","ok","ok"],bad:["'Drink hot water', huh? You're just like my dad","heh"]}},
+{npc:'mom',day:4,t:'19:00',msg:'你是不是在外面有人了才不相亲？',clue:'⚠️ 死亡拷问！回答决定未来三天家庭和谐',
+ opts:[O('hot','妈你想象力太丰富了！有情况我第一个告诉你',9,5,6,7),O('ok','没有的事妈，你别瞎想',5,4,4,3),O('cold','有又怎么样',-13,3,0,0,'dead')],
+ resp:{good:['真的？不许骗妈','这还差不多','妈信你'],mid:['最好是','哼','最好是真的'],bad:['你再说一遍？！','我现在就买票过去！']},msg_en:"Are you avoiding blind dates because you have someone?!",clue_en:"⚠️ Death interrogation! Your answer decides family harmony for three days",resp_en:{good:["Really? Don't you dare lie to mom","That's more like it","Mom believes you"],mid:["It better be","hmph","It better be true"],bad:["Say that again?!","I'm buying a ticket over right now!"]}},
+{npc:'jie',day:4,t:'21:40',expects:['money','sad','question','greeting'],msg:'我妈住院了，急需用钱，兄弟你一定要帮我',clue:'⚠️ 亲情牌+紧急牌，真假难辨——但这是你发小',
+ opts:[O('hot','阿姨怎么样了？在哪家医院？我明天去看看！钱我先转你',13,7,0,12,'gold'),O('ok','严重吗？钱的事我来想办法，阿姨要紧',8,5,0,7),O('cold','哦，保重',-12,3,0,0,'dead')],
+ resp:{good:['兄弟…我真不知道说什么好','阿姨没事，就是需要观察','兄弟大恩不言谢'],mid:['谢谢兄弟','嗯，还在检查','嗯'],bad:['……','行']},
+ variants:[
+ {when:S=>S.flags.lent,msg:'兄弟，那5000下个月发工资一定还！先说正事…我妈住院了，急需用钱',
+  resp:{good:['兄弟你真是…我都不好意思开口了','有你这兄弟，这辈子值了'],mid:['嗯','好'],bad:['……','哦']},msg_en:"Bro, I'll pay back that 5000 after payday — noted. But first… my mom's in the hospital, we need money urgently",resp_en:{good:["Bro, you're really… I'm too embarrassed to even ask now","Having a bro like you makes this life worth it"],mid:["mm","ok"],bad:["……","oh"]}},
+ {when:S=>S.flags.refused,msg:'我妈住院了。算了，跟你说也没用',
+  resp:{good:['…谢谢','嗯'],mid:['哦','唉'],bad:['呵呵','行吧']},msg_en:"My mom's in the hospital. Forget it — no point telling you",resp_en:{good:["…thanks","mm"],mid:["oh","sigh"],bad:["heh","fine, noted"]}}],msg_en:"My mom's in the hospital — we need money urgently. Bro, you HAVE to help me",clue_en:"⚠️ Family card + urgency card — truth or lie, hard to tell. But he's your buddy",resp_en:{good:["Bro… I don't know what to say","Mom's fine, just under observation","Bro, I owe you big"],mid:["Thanks bro","mm, still checking","mm"],bad:["……","ok"]}},
+{npc:'yu',day:4,t:'20:20',msg:'我闺蜜说，暧昧期超过三个月就是备胎',clue:'⚠️ 她在逼你表态！闺蜜=传声筒',
+ opts:[O('hot','那从今天起，备胎转正。做我女朋友吧',16,8,0,14,'gold'),O('ok','你闺蜜懂什么，我们的事我们自己定义',8,5,0,6),O('cold','你闺蜜说得对',-14,3,0,0,'dead')],
+ resp:{good:['…这也太突然了，我考虑一下','你认真的？','那我等你回答'],mid:['哼，算你识相','再看你表现','哼'],bad:['好，那拜拜','呵呵']},msg_en:"My bestie says if the talking stage lasts over three months, you're just a backup",clue_en:"⚠️ She's forcing you to define it! The bestie is a loudspeaker",resp_en:{good:["…That's so sudden, let me think","Are you serious?","Then I'll wait for your answer"],mid:["Hmph, good that you know","Let's see how you do","hmph"],bad:["Fine, then bye","heh"]}},
+{npc:'mom',day:4,t:'20:05',msg:'算了，妈不逼你了，你自己看着办吧',clue:'以退为进！千万别当真，当真你就输了',
+ opts:[O('hot','妈你别这么说，我知道你是为我好。给我点时间，我一定带个好的回来见你',11,5,6,9,'gold'),O('ok','妈，谢谢你的理解',6,4,4,4),O('cold','早该这样了',-12,3,0,0,'dead')],
+ resp:{good:['妈等你这句话','嗯，妈相信你','妈不逼你了'],mid:['嗯','好','好'],bad:['好好好，妈以后再也不管你了！','你翅膀硬了！']},msg_en:"Fine, I won't push you. Do whatever you want",clue_en:"Strategic retreat! Do NOT take it literally — if you do, you lose",resp_en:{good:["Mom's been waiting to hear that","Mm, mom believes you","I won't push anymore"],mid:["mm","ok","ok"],bad:["Fine fine, I'll never meddle again!","You've grown wings!"]}},
+{npc:'jie',day:4,t:'22:50',msg:'其实我……',recall:{confess:'其实我上次借的钱还没还完，这次是真周转不开了',trap:'其实我最近在追一个女生，想借钱买包',confess_en:"Actually, I still haven't paid back what I borrowed last time — this time I really can't make ends meet",trap_en:"Actually, there's this girl I've been chasing — I wanted to borrow money to buy her a bag"},clue:'⚠️ 又撤回了！',
+ opts:[O('hot','没事{jie}，有难处直说，兄弟不笑话你',7,6,0,8),O('ok','嗯？怎么了？',4,4,0,4),O('cold','说话说一半？',-5,3,0,0)],
+ resp:{good:['唉…还是你懂我','算了，不说了，改天喝酒说','改天细说'],mid:['嗯','没事','没事'],bad:['你这人真没劲','不说了']},msg_en:"Actually I…",clue_en:"⚠️ Unsent again!",resp_en:{good:["Sigh… you really get me","Forget it, let's talk over drinks sometime","Another time"],mid:["mm","It's fine","It's fine"],bad:["You're no fun","Never mind"]}},
+{npc:'yu',day:5,t:'10:20',msg:'昨天我妈问我有没有对象，我说…还没想好怎么说',clue:'她在等你给名分，压力给到你了',
+ opts:[O('hot','那就别想了，直接说有，我周末去拜访阿姨',14,7,0,12,'gold'),O('ok','慢慢来，不着急',7,5,0,5),O('cold','哦',-10,3,0,0,'dead')],
+ resp:{good:['真的吗！我妈肯定高兴坏了','你最好了','我妈肯定喜欢你'],mid:['嗯…','好吧','再说吧'],bad:['哦','呵']},
+ variants:[
+ {when:S=>(S.flags.yuCold||0)>=2,msg:'我妈问我有没有对象，我说没有',
+  resp:{good:['嗯'],mid:['哦'],bad:['呵']},msg_en:"My mom asked if I have someone. I said no",resp_en:{good:["mm"],mid:["oh"],bad:["whatever"]}}],msg_en:"My mom asked if I have someone yesterday. I said… I didn't know what to say",clue_en:"She's waiting for you to give it a name — pressure's on you",resp_en:{good:["Really?! My mom will be thrilled","You're the best","My mom will love you"],mid:["Mm…","ok","we'll see"],bad:["oh","heh"]}},
+{npc:'mom',day:5,t:'17:30',msg:'气死我了！广场舞的地盘被那帮跳曳步舞的占了！',clue:'📅 她今天丢了地盘，极度烦躁，请顺毛捋',
+ opts:[O('hot','反了他们了！妈你等着，我周末回去帮你站场子！',12,6,8,9,'gold'),O('ok','妈别气，气坏身体不值当',7,5,6,5),O('cold','那就换个地方跳',-11,3,4,0,'dead')],
+ resp:{good:['还是我儿子向着我！','哈哈哈，有你这句话妈就赢了','儿子给妈长脸了！'],mid:['唉，妈就是咽不下这口气','嗯','嗯'],bad:['你就知道说风凉话！','白养你了！']},msg_en:"I'm SO mad! Those street dancers took our park dance spot!",clue_en:"📅 She lost her turf today — extremely irritated, handle with care",resp_en:{good:["My kid's got my back!","Haha, with that I'm already winning","My kid makes me proud!"],mid:["Sigh, I just can't swallow this","mm","mm"],bad:["All you do is talk!","Raised you for nothing!"]}},
+{npc:'yu',day:5,t:'21:00',msg:'对了，我们高中同学群你怎么从来不说话？',clue:'暴风雨前的宁静……',
+ opts:[O('hot','这不是来了吗！各位老同学好',6,5,0,5),O('ok','潜水习惯了',4,4,0,3),O('cold','没意思',-8,3,0,0,'dead')],
+ resp:{good:['哈哈哈','欢迎欢迎','欢迎回来'],mid:['嗯','哦','哦'],bad:['……','呵']},msg_en:"By the way, why do you never talk in our high school group chat?",clue_en:"The calm before the storm…",resp_en:{good:["haha","Welcome welcome","Welcome back"],mid:["mm","oh","oh"],bad:["……","heh"]}},
+{npc:'mom',day:5,t:'22:40',msg:'今天的事谢谢你，妈心情好多了',clue:'顺毛捋成功，她记你的好',
+ opts:[O('hot','妈开心我就开心，天塌下来有儿子顶着',10,5,5,9,'gold'),O('ok','妈开心就好，早点休息',6,4,3,4),O('cold','嗯',-6,3,0,0,'dead')],
+ resp:{good:['我儿子真暖','妈没白疼你','妈有你真幸福'],mid:['嗯，你也早点睡','好','好'],bad:['……','唉']},msg_en:"Thanks for today — I'm in a much better mood",clue_en:"The gentle approach worked — she remembers your kindness",resp_en:{good:["My kid is so sweet","I didn't raise you for nothing","So lucky to have you"],mid:["Mm, you get some rest too","ok","ok"],bad:["……","sigh"]}},
+{npc:'jie',day:5,t:'23:10',msg:'兄弟你说句话啊，群里都在问你啥时候结婚',clue:'他在群里@你，哪壶不开提哪壶',
+ opts:[O('hot','{jie}你先结，我随份子随双份！',7,5,0,6),O('ok','哈哈，快了快了',5,4,0,4),O('cold','关你什么事',-9,3,0,0,'dead')],
+ resp:{good:['哈哈哈，就等你这句话','行，记住了啊','一言为定！'],mid:['哈哈','嗯','哈哈'],bad:['……','你这人']},msg_en:"Bro, say something — everyone's asking in the group when you're getting married",clue_en:"He's @-ing you in the group — poking the hornet's nest",resp_en:{good:["Haha, just waiting for you to say that","Deal, noted","A promise is a promise!"],mid:["haha","mm","haha"],bad:["……","Dude"]}},
+{npc:'yu',day:6,t:'14:00',expects:['meetup','affection','question','greeting'],msg:'周末有空吗？想去看那个新开的展',clue:'约会邀请！答应=关系升温',
+ opts:[O('hot','有！必须有！周六上午我去接你',12,7,0,10,'gold'),O('ok','应该有空，到时候联系',7,5,0,5),O('cold','没空',-10,3,0,0,'dead')],
+ resp:{good:['太好了！那说定了','期待！','不见不散！'],mid:['嗯，到时候说','好','到时候说吧'],bad:['哦','那算了']},
+ variants:[
+ {when:S=>(S.flags.yuCold||0)>=2,msg:'周末有事吗',
+  resp:{good:['哦'],mid:['嗯'],bad:['算了']}}],msg_en:"Free this weekend? There's a new exhibition I want to see",clue_en:"A date invitation! Say yes = relationship heats up",resp_en:{good:["Awesome! It's a date","Can't wait!","See you there!"],mid:["Mm, we'll see","ok","we'll see"],bad:["oh","then never mind"]}},
+{npc:'mom',day:6,t:'19:30',msg:'姑娘人家说了，不嫌你年纪大',clue:'“不嫌你年纪大”——杀人诛心，但她是好意',
+ opts:[O('hot','哈哈哈妈，人家姑娘心真大。行，见一面，交个朋友',9,5,6,7),O('ok','妈，我有自己的节奏',5,4,4,3),O('cold','我还嫌她呢',-11,3,0,0,'dead')],
+ resp:{good:['这就对了！妈去安排','好好好','妈看好你们'],mid:['你有啥节奏…','唉','唉'],bad:['你怎么说话呢！','没大没小！']},
+ variants:[
+ {when:S=>S.rel.mom<30,msg:'人家姑娘说了，不嫌你年纪大。你自己看着办吧[微笑]',
+  resp:{good:['嗯'],mid:['[微笑]'],bad:['好好好，妈多余操心']},msg_en:"The girl said she doesn't mind your age. Do what you want [smile]",resp_en:{good:["mm"],mid:["[smile]"],bad:["Fine fine, I was being nosy"]}}],msg_en:"The girl said she doesn't mind that you're older",clue_en:"'Doesn't mind you're older' — brutal, but well-meant",resp_en:{good:["That's the spirit! I'll arrange it","Good good good","I knew they'd like you"],mid:["What rhythm do you even have…","sigh","sigh"],bad:["How dare you talk like that!","No respect!"]}},
+{npc:'jie',day:6,t:'20:00',expects:['money'],msg:'最后问一次，8000，有没有一句话。兄弟我这是真到坎了',clue:'⚠️ 终极拷问！你的回答决定这段友谊的生死',special:'borrow',
+ opts:[O('hot','有！现在就转你。兄弟的坎就是我的坎',0,8,0,20,'gold'),O('ok','8000我一时拿不出，先转你3000应个急，剩下的我想想办法',0,6,0,10),O('cold','没有',0,4,0,0,'dead')],
+ resp:{good:['兄弟！！！我阿杰这辈子没服过谁，就服你','大恩不言谢，来日必报','兄弟！你就是我亲兄弟！'],mid:['行…3000也行，谢了兄弟','嗯，谢了','谢了'],bad:['呵呵，好','行，我记住了']},
+ variants:[
+ {when:S=>S.flags.lent,msg:'兄弟，上次那5000我记在账上。这次8000…我实在开不了口，但真到坎了',
+  resp:{good:['兄弟！你就是我亲兄弟！下个月发工资一起还','大恩不言谢！'],mid:['行…谢了兄弟','嗯'],bad:['呵呵','行']},msg_en:"Bro, I owe you that 5000 — noted. This 8000… I can barely ask, but I'm really stuck",resp_en:{good:["Bro! You're my real brother! We'll pay it back together after payday","A debt of gratitude!"],mid:["Sure… thanks bro","mm"],bad:["heh","fine"]}},
+ {when:S=>S.flags.refused,msg:'最后问一次，8000…算了，你上次已经说了，就当我没问',
+  resp:{good:['…没事','嗯'],mid:['哦','唉'],bad:['呵呵','好，我记住了']},msg_en:"Last time asking, 8000… forget it, you already said no. Pretend I didn't ask",resp_en:{good:["…it's fine","mm"],mid:["oh","sigh"],bad:["heh","fine, noted"]}}],msg_en:"Last time asking — 8000, yes or no, one sentence. Bro, I'm really at the edge here",clue_en:"⚠️ The ultimate interrogation! Your answer decides this friendship's fate",resp_en:{good:["BRO!!! I've never admired anyone like I admire you","A debt of gratitude, I'll repay you someday","Bro! You're my real brother!"],mid:["Sure… 3000 works too, thanks","mm, thanks","thanks"],bad:["heh, fine","ok, noted"]}},
+{npc:'yu',day:6,t:'21:30',expects:['affection','question'],msg:'你说，我们现在算什么关系？',clue:'⚠️ 终极送命题！认真回答',
+ opts:[O('hot','算命中注定。给我个机会，让我照顾你',15,8,0,13,'gold'),O('ok','算…很好的朋友，再往前一步的那种',9,5,0,7),O('cold','朋友',-13,3,0,0,'dead')],
+ resp:{good:['…我也是这么想的','那就看你表现了','你说了算'],mid:['嗯…','好吧','你说呢'],bad:['朋友？好，知道了','呵呵，朋友']},msg_en:"So… what are we, exactly?",clue_en:"⚠️ The ultimate trap question! Answer carefully",resp_en:{good:["…I was thinking the same","Then it depends on you","You call the shots"],mid:["Mm…","ok","you tell me"],bad:["Friends? Got it","heh, friends"]}},
+{npc:'mom',day:6,t:'20:45',msg:'你就回妈一句，到底去不去见那个姑娘？',clue:'她要一个准话，yes or no',
+ opts:[O('hot','去！妈安排时间，我一定到',10,5,6,8),O('ok','妈，我先跟人家姑娘微信聊聊，合适再见面',6,4,4,4),O('cold','不去',-12,3,0,0,'dead')],
+ resp:{good:['好好好！妈这就去说','太好了！','妈这就安排！'],mid:['也行，你先聊着','嗯','嗯'],bad:['你是要气死妈吗！','好好好']},msg_en:"Just tell me straight — are you meeting that girl or not?",clue_en:"She wants a straight answer, yes or no",resp_en:{good:["Good good good! I'll tell her right away","Wonderful!","I'll arrange it!"],mid:["Fine, chat first","mm","mm"],bad:["Are you trying to kill me?!","Fine fine"]}},
+{npc:'jie',day:6,t:'22:00',msg:'你的心意我领了，多的不说了',clue:'尘埃落定，且看后效',
+ opts:[O('hot','别客气，都是兄弟',5,4,0,5),O('ok','嗯',3,3,0,2),O('cold','嗯',-3,2,0,0)],
+ resp:{good:['兄弟！','改天请你喝酒','都在酒里了'],mid:['嗯','好','好'],bad:['……','哦']},msg_en:"I appreciate it, enough said",clue_en:"The dust has settled — time will tell",resp_en:{good:["Bro!","Drinks on me next time","It's all in the drinks"],mid:["mm","ok","mm"],bad:["……","oh"]}},
+{npc:'yu',day:7,t:'10:00',msg:'昨晚梦见你了',clue:'梦到你=心里有你，最后一搏的时候到了',
+ opts:[O('hot','梦里我是不是很帅？现实中的我更帅，周末见',12,7,0,10,'gold'),O('ok','梦见我什么了？',7,5,0,5),O('cold','哦',-9,3,0,0,'dead')],
+ resp:{good:['自恋！不过…确实挺帅的','哈哈哈','梦里见'],mid:['嗯…','不告诉你','哼'],bad:['哦','呵']},
+ variants:[
+ {when:S=>S.flags.warm,
+  resp:{good:['梦见你跟我表白，醒来发现是真的','男朋友，早上好'],mid:['嗯','哈哈'],bad:['哦','……']},resp_en:{good:["I dreamed you confessed to me — woke up and it was real","Good morning, boyfriend"],mid:["mm","haha"],bad:["oh","……"]}}],msg_en:"I dreamed about you last night",clue_en:"Dreaming of you = you're on her mind. Final push time",resp_en:{good:["Narcissist! But… you are kind of handsome","hahaha","see you in dreams"],mid:["Mm…","won't tell you","hmph"],bad:["oh","heh"]}},
+{npc:'mom',day:7,t:'18:30',expects:['apology','affection','praise','greeting'],msg:'妈想了想，可能是妈太急了',clue:'她在反思，这是和解的信号，接住它',
+ opts:[O('hot','妈，你也是为我好，我都懂。以后我多跟你商量，不让你瞎操心',12,5,6,11,'gold'),O('ok','妈，谢谢你的理解',7,4,4,5),O('cold','你知道就好',-10,3,0,0,'dead')],
+ resp:{good:['我儿子长大了…妈很欣慰','嗯，妈以后不催了','妈以后多听你的'],mid:['嗯','好','好'],bad:['好好好，妈多余','你！']},
+ variants:[
+ {when:S=>S.flags.warm,
+  resp:{good:['我儿子最贴心了','妈有你真幸福'],mid:['嗯','好'],bad:['……','唉']},resp_en:{good:["My kid is the sweetest","So lucky to have you"],mid:["mm","ok"],bad:["……","sigh"]}}],msg_en:"I've been thinking — maybe I was pushing too hard",clue_en:"She's reflecting — this is a peace signal, catch it",resp_en:{good:["My boy's all grown up… I'm so proud","Mm, I won't push anymore","I'll listen to you more"],mid:["mm","ok","ok"],bad:["Fine fine, I was being nosy","You!"]}},
+{npc:'jie',day:7,t:'19:00',msg:'兄弟，跟你说个事',clue:'最终章：检验这段友谊的成色',
+ opts:[O('hot','说，兄弟听着',6,5,0,6),O('ok','嗯，你说',4,4,0,3),O('cold','说',-4,3,0,0)],
+ resp:{good:['这几天我想了很多…','不管咋样，你这个兄弟我认定了','兄弟一生一起走'],mid:['嗯','唉','嗯'],bad:['……','算了']},
+ variants:[
+ {when:S=>S.flags.lent,msg:'兄弟，这几天我想了很多…钱我一定还，你这个兄弟，我认定了',
+  resp:{good:['一辈子兄弟！','这辈子没服过谁，就服你'],mid:['嗯','好'],bad:['……','哦']},msg_en:"Bro, I've been thinking a lot… I'll pay the money back for sure. You're my brother, period",resp_en:{good:["Bros for life!","I've never admired anyone like I admire you"],mid:["mm","ok"],bad:["……","oh"]}},
+ {when:S=>S.flags.fight,msg:'…',
+  resp:{good:['嗯'],mid:['哦'],bad:['呵']},msg_en:"…",resp_en:{good:["mm"],mid:["oh"],bad:["heh"]}}],msg_en:"Bro, I need to tell you something",clue_en:"Final chapter: testing what this friendship is made of",resp_en:{good:["I've been thinking a lot these days…","No matter what, you're my bro","Bros for life"],mid:["mm","sigh","mm"],bad:["……","forget it"]}},
+{npc:'yu',day:7,t:'21:00',expects:['affection','question','greeting'],msg:'这七天，跟你聊天很开心',clue:'⚠️ 告白窗口期！关系够硬就上',special:'confess',
+ opts:[O('hot','我也是。{yu}，做我女朋友吧',0,8,0,15,'gold'),O('ok','我也是，很开心',8,5,0,6),O('cold','嗯',-10,3,0,0,'dead')],
+ resp:{good:['…好','我答应你','以后请多指教'],mid:['嗯','哈哈','哈哈'],bad:['哦','……']},
+ variants:[
+ {when:S=>S.rel.yu>=80,
+  resp:{good:['…好，男朋友','终于等到你说这句话','以后请多指教'],mid:['嗯','哈哈'],bad:['哦','……']},resp_en:{good:["…Fine, boyfriend","Finally — I've been waiting for you to say that","Take care of me from now on"],mid:["mm","haha"],bad:["oh","……"]}}],msg_en:"These seven days, chatting with you made me really happy",clue_en:"⚠️ Confession window! If the relationship is solid, go for it",resp_en:{good:["…ok","I accept","Take care of me"],mid:["mm","haha","haha"],bad:["oh","……"]}},
+{npc:'mom',day:7,t:'20:00',msg:'不管你做啥决定，妈都支持你。记得按时吃饭',clue:'终极温柔，收官',
+ opts:[O('hot','妈，我爱你。周末我回家，给你做饭',12,5,5,11,'gold'),O('ok','妈，我也爱你',8,4,3,6),O('cold','知道了',-8,3,0,0,'dead')],
+ resp:{good:['好…妈等你','我儿子真好','妈永远支持你'],mid:['嗯','好','好'],bad:['……','唉']},msg_en:"Whatever you decide, mom supports you. Remember to eat on time",clue_en:"Ultimate tenderness — closing act",resp_en:{good:["Good… mom will wait for you","My kid is wonderful","Mom will always support you"],mid:["mm","ok","ok"],bad:["……","sigh"]}},
+{npc:'jie',day:7,t:'21:30',msg:'以后有事，尽管开口',clue:'收官，兄弟情的最终定价',
+ opts:[O('hot','必须的！一辈子的兄弟',8,5,0,7,'gold'),O('ok','嗯，一样',5,4,0,4),O('cold','嗯',-5,3,0,0,'dead')],
+ resp:{good:['一辈子！','哈哈哈','一辈子兄弟！'],mid:['嗯','好','嗯'],bad:['……','哦']},msg_en:"If you ever need anything, just ask",clue_en:"Closing act — the final price of brotherhood",resp_en:{good:["For life!","hahaha","Bros for life!"],mid:["mm","ok","mm"],bad:["……","oh"]}}
+];
+
+/* ================= 自由聊天引擎 ================= */
+/* ---------- 理解层：本地意图识别（零联网） ---------- */
+const INTENT_RES=[
+ ['perfunctory',/^(哦|嗯|好|行|哈哈|呵呵|ok|OK|好的|嗯嗯|是的|对|可以|行吧|哦哦|嗯嗯嗯|好吧|收到|在|贵|？|\?|okay|k|yeah|yep|yup|fine|sure|lol|lmao|haha|hehe|hmm|hmmm|noted|got it|received)+$/i],
+ ['bye',/拜拜|睡了|下了|回见|明天聊|先忙了|晚安|88|886|先撤了|我睡了|\bbye\b|good ?night|goodnight|\bgn\b|ttyl|talk later|\bgtg\b|gotta go|heading out|sleep tight|good ?nite/i],
+ ['apology',/对不起|抱歉|不好意思|我的错|我错了|原谅我|是我不对|道歉|对不住|我不好|sorry|apologize|apologies|my bad|my fault|forgive me|pardon me|i was wrong|i'm sorry/i],
+ ['affection',/喜欢你|爱你|想你|宝贝|亲亲|抱抱|心动|稀罕|么么|mua|老婆|女朋友|男朋友|想见你|爱死你|i love you|love you|love ya|miss you|i miss you|like you|crush on you|\bkiss\b|\bhug\b|xoxo|\bbabe\b|\bbaby\b|darling|honey|sweetheart|want to see you|my love/i],
+ ['anger',/滚|有病|神经病|烦死了|拉黑|去死|闭嘴|讨厌你|傻逼|白痴|脑残|恶心|贱|神经|gun|关你什么事|关你屁事|要你管|多管闲事|你管我|fuck|shit|stfu|shut up|piss off|fuck off|hate you|idiot|stupid|dumb|moron|block you|none of your business|mind your business|mind your own business|leave me alone|screw you|damn you|go to hell/i],
+ ['money',/钱|借|还钱|转账|转你|红包|5000|8000|周转|发工资|借钱|还我|打钱|money|borrow|lend|loan|transfer|venmo|pay ?back|payback|red packet|red envelope|hongbao|salary|payday|broke|short on cash|wire me|spot me/i],
+ ['meetup',/见面|吃饭|喝一杯|出来玩|逛街|看电影|聚聚|约会|喝酒|撸串|火锅|看展|约吗|出来|meet ?up|hang ?out|grab dinner|grab a drink|get coffee|watch a movie|movie night|party|go on a date|dinner|lunch|drinks|come over|come out/i],
+ ['praise',/厉害|牛|好看|漂亮|真棒|优秀|天才|佩服|帅|赞|强啊|666|棒|美|awesome|amazing|great|nice|cool|brilliant|genius|impressive|beautiful|gorgeous|handsome|smart|well done|congrats|congratulations|proud of you|dope|slay/i],
+ ['sad',/难过|想哭|好累|压力大|好烦|emo|失眠|委屈|郁闷|心累|崩溃|累死了|想哭|sad|crying|\bcry\b|tired|exhausted|stressed|depressed|emo|upset|down bad|burn ?out|insomnia|can't sleep|anxious|anxiety|overwhelmed/i],
+ ['tease',/笑死|逗你|开玩笑|调戏|哈哈哈|hhhh|逗比|开玩笑的|笑死我了|lmao|lmfao|\blol\b|joking|just kidding|\bjk\b|kidding|teasing|hahaha|hahahaha|rofl/i],
+ ['greeting',/在吗|在么|在不在|你好|早上好|早安|吃了没|吃了吗|最近怎么样|最近咋样|最近如何|嗨|hello|hi|\bhey\b|\byo\b|\bsup\b|good morning|good afternoon|good evening|morning|how are you|how's it going|what's up|how are u|long time no see/i],
+ ['question',/[？?]\s*$|为什么|怎么|咋|谁|哪里|哪儿|多少|几个|是不是|多久|能不能|可不可以|吗\s*$|么\s*$|呢\s*$|\bwhy\b|\bhow\b|\bwhat\b|\bwho\b|\bwhere\b|\bwhen\b|\bwhich\b|\bis it\b|\bare you\b|\bdo you\b|\bcan you\b|\bcould you\b|\bwill you\b|\bwould you\b/i],
+];
+const POS_W=/(哈哈|喜欢|爱|开心|棒|谢谢|好|甜|美|帅|暖|感动|嘻嘻|嘿嘿|mua|😊|😍|🥰|😘|👍|❤️|❤|love|like|happy|great|awesome|thanks|thank|haha|lmao|sweet|warm|touched|beautiful|amazing|glad)/gi;
+const NEG_W=/(滚|烦|讨厌|有病|不行|不好|差|哼|切|呸|😡|💢|😤|🖕|hate|angry|stupid|idiot|dumb|annoying|disgusting|sucks|awful|terrible|worst)/gi;
+function analyze(text){
+  const t=String(text).trim(); const intents=[];
+  for(let k=0;k<INTENT_RES.length;k++){ try{ if(INTENT_RES[k][1].test(t))intents.push(INTENT_RES[k][0]); }catch(e){} }
+  let s=0; const pm=t.match(POS_W), nm=t.match(NEG_W);
+  s+=(pm?pm.length:0)-(nm?nm.length:0);
+  const sentiment=s===0?0:Math.max(-1,Math.min(1,s/2));
+  return {intents:intents.length?intents:['unknown'], sentiment, len:t.length,
+    question:intents.indexOf('question')>=0, text:t};
+}
+function toneFromAnalysis(a){
+  const I=a.intents;
+  if(I.indexOf('anger')>=0||I.indexOf('perfunctory')>=0)return 'cold';
+  if(I.indexOf('affection')>=0)return 'hot';
+  if(I.indexOf('sad')>=0)return 'ok';
+  if(a.sentiment>=0.4)return 'hot';
+  if(a.sentiment<=-0.4)return 'cold';
+  return 'ok';
+}
+/* ---------- 通用反应池：3人×3情绪 ---------- */
+const GENERIC={
+ yu:{warm:['哈哈哈，你找我呀~','在呢在呢，看到你的消息就开心','怎么啦？想我啦？','你最好了~'],
+     mid:['嗯？怎么了','在呢，啥事？','哈哈，咋啦','说吧，我听着呢','哈哈，真的吗','然后呢然后呢','有点意思，继续说'],
+     cold:['哦','在忙','嗯','有事？','刚在忙，没看手机','嗯…我这边有点事','晚点跟你说','在地铁上，信号不好']},
+ mom:{warm:['哎哟，想妈啦？','在呢在呢，吃了没？','哈哈，我儿子真乖','妈在呢，慢慢说'],
+     mid:['嗯？啥事？','说吧，妈听着','在呢','咋啦？','是吗？还有呢','嗯，你继续说','妈听着呢，你说'],
+     cold:['[微笑]','嗯','忙','有事说事','妈在买菜呢','先不说了，锅上还炖着汤','嗯，妈记下了','回头再说，妈忙着呢']},
+ jie:{warm:['咋啦兄弟？','在呢在呢，啥指示？','哈哈哈，想我了？','说，兄弟听着'],
+     mid:['嗯？咋了','在呢','啥事？','说吧','然后呢？','有点意思','继续，我听着'],
+     cold:['哦','忙','嗯','有事？','在开会，稍后回你','忙着呢，改天约','手头有点事','嗯，知道了，回聊']}
+};
+const DEFLECT={
+ yu:['你这话说的，我CPU干烧了…','哈哈哈，你成功把我问住了','嗯…这个话题超纲了！','你猜？（眨眼）','哎呀，这个问题把我问住了','换个话题嘛~','这个嘛…说来话长'],
+ mom:['你这孩子，说话没头没尾的','妈年纪大了，听不懂你们年轻人的话','啊？你说啥？妈没看清','行行行，妈知道了','妈听不懂，你直接说重点','这事妈不懂，你问你爸去','行了，妈要去跳广场舞了'],
+ jie:['哈哈哈，你小子又整啥活？','啥意思？我没跟上','你这话里有话啊','得得得，说人话','这题超纲了兄弟','换个话题，聊点开心的','你这弯子绕得我有点晕']
+};
+const STEER={
+ yu:['对了，我跟你说个事…','诶，说正经的','不说这个了，你猜我今天遇到啥了'],
+ mom:['对了，妈跟你说个正事','行了行了，说正经的','不扯别的了，你王阿姨…'],
+ jie:['对了，说正事','行了，言归正传','不扯淡了，兄弟跟你说个事']
+};
+const NUDGE={yu:{zh:['？','人呢？','看到回一下嘛'],en:['?','Hello?','Saw it? Reply pls']},
+ mom:{zh:['？','看到没？','[微笑]'],en:['?','Did you see it?','[smile]']},
+ jie:{zh:['？','在不在？','忙啥呢'],en:['?','You there?','What you up to']}};
+function pickNudge(npc){ const p=NUDGE[npc]||NUDGE.yu; return pick1(LANG==='en'?p.en:p.zh); }
+/* ---------- 通用反应池 · 英文版 ---------- */
+const GENERIC_EN={
+ yu:{warm:['Hahaha, you came to find me~','I\'m here — seeing your message makes me happy','What\'s up? Miss me?','You\'re the best~'],
+     mid:['Hm? What\'s up','I\'m here, what is it?','Haha, what\'s wrong','Tell me, I\'m listening','Haha, really?','And then?','Interesting, go on'],
+     cold:['oh','busy','mm','something?','Was busy, didn\'t see my phone','mm… got stuff here','talk later','On the subway, bad signal']},
+ mom:{warm:['Aww, miss mom?','I\'m here — have you eaten?','Haha, my kid is so good','Mom\'s here, take your time'],
+     mid:['Hm? What is it?','Go ahead, mom\'s listening','I\'m here','What\'s wrong?','Really? Go on','Mm, keep talking','Mom\'s listening, go ahead'],
+     cold:['[smile]','mm','busy','Say what you need','Mom\'s grocery shopping','Let\'s talk later, soup\'s on the stove','Mm, noted','Talk later, mom\'s busy']},
+ jie:{warm:['What\'s up, bro?','Here — what are your orders?','Hahaha, miss me?','Say it, bro\'s listening'],
+     mid:['Hm? What','Here','What\'s up?','Say it','And then?','Interesting','Go on, I\'m listening'],
+     cold:['oh','busy','mm','what?','In a meeting, talk later','Busy now, another day','Got stuff to do','mm, got it, talk later']}
+};
+const DEFLECT_EN={
+ yu:['Wow, you fried my CPU…','Hahaha, you got me','Mm… that\'s beyond my syllabus!','Guess? (winks)','Ugh, you stumped me','Change the topic~','Well… that\'s a long story'],
+ mom:['You kid, you make no sense','Mom\'s old, can\'t keep up with you young people','Huh? What did you say? Mom didn\'t catch that','Fine fine, mom got it','Mom doesn\'t get it — just say the point','Mom doesn\'t know about this, ask your dad','OK, mom\'s off to dance class'],
+ jie:['Hahaha, what are you up to now?','What do you mean? I\'m lost','There\'s something between the lines here','Come on, speak human','That\'s beyond my syllabus, bro','Change of topic — something fun','You\'re going in circles, I\'m dizzy']
+};
+const STEER_EN={
+ yu:['Oh right, I have something to tell you…','Hey, seriously though','Enough about that — guess what happened to me today'],
+ mom:['Oh right, mom has something serious to tell you','OK OK, serious talk','Enough — your Auntie Wang…'],
+ jie:['Oh right, serious talk','OK, back on track','Enough messing around — bro\'s got something to say']
+};
+/* 语言感知的通用池取行 */
+function pickGeneric(npc,mood){ return pick1((LANG==='en'?GENERIC_EN:GENERIC)[npc][mood]); }
+function pickDeflect(npc){ return pick1((LANG==='en'?DEFLECT_EN:DEFLECT)[npc]); }
+function pickSteer(npc){ return pick1((LANG==='en'?STEER_EN:STEER)[npc]); }
+/* ---------- 按意图的同义回复池：同一意图 5 条轮换（不立即重复），破背板感 ---------- */
+const INTENT_REACT={
+ greeting:{
+  yu:['在呢在呢~','嗨~找我呀','在的在的，怎么啦','哟，稀客呀~','在呢，看到你的消息啦'],
+  mom:['在呢，乖','哎，妈在呢','在，啥事呀','嗯，妈看到了','咋啦孩子'],
+  jie:['在呢兄弟','咋啦','在，说','哟，找我啥事','讲']},
+ question:{
+  yu:['嗯？问吧','你说，我听着呢','啥问题呀','问呗，别客气','让我想想…你先说'],
+  mom:['啥？你问','你说，妈听着','问吧问吧','嗯？妈没看清，你再说一遍','问，妈给你参谋参谋'],
+  jie:['问','说，啥事','你讲','嗯？细说','直接问，别绕']},
+ affection:{
+  yu:['哎呀，你最好了~','我也想你','嘿嘿，开心','你这么说我脸红了','mua~'],
+  mom:['我儿子真乖','哎哟，妈的心都化了','好好好，妈知道了','乖，妈也疼你','嘴真甜，随我'],
+  jie:['哈哈哈，兄弟我懂','行，够意思','哎哟，肉麻了啊','放心，兄弟在呢','别整煽情的啊，哈哈']},
+ perfunctory:{
+  yu:['哦…','嗯嗯','这样啊','行吧','知道了'],
+  mom:['嗯','哦','行，妈知道了','啊？哦','知道了知道了'],
+  jie:['哦','嗯','行','知道了','妥']},
+ tease:{
+  yu:['哈哈哈，你讨厌~','哼，不理你了（假的）','你再说一遍试试？','调皮~','略略略'],
+  mom:['你这孩子，没大没小的','去去去，逗你妈玩呢','好好说话！','妈可不吃这一套','再贫嘴妈真生气了啊'],
+  jie:['哈哈哈，滚蛋','你小子，皮痒了？','行行行，你厉害','别贫了，说正事','有两下子啊你']},
+ apology:{
+  yu:['哼，看在你这么诚恳的份上，原谅你啦','好吧好吧，别难过了','知道错了就行，下次注意哦','哎呀，你这样我都不好意思生气了','行吧，原谅你这一次'],
+  mom:['妈没真生气，知道你心里有妈就行','过去了过去了，一家人说什么对不起','你能这么说，妈就知足了','行了行了，妈不气了','傻孩子，跟妈还见外'],
+  jie:['多大点事，哥不放心上','行了啊，大老爷们别磨叽','这事翻篇了','你小子还知道认错，行吧','没事，下次请我喝酒']},
+ anger:{
+  yu:['你凶什么凶嘛…','好好说话不行吗','你这样我有点难过','冷静点，咱们有话好好说','你再凶我真不理你了'],
+  mom:['你跟谁喊呢？好好说话！','妈是为你好，你这是什么态度','行行行，妈不说了还不行吗','你这孩子，火气怎么这么大','好好好，妈错了行了吧'],
+  jie:['哟，火气不小啊','好好说，别上头','你跟我急什么，又不是我惹的','冷静冷静，喝口水','行，你说得对，消消气']}
+};
+const IR_LAST={};
+function pickIntent(npc,intent){
+  const tab=(LANG==='en'&&INTENT_REACT_EN[intent])?INTENT_REACT_EN:INTENT_REACT;
+  const pool=tab[intent]&&tab[intent][npc];
+  if(!pool||!pool.length)return null;
+  const k=npc+':'+intent+':'+LANG;
+  let i=Math.floor(Math.random()*pool.length);
+  if(pool.length>1&&IR_LAST[k]===i)i=(i+1)%pool.length;
+  IR_LAST[k]=i;
+  return pool[i];
+}
+/* 意图回复池 · 英文版（人设语气与中文版对齐） */
+const INTENT_REACT_EN={
+ greeting:{
+  yu:['Heyy, you\'re here~','Hiii, come to see me?','I\'m here — what\'s up?','Oh, a rare visitor~','I\'m here, saw your message!'],
+  mom:['I\'m here, sweetie','Oh, mom\'s here','Here — what\'s up?','Mm, mom saw it','What\'s wrong, kiddo'],
+  jie:['Yo, what\'s up','Here','Sup','Yeah?','Talk to me']},
+ question:{
+  yu:['Hmm, let me think…','Good question!','Why do you ask~','Ooh, curious are we','Let me get back to you on that'],
+  mom:['What was the question again?','Mom needs a minute','Ask your dad about that one','Hmm, that\'s a tough one','Let me ask Auntie Wang'],
+  jie:['Dunno, let me think','Good question, bro','Hmm, never thought about it','Ask me something easier','Let me google that in my head']},
+ affection:{
+  yu:['Aww, you\'re so sweet~','Hehe, I like you too','Mua~','You always know what to say','My heart just skipped a beat'],
+  mom:['Aww, mom loves you too','My sweet child','Mom\'s heart is melting','You\'re mom\'s pride','Come here, virtual hug'],
+  jie:['Bro… love you too, man','Haha, alright alright','Don\'t get all mushy on me','Yeah yeah, bros for life','Appreciate you, man']},
+ perfunctory:{
+  yu:['Mm-hm, listening~','Uh-huh','Yeah yeah','Go on','I\'m here, keep talking'],
+  mom:['Mm, mom\'s listening','Go on','Uh-huh, continue','Mom hears you','Keep talking'],
+  jie:['Yeah','Mm','Go on','Listening','Keep going']},
+ tease:{
+  yu:['Hahaha, you\'re mean~','Hmph, ignoring you (not really)','Say that again, I dare you?','Naughty~','Nya nya nya'],
+  mom:['You kid, no manners','Stop teasing your mom','Talk properly!','Mom\'s not buying it','Keep it up and mom\'s really getting mad'],
+  jie:['Hahaha, get lost','You little punk, asking for it?','Fine fine, you\'re good','Stop messing around, be serious','Not bad, not bad']},
+ apology:{
+  yu:['Hmph, since you\'re so sincere, I forgive you','Fine fine, don\'t be sad','As long as you\'ve learned — be careful next time','Aww, now I feel bad being mad','OK, forgiven — this once'],
+  mom:['Mom wasn\'t really mad — knowing you care is enough','It\'s over, we\'re family, no need for sorry','That you said it is enough for me','There there, mom\'s not mad anymore','Silly child, no need to be formal with mom'],
+  jie:['It\'s nothing, bro, don\'t sweat it','Alright, real men don\'t dwell','This one\'s closed','You actually apologized — respect','It\'s fine, you owe me a drink next time']},
+ anger:{
+  yu:['Why are you yelling…','Can\'t you talk nicely?','That kind of hurts, you know','Calm down, let\'s talk properly','Yell again and I\'m really ignoring you'],
+  mom:['Who are you shouting at?! Talk properly!','It\'s for your own good — what\'s with the attitude?','Fine fine, mom won\'t say another word','Kid, why so much fire?','OK OK, mom\'s wrong, happy now?'],
+  jie:['Whoa, temper much?','Talk straight, don\'t get heated','Why are you mad at me? I didn\'t do it','Chill, have some water','Fine, you\'re right — calm down']}
+};
+/* 每条玩家消息的好感delta（求和后钳制） */
+function freeRelDelta(a){
+  const I=a.intents; let d=0;
+  if(I.indexOf('affection')>=0)d+=3; if(I.indexOf('praise')>=0)d+=2;
+  if(I.indexOf('greeting')>=0)d+=1; if(I.indexOf('apology')>=0)d+=2;
+  if(I.indexOf('anger')>=0)d-=6; if(I.indexOf('perfunctory')>=0)d-=1;
+  if(I.indexOf('sad')>=0)d+=1;
+  d=Math.max(-6,Math.min(5,d));
+  if(S.persona==='nice'&&d<0)d=Math.round(d*0.6);
+  if(S.persona==='cold'&&d>0)d=Math.round(d*0.7);
+  if(S.persona==='yin'&&I.indexOf('anger')>=0)d=Math.round(d*0.5);
+  d+=Math.random()<0.5?-1:1; /* 同一句话每次好感浮动±1：破背板感，方差>0 */
+  return d;
+}
+/* 上下文：记最近6条玩家消息，推导 warm/fight/distant */
+function pushCtx(npc,a){
+  S.ctx.push({npc,intents:a.intents.slice(0,5)}); if(S.ctx.length>6)S.ctx.shift();
+  const mine=S.ctx.filter(c=>c.npc===npc).slice(-3);
+  if(mine.length===3&&mine.every(c=>c.intents.indexOf('affection')>=0))S.flags.warm=true;
+  if(a.intents.indexOf('anger')>=0)S.flags.fight=true;
+  if(a.intents.indexOf('apology')>=0)S.flags.fight=false;
+  if(mine.length===3&&mine.every(c=>c.intents.indexOf('perfunctory')>=0))S.flags.distant=true;
+}
+
+/* ================= 引擎 ================= */
+const $=id=>document.getElementById(id);
+const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
+let S=null, HIST=null, timers=[];
+function clearTimers(){timers.forEach(t=>{clearInterval(t);clearTimeout(t)});timers=[];}
+function later(fn,ms){timers.push(setTimeout(fn,ms));}
+function every(fn,ms){timers.push(setInterval(fn,ms));}
+/* 音频 */
+let AC=null;
+function beep(f,d){ if(S&&S.muted)return; f=f||600; d=d||0.07;
+  try{ AC=AC||new (window.AudioContext||window.webkitAudioContext)();
+    if(AC.state==='suspended')AC.resume();
+    const o=AC.createOscillator(),g=AC.createGain(); o.connect(g); g.connect(AC.destination);
+    o.type='sine'; o.frequency.value=f;
+    g.gain.setValueAtTime(0.07,AC.currentTime); g.gain.exponentialRampToValueAtTime(0.001,AC.currentTime+d);
+    o.start(); o.stop(AC.currentTime+d);
+  }catch(e){}
+}
+function toast(t){ const el=$('toast'); el.textContent=t; el.style.opacity=1;
+  clearTimeout(el._t); el._t=setTimeout(()=>el.style.opacity=0,2200); }
+function showModal(html){ $('modalCard').innerHTML=html; $('modalWrap').classList.remove('hidden'); }
+function hideModal(){ $('modalWrap').classList.add('hidden'); }
+/* DMK 已废弃：NPC 名每局随机，改用 npcName()/npc id 直连 */
+
+/* ---------- 存档 ---------- */
+function save(){ if(!S||S.over)return;
+  try{ localStorage.setItem('yidu_save',JSON.stringify({persona:S.persona,stepIdx:S.stepIdx,day:S.day,e:S.e,p:S.p,s:S.s,rel:S.rel,unread:S.unread,timeouts:S.timeouts,quotes:S.quotes,flags:S.flags,hist:HIST,groupUnlocked:S.groupUnlocked,respIdx:S.respIdx,dayStart:S.dayStart,achv:S.achv,npcs:S.npcs,ctx:S.ctx})); }catch(e){}
+}
+function loadSave(){ try{return JSON.parse(localStorage.getItem('yidu_save'));}catch(e){return null;} }
+function clearSave(){ try{localStorage.removeItem('yidu_save');}catch(e){} }
+function getAchv(){ try{return JSON.parse(localStorage.getItem('yidu_achv')||'[]');}catch(e){return [];} }
+function unlockAchv(id){ const a=getAchv(); if(a.indexOf(id)<0){ a.push(id); try{localStorage.setItem('yidu_achv',JSON.stringify(a));}catch(e){}
+  const nm={ghost:'achvGhost',asura:'achvAsura',writer:'achvWriter',master:'achvMaster'}[id]||'achvGhost';
+  toast(F('achvToast',{name:T(nm)})); beep(880,0.15); if(S)S.achvNew.push(id); } }
+
+/* ---------- 队列 ---------- */
+function buildQueue(){ const q=[];
+  for(let d=1;d<=7;d++){ const db=BEATS.filter(b=>b.day===d);
+    if(d===5){ db.slice(0,3).forEach(b=>q.push({type:'beat',beat:b})); q.push({type:'group'}); db.slice(3).forEach(b=>q.push({type:'beat',beat:b})); }
+    else db.forEach(b=>q.push({type:'beat',beat:b}));
+    q.push({type:'night',day:d});
+  } return q;
+}
+function initState(persona){ S={persona,stepIdx:0,queue:buildQueue(),day:1,e:100,p:100,s:100,
+  rel:{yu:50,mom:50,jie:50},cur:'yu',unread:{yu:0,mom:0,jie:0,group:0},
+  timeouts:0,quotes:[],flags:{},groupUnlocked:false,gi:0,groupMin:100,
+  muted:false,over:false,phase:'idle',pendingBeat:null,curBeat:null,respIdx:0,
+  pending:null,pendingQ:null,ctx:[],
+  dayStart:{yu:50,mom:50,jie:50},achvNew:[],npcs:randomNpcs()};
+  HIST={yu:[],mom:[],jie:[],group:[]};
+}
+
+/* ---------- 渲染 ---------- */
+function renderTabs(){ const tb=$('tabbar'); tb.innerHTML='';
+  ['yu','mom','jie'].concat(S.groupUnlocked?['group']:[]).forEach(id=>{
+    const d=document.createElement('div'); d.className='tab'+(S.cur===id?' sel':'');
+    d.innerHTML=npcName(id)+(S.unread[id]?'<span class="bdg">'+S.unread[id]+'</span>':'');
+    d.onclick=()=>switchTab(id); tb.appendChild(d);
+  });
+}
+function switchTab(id){ if(S.over||S.phase==='group')return;
+  if(S.cur!==id){ S.e=Math.max(0,S.e-1); }
+  S.cur=id; S.unread[id]=0; renderTabs(); renderHeader(); renderMsgs(); renderRes();
+  if(S.pendingBeat&&S.pendingBeat.npc===id) deliverBeat(S.pendingBeat);
+}
+function renderHeader(){ const id=S.cur;
+  $('hAva').textContent=npcAva(id); $('hName').textContent=npcName(id);
+  $('hMood').textContent=moodText(id,S.day)+(S.rel&&S.rel[id]!=null?' · ❤'+Math.round(S.rel[id]):'');
+  $('chatInput').placeholder=inputHint(id); }
+/* 输入框按场景给提示：只展示，不碰逻辑 */
+function inputHint(id){
+  if(S.pending&&S.pending.npc===id)return F('hintReply',{name:npcName(id)});
+  if(!(HIST[id]&&HIST[id].length))return ({yu:T('hintYu0'),mom:T('hintMom0'),jie:T('hintJie0')})[id]||T('inputDefault');
+  return T('inputDefault'); }
+function moodText(npc,day){
+  if(npc==='yu'&&(day===3||day===4))return T('moodYuP');
+  if(npc==='mom'&&day===5)return T('moodMom5');
+  if(npc==='jie'&&day===2)return T('moodJie2');
+  if(npc==='jie'&&day===6)return T('moodJie6');
+  return {yu:T('moodYuD'),mom:T('moodMomD'),jie:T('moodJieD'),group:T('moodGroup')}[npc]||'';
+}
+function renderRes(){ $('vE').textContent=Math.round(S.e);$('vP').textContent=Math.round(S.p);$('vS').textContent=Math.round(S.s);
+  $('bE').style.width=S.e+'%';$('bP').style.width=S.p+'%';$('bS').style.width=S.s+'%'; }
+function updateDayPill(){$('dayPill').textContent=F('dayPill',{day:S.day});}
+function setClock(t){$('clock').textContent=t;}
+function renderMsgs(){ const ml=$('msgList'); ml.innerHTML='';
+  HIST[S.cur].forEach(it=>{ ml.appendChild(msgEl(it)); });
+  if(!HIST[S.cur].length){ const d=document.createElement('div');
+    d.className='clueRow'; const s=document.createElement('span');
+    s.textContent='💡 '+({yu:T('starterYu'),mom:T('starterMom'),jie:T('starterJie')})[S.cur]; d.appendChild(s); ml.appendChild(d); }
+  ml.scrollTop=ml.scrollHeight;
+}
+function msgEl(it){ const wrap=document.createElement('div');
+  if(it.k==='t'){wrap.className='timeRow';wrap.textContent=it.text;}
+  else if(it.k==='sys'){wrap.className='sysRow';const s=document.createElement('span');s.textContent=it.text;wrap.appendChild(s);}
+  else if(it.k==='clue'){wrap.className='clueRow';const s=document.createElement('span');s.textContent='🕵️ '+it.text;wrap.appendChild(s);}
+  else if(it.k==='recall'){wrap.className='sysRow';const s=document.createElement('span');s.textContent='🚫 '+it.text;wrap.appendChild(s);}
+  else if(it.k==='typing'){wrap.className='msgRow left';
+    wrap.innerHTML='<div class="miniAva">'+npcAva(S.cur)+'</div><div class="bub"><span class="typing"><i></i><i></i><i></i></span></div>';}
+  else if(it.k==='l'){wrap.className='msgRow left';
+    wrap.innerHTML='<div class="miniAva">'+npcAva(S.cur)+'</div><div class="bub">'+esc(it.text)+'</div>';}
+  else if(it.k==='g'){wrap.className='msgRow left';
+    wrap.innerHTML='<div class="miniAva">👤</div><div><div class="gname">'+esc(it.name)+'</div><div class="bub" style="background:#fff">'+esc(it.text)+'</div></div>';}
+  else if(it.k==='r'){wrap.className='msgRow right';wrap.innerHTML='<div class="bub">'+esc(it.text)+'</div>';}
+  return wrap;
+}
+function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;');}
+function pushMsg(tab,it){ HIST[tab].push(it); if(tab===S.cur)renderMsgs(); }
+function removeTyping(tab){ HIST[tab]=HIST[tab].filter(it=>it.k!=='typing'); if(tab===S.cur)renderMsgs(); }
+
+/* ---------- 数值 ---------- */
+function applyCost(e,p,s,beat){ let me=e||0,mp=p||0,ms=s||0;
+  if(S.persona==='nice')ms=Math.round(ms*0.7);
+  if(S.persona==='cold'){mp=Math.round(mp*0.7);me=Math.round(me*0.7);}
+  if(S.persona==='yin')ms=Math.round(ms*1.5);
+  if(beat&&beat.npc==='mom'&&beat.day===5)mp+=6;
+  S.e=clamp(S.e-me,0,100);S.p=clamp(S.p-mp,0,100);S.s=clamp(S.s-ms,0,100);
+  renderRes();
+}
+function moodMod(beat,opt,rel){ const npc=beat.npc,day=beat.day;
+  if(npc==='yu'&&(day===3||day===4)){ if(rel>0)rel=Math.round(rel*0.6); if(opt.tone==='cold')rel-=5; }
+  if(npc==='mom'&&day===5&&opt.tone==='hot')rel+=5;
+  if(npc==='jie'&&day===2)rel+=3;
+  if(npc==='jie'&&day===6&&opt.tone==='cold')rel-=8;
+  return rel;
+}
+function afford(o){ return S.e>=(o.e||0)&&S.p>=(o.p||0)&&S.s>=(o.s||0); }
+function costLine(o){ const c=[]; if(o.e)c.push('⚡'+o.e); if(o.p)c.push('🧘'+o.p); if(o.s)c.push('💚'+o.s); return c.join(' '); }
+
+/* ---------- 主流程 ---------- */
+function startStep(){ if(S.over)return; save();
+  const st=S.queue[S.stepIdx];
+  if(!st){endGame('done');return;}
+  if(st.type==='night'){showNight(st.day);return;}
+  if(st.type==='group'){doGroup();return;}
+  doBeat(st.beat);
+}
+function nextStep(){ S.stepIdx++; startStep(); }
+/* 上下文变体：beat 可带 variants:[{when,msg,resp}]，命中则覆盖 msg/resp */
+function beatVariant(beat){ if(!beat.variants)return null;
+  for(const v of beat.variants){ try{ if(v.when(S))return v; }catch(e){} } return null; }
+function beatMsg(beat){ const v=beat._v; if(v&&v.msg)return _lm(v.msg,v.msg_en); return _lm(beat.msg,beat.msg_en); }
+function beatResp(beat){ const v=beat._v,r=(v&&v.resp)?v.resp:beat.resp;
+  const e=(v&&v.resp_en)?v.resp_en:beat.resp_en;
+  if(LANG==='en'&&e)return {good:e.good.slice(),mid:e.mid.slice(),bad:e.bad.slice()};
+  return r; }
+function doBeat(beat){ S.curBeat=beat; beat._v=beatVariant(beat); S.pendingBeat=beat; S.day=beat.day; updateDayPill();
+  if(S.cur!==beat.npc){ S.unread[beat.npc]=(S.unread[beat.npc]||0)+1; renderTabs();
+    toast(F('toastNew',{name:npcName(beat.npc)})); beep(440,0.1);
+  } else deliverBeat(beat);
+}
+/* 自由聊天：beat 派发后不再弹固定选项面板，玩家用输入框自由回复 */
+function deliverBeat(beat){ S.pendingBeat=null; S.unread[beat.npc]=0; renderTabs();
+  pushMsg(beat.npc,{k:'t',text:F('dayPill',{day:beat.day})+' '+beat.t}); setClock(beat.t);
+  const lines=Array.isArray(beat.msg)?beat.msg:[beatMsg(beat)];
+  pushMsg(beat.npc,{k:'typing'});
+  later(()=>{
+    removeTyping(beat.npc);
+    pushMsg(beat.npc,{k:'l',text:interp(lines[0])}); beep(520,0.09);
+    const afterFirst=()=>{
+      if(beat.clue)pushMsg(beat.npc,{k:'clue',text:interp(_lm(beat.clue,beat.clue_en))});
+      setPending(beat);
+    };
+    if(lines[1]){ pushMsg(beat.npc,{k:'typing'});
+      later(()=>{ removeTyping(beat.npc); pushMsg(beat.npc,{k:'l',text:interp(lines[1])}); beep(520,0.09); afterFirst(); },900);
+    } else afterFirst();
+  },1100);
+}
+function setPending(beat){ S.pending=beat; S.pendingQ={npc:beat.npc,t:Date.now()}; armNudge(beat); save(); }
+/* 催回复：30秒无回应先 nudge，再30秒无回应按已读不回处理 */
+function armNudge(beat){
+  later(()=>{ if(S.pending!==beat||S.over)return;
+    pushMsg(beat.npc,{k:'l',text:pickNudge(beat.npc)}); beep(520,0.09);
+    later(()=>{ if(S.pending!==beat||S.over)return; ghostBeat(beat); },30000);
+  },30000);
+}
+function ghostBeat(beat){
+  const npc=beat.npc; S.pending=null; S.pendingQ=null;
+  S.timeouts++; if(S.timeouts>=20)unlockAchv('ghost');
+  const d=npc==='mom'?-12:-8;
+  S.rel[npc]=clamp(S.rel[npc]+d,0,100); applyCost(2,0,0);
+  pushMsg(npc,{k:'sys',text:F('ghostSys',{timeouts:S.timeouts})});
+  npcRespond(beat,'bad',0);
+}
+
+/* ---------- 自由聊天：输入 ---------- */
+function sendChat(){
+  if(!S||S.over)return;
+  if(S.phase==='night')return;
+  if(S.phase==='g-reply'){ const t=$('chatInput').value.trim(); if(t)groupFreeResolve(t); $('chatInput').value=''; return; }
+  if(S.phase==='group')return;
+  const inp=$('chatInput'); const t=inp.value.trim(); if(!t)return;
+  inp.value='';
+  const npc=S.cur;
+  pushMsg(npc,{k:'r',text:t}); beep(700,0.07);
+  handlePlayerMsg(npc,t);
+  inp.focus();
+}
+$('sendBtn').onclick=sendChat;
+$('chatInput').addEventListener('keydown',e=>{ if(e.key==='Enter')sendChat(); });
+
+function handlePlayerMsg(npc,text){
+  const a=analyze(text);
+  if(S.s<15&&!S._sWarned){ toast(T('toastSincere')); S._sWarned=true; }
+  if(S.s>=15)S._sWarned=false;
+  if(S.pending&&S.pending.npc===npc)resolveFree(npc,text,a);
+  else genericReact(npc,text,a);
+  save();
+}
+/* 有待回复的 beat：把自由文本映射到语气，走原有数值管线 */
+function resolveFree(npc,text,a){
+  clearTimers();
+  const beat=S.pending;
+  const tone=toneFromAnalysis(a);
+  const opt=beat.opts.find(o=>o.tone===tone)||beat.opts[0];
+  let rel=opt.rel;
+  if(S.persona==='nice'&&tone==='cold')rel=Math.round(rel*0.6);
+  if(S.persona==='cold'&&tone==='hot')rel=Math.round(rel*0.7);
+  if(S.persona==='yin'&&a.intents.indexOf('anger')>=0)rel=Math.round(rel/2);
+  rel=moodMod(beat,opt,rel);
+  if(beat.expects&&a.intents.some(i=>beat.expects.indexOf(i)>=0))rel+=2;
+  const dt=S.pendingQ?(Date.now()-S.pendingQ.t)/1000:999;
+  if(dt<15){rel+=2;toast(F('toastSec',{name:npcName(npc)}));}
+  else if(dt>120){toast(F('toastLate',{name:npcName(npc)}));if(npc==='mom')rel-=1;}
+  const tier=rel>=10?'good':(rel>=0?'mid':'bad');
+  applyCost(1,1,(a.intents.indexOf('affection')>=0||a.intents.indexOf('apology')>=0||a.intents.indexOf('praise')>=0)?2:0,beat);
+  if(npc==='yu'&&tone==='cold')S.flags.yuCold=(S.flags.yuCold||0)+1;
+  if(beat.special==='borrow'){ if(tone==='hot')S.flags.lent=true; else if(tone==='ok')S.flags.partial=true; else S.flags.refused=true; }
+  if(beat.special==='confess'&&tone==='hot'&&S.rel.yu>=60)S.flags.confessed=true;
+  pushCtx(npc,a);
+  if(tier==='good')recordQuote({txt:text,npc,tag:'gold',day:S.day});
+  else if(tier==='bad')recordQuote({txt:text,npc,tag:'dead',day:S.day});
+  S.pending=null; S.pendingQ=null;
+  npcRespond(beat,tier,rel);
+}
+/* 无待办：通用反应（情绪池 / 万能接话 / 抛回话题） */
+function genericReact(npc,text,a){
+  applyCost(1,1,0);
+  const d=freeRelDelta(a);
+  S.rel[npc]=clamp(S.rel[npc]+d,0,100);
+  pushCtx(npc,a);
+  const mood=S.rel[npc]>=70?'warm':(S.rel[npc]>=30?'mid':'cold');
+  const r=Math.random(); let line;
+  const iPool=a.intents[0]&&INTENT_REACT[a.intents[0]];
+  const strong=['apology','affection','anger'].indexOf(a.intents[0])>=0;
+  const iLine=(iPool&&(strong||r<0.55))?pickIntent(npc,a.intents[0]):null;
+  if(iLine)line=iLine;
+  else if(r<0.14)line=pickDeflect(npc);
+  else if(r<0.36)line=pickSteer(npc);
+  else line=pickGeneric(npc,mood);
+  removeTyping(npc);
+  pushMsg(npc,{k:'typing'});
+  later(()=>{ removeTyping(npc);
+    pushMsg(npc,{k:'l',text:interp(line)}); beep(520,0.09); renderRes(); renderHeader();
+    if(S.e<=0){ later(()=>endGame('dead'),1500); return; }
+    save();
+  },900+Math.random()*900);
+}
+
+/* ---------- 结算一条 beat ---------- */
+function npcRespond(beat,tier,relDelta){
+  const dur=tier==='good'?2200:(tier==='mid'?4500:8000);
+  pushMsg(beat.npc,{k:'typing'});
+  later(()=>{ removeTyping(beat.npc);
+    const pool=beatResp(beat)[tier];
+    let i=Math.floor(Math.random()*pool.length);
+    if(pool.length>1&&beat._lastIdx===i)i=(i+1)%pool.length;
+    beat._lastIdx=i; const txt=interp(pool[i]);
+    S.rel[beat.npc]=clamp(S.rel[beat.npc]+relDelta,0,100);
+    pushMsg(beat.npc,{k:'l',text:txt}); beep(520,0.09); renderRes(); renderHeader();
+    if(S.e<=0){ later(()=>endGame('dead'),1500); return; }
+    if(beat.recall){ later(()=>doRecall(beat),2500); }
+    else later(nextStep,1300);
+  },dur);
+}
+function doRecall(beat){ pushMsg(beat.npc,{k:'recall',text:T('recallText')}); beep(300,0.12);
+  const seen=interp(beatMsg(beat));
+  showModal('<h2>'+T('recallTitle')+'</h2><div class="csub">'+F('recallBody',{msg:esc(seen)})+'</div>'
+    +'<button class="mbtn p" id="mAsk">'+T('recallAsk')+'</button>'
+    +'<button class="mbtn g" id="mIgnore">'+T('recallNo')+'</button>');
+  $('mAsk').onclick=()=>{ if(S.s<15){toast(T('recallNoSinc'));return;}
+    applyCost(0,0,15); hideModal();
+    if(S.rel[beat.npc]>=55){ S.rel[beat.npc]=clamp(S.rel[beat.npc]+8,0,100);
+      const cf=interp(_lm(beat.recall.confess,beat.recall.confess_en));
+      pushMsg(beat.npc,{k:'l',text:T('recallConfessLead')+cf});
+      recordQuote({txt:T('recallGold')+cf,npc:beat.npc,tag:'gold',day:S.day});
+    } else { S.rel[beat.npc]=clamp(S.rel[beat.npc]-10,0,100);
+      const tp=interp(_lm(beat.recall.trap,beat.recall.trap_en));
+      pushMsg(beat.npc,{k:'l',text:T('recallTrapLead')+tp+T('recallTrapTail')});
+      recordQuote({txt:T('recallDead')+tp,npc:beat.npc,tag:'dead',day:S.day});
+    }
+    renderRes(); renderHeader(); later(nextStep,1300);
+  };
+  $('mIgnore').onclick=()=>{ hideModal(); pushMsg(beat.npc,{k:'sys',text:T('recallIgnore')}); later(nextStep,900); };
+}
+function recordQuote(q){ S.quotes.push(q); }
+
+/* ---------- 结局 ---------- */
+function computeEndings(){ const R=S.rel,F=S.flags; let yu,mom,jie;
+  if(F.confessed||R.yu>=75)yu={t:'good',title:T('yuGoodT'),text:T('yuGoodX')};
+  else if(R.yu>=40)yu={t:'mid',title:T('yuMidT'),text:T('yuMidX')};
+  else yu={t:'bad',title:T('yuBadT'),text:T('yuBadX')};
+  if(R.mom>=70)mom={t:'good',title:T('momGoodT'),text:T('momGoodX')};
+  else mom={t:'bad',title:T('momBadT'),text:T('momBadX')};
+  if(F.lent)jie=R.jie>=60?{t:'good',title:T('jieGoodLentT'),text:T('jieGoodLentX')}:{t:'mid',title:T('jieMidLentT'),text:T('jieMidLentX')};
+  else if(F.partial)jie={t:'mid',title:T('jieMidPartialT'),text:T('jieMidPartialX')};
+  else if(F.refused||R.jie<40)jie={t:'bad',title:T('jieBadT'),text:T('jieBadX')};
+  else jie=R.jie>=55?{t:'good',title:T('jieGoodT'),text:T('jieGoodX')}:{t:'mid',title:T('jieMidT'),text:T('jieMidX')};
+  return {yu,mom,jie};
+}
+function endGame(reason){ if(S.over)return; S.over=true; clearTimers(); clearSave();
+  const E=reason==='dead'?null:computeEndings();
+  const gold=S.quotes.filter(q=>q.tag==='gold'),dead=S.quotes.filter(q=>q.tag==='dead');
+  if(gold.length>=8)unlockAchv('writer');
+  if(E&&E.yu.t==='good'&&E.mom.t==='good'&&E.jie.t==='good')unlockAchv('master');
+  try{ const b=JSON.parse(localStorage.getItem('yidu_best')||'0'); const tot=Math.round(S.rel.yu+S.rel.mom+S.rel.jie);
+    if(tot>b)localStorage.setItem('yidu_best',String(tot)); }catch(e){}
+  const quotes=[...gold,...dead].filter(q=>!q.hidden).slice(0,10);
+  const tagHtml=t=>t==='good'?'<span class="tag good">'+T('tagGood')+'</span>':t==='mid'?'<span class="tag mid">'+T('tagMid')+'</span>':'<span class="tag bad">'+T('tagBad')+'</span>';
+  let body='';
+  if(reason==='dead'){ body='<div class="endSec"><h3>'+T('endDeadH')+'</h3><p>'+T('endDeadX')+'<br>'+npcAva('yu')+' '+npcName('yu')+'：'+T('endTBD')+'<br>'+npcAva('mom')+' '+npcName('mom')+'：'+T('endTBD')+'<br>'+npcAva('jie')+' '+npcName('jie')+'：'+T('endTBD')+'</p></div>'; }
+  else{ body=[[npcAva('yu')+' '+npcName('yu')+' · '+T('roleYu'),E.yu],[npcAva('mom')+' '+npcName('mom')+' · '+T('roleMom'),E.mom],[npcAva('jie')+' '+npcName('jie')+' · '+T('roleJie'),E.jie]].map(([n,e])=>
+    '<div class="endSec"><h3>'+n+' '+tagHtml(e.t)+e.title+'</h3><p>'+e.text+'</p></div>').join(''); }
+  const qHtml=quotes.length?quotes.map(q=>'<div class="quote'+(q.tag==='dead'?' dead':'')+'">'+esc(q.txt)+'<div class="who">— '+npcName(q.npc)+' · '+F('dayPill',{day:q.day})+'</div></div>').join(''):'<p style="font-size:13px;color:#999">'+T('endNoQuotes')+'</p>';
+  const achvNames={master:T('achvMaster'),ghost:T('achvGhost'),asura:T('achvAsura'),writer:T('achvWriter')};
+  const aHtml=S.achvNew.length?S.achvNew.map(id=>'<div class="achv">🏆 '+achvNames[id]+'</div>').join(''):'<p style="font-size:13px;color:#999">'+T('endNoAchv')+'</p>';
+  showModal('<h2>'+(reason==='dead'?T('endDeadTitle'):T('endTitle'))+'</h2>'
+    +'<div class="csub">'+T('endPersona')+PERSONAS[S.persona].em+personaName(S.persona)+' ｜ '+F('endTimeouts',{n:S.timeouts})+' ｜ '+T('endRel')+' '+npcName('yu')+Math.round(S.rel.yu)+' / '+npcName('mom')+Math.round(S.rel.mom)+' / '+npcName('jie')+Math.round(S.rel.jie)+'</div>'
+    +body
+    +'<h2 style="margin-top:16px">'+T('endQuotesT')+(quotes.some(q=>q.tag==='dead')?T('endQuotesDead'):T('endQuotesGood'))+'</h2><div class="csub">'+T('endQuotesSub')+'</div>'+qHtml
+    +'<h2 style="margin-top:16px">'+T('endAchvT')+'</h2>'+aHtml
+    +'<button class="mbtn p" id="copyBtn">'+T('copyBtn')+'</button>'
+    +'<button class="mbtn g" id="againBtn">'+T('againBtn')+'</button>');
+  $('copyBtn').onclick=()=>{ const txt=T('shareHead')+'\n'+quotes.map((q,i)=>(i+1)+'. '+q.txt).join('\n')+'\n'+T('shareTail');
+    const done=()=>toast(T('toastCopied'));
+    if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(txt).then(done).catch(()=>fallbackCopy(txt,done));}
+    else fallbackCopy(txt,done);
+  };
+  $('againBtn').onclick=()=>location.reload();
+}
+function fallbackCopy(txt,done){ try{ const ta=document.createElement('textarea'); ta.value=txt; document.body.appendChild(ta); ta.select(); document.execCommand('copy'); document.body.removeChild(ta); done(); }catch(e){ toast(T('toastCopyFail')); } }
+
+/* ---------- 启动 ---------- */
+let _persona='nice';
+document.querySelectorAll('.pcard').forEach(c=>{ c.onclick=()=>{ document.querySelectorAll('.pcard').forEach(x=>x.classList.remove('sel')); c.classList.add('sel'); _persona=c.dataset.p; beep(650,0.05); }; });
+$('startBtn').onclick=()=>{ initGame(_persona); };
+(function(){ const sv=loadSave();
+  if(sv&&sv.stepIdx>0){ const b=document.createElement('button'); b.className='mbtn g'; b.textContent=F('contBtn',{day:sv.day}); b.style.marginTop='12px';
+    $('startBtn').after(b); b.onclick=()=>restoreGame(sv); }
+})();
+function initGame(persona){ initState(persona);
+  $('startScreen').classList.add('hidden'); $('gameScreen').classList.remove('hidden');
+  applyGameI18n();
+  renderTabs(); renderHeader(); renderRes(); updateDayPill(); renderMsgs(); startStep();
+}
+function restoreGame(sv){ initState(sv.persona);
+  S.stepIdx=sv.stepIdx;S.day=sv.day;S.e=sv.e;S.p=sv.p;S.s=sv.s;S.rel=sv.rel;S.unread=sv.unread;
+  S.timeouts=sv.timeouts;S.quotes=sv.quotes||[];S.flags=sv.flags||{};S.groupUnlocked=!!sv.groupUnlocked;
+  S.respIdx=sv.respIdx||0;S.dayStart=sv.dayStart||{yu:50,mom:50,jie:50};
+  S.npcs=sv.npcs||randomNpcs(); S.ctx=sv.ctx||[]; S.pending=null; S.pendingQ=null; S.pendingBeat=null;
+  HIST=sv.hist||{yu:[],mom:[],jie:[],group:[]};
+  S.queue=buildQueue();
+  $('startScreen').classList.add('hidden'); $('gameScreen').classList.remove('hidden');
+  applyGameI18n();
+  renderTabs(); renderHeader(); renderRes(); updateDayPill(); renderMsgs();
+  toast(T('toastRestored')); startStep();
+}
+$('muteBtn').onclick=()=>{ if(!S)return; S.muted=!S.muted; $('muteBtn').textContent=S.muted?'🔇':'🔊'; };
+$('helpBtn').onclick=()=>showModal('<h2>'+T('helpTitle')+'</h2><div class="csub">'+T('helpBody')+'</div>'
+  +'<button class="mbtn p" onclick="document.getElementById(\'modalWrap\').classList.add(\'hidden\')">'+T('helpOk')+'</button>');
+function applyHomeI18n(){ document.title=T('doctitle');
+  document.querySelectorAll('#startScreen [data-i18n]').forEach(el=>{ el.innerHTML=T(el.getAttribute('data-i18n')); });
+  const ht=$('homeTitle'); if(ht)ht.innerHTML=T('titleA')+'<span class="hl">'+T('titleB')+'</span>';
+  document.querySelectorAll('.langBtn').forEach(b=>{ if(b.id!=='langBtn')b.textContent=T('langToggle'); });
+}
+function applyGameI18n(){ const gs=$('gameScreen'); if(!gs||gs.classList.contains('hidden'))return;
+  const le=$('labE'); if(le){ le.textContent=T('resE'); $('labP').textContent=T('resP'); $('labS').textContent=T('resS'); }
+  $('sendBtn').textContent=T('sendBtn');
+  if(typeof S==='undefined'||!S)return;
+  updateDayPill(); renderTabs(); renderHeader(); renderMsgs();
+}
+$('langBtnHome').onclick=()=>setLang(LANG==='zh'?'en':'zh');
+$('langBtn').onclick=()=>setLang(LANG==='zh'?'en':'zh');
+langInit(); applyHomeI18n();
+function doGroup(){ S.phase='group'; S.groupUnlocked=true; S.cur='group'; S.unread.group=0;
+  renderTabs(); renderHeader();
+  pushMsg('group',{k:'sys',text:T('groupSys')}); beep(440,0.12);
+  S.gi=0; S.groupMin=100; groupRound();
+}
+function groupRound(){ const r=GROUP_ROUNDS[S.gi];
+  if(!r){finishGroup();return;}
+  pushMsg('group',{k:'typing'}); setClock('2'+(1+S.gi%8)+':0'+(S.gi%6));
+  later(()=>{ removeTyping('group');
+    pushMsg('group',{k:'g',name:npcName(r.from),text:interp(_lm(r.msg,r.msg_en))}); beep(520,0.09);
+    openGroupOptions(r);
+  },1000);
+}
+function openGroupOptions(r){ S.phase='g-reply'; S._groupR=r;
+  pushMsg('group',{k:'clue',text:F('groupClue',{i:S.gi+1})});
+  const bar=$('timingBar'); let left=20;
+  $('timingWrap').classList.remove('hidden');
+  $('timingLabel').textContent=T('timingLabel'); $('timingNum').textContent=left+'s';
+  bar.classList.remove('danger'); bar.style.width='100%';
+  S._gleft=left;
+  every(()=>{ S._gleft-=0.2; if(S._gleft<0)S._gleft=0;
+    bar.style.width=(S._gleft/20*100)+'%'; $('timingNum').textContent=Math.ceil(S._gleft)+'s';
+    if(S._gleft<=5)bar.classList.add('danger');
+    if(S._gleft<=0){groupFreeResolve(null);}
+  },200);
+}
+/* 群里自由发言：按语气映射到三个选项（积极→0/中性→1/消极→2） */
+function groupFreeResolve(text){
+  if(S.phase!=='g-reply')return;
+  const r=S._groupR; clearTimers();
+  $('timingWrap').classList.add('hidden');
+  let idx=2;
+  if(text){ const a=analyze(text);
+    pushMsg('group',{k:'r',text:a.text}); beep(700,0.07);
+    idx=a.sentiment>=0.3?0:(a.sentiment<=-0.3?2:1);
+    applyCost(1,1,0);
+  } else pushMsg('group',{k:'sys',text:T('groupSilent')});
+  resolveGroupOpt(r,r.opts[idx]);
+}
+function resolveGroupOpt(r,o){ if(S.phase!=='g-reply')return; clearTimers();
+  S.phase='group';
+  Object.keys(o.d).forEach(k=>{ S.rel[k]=clamp(S.rel[k]+o.d[k],0,100); });
+  S.groupMin=Math.min(S.groupMin,S.rel.yu,S.rel.mom,S.rel.jie);
+  applyCost(o.e,o.p||0,o.s||0);
+  if(o.tag)recordQuote({txt:_lm(o.txt,o.en),npc:'group',tag:o.tag,day:5});
+  if(S.e<=0){endGame('dead');return;}
+  groupDM(r);
+}
+function groupDM(r){ const dm=r.dm, nk=dm.from;
+  const dmMsg=interp(_lm(dm.msg,dm.msg_en));
+  showModal('<h2>'+F('dmTitle',{name:npcName(dm.from)})+'</h2><div class="csub">'+F('dmBody',{msg:esc(dmMsg),name:npcName(dm.from)})+'</div>'
+    +dm.opts.map((o,i)=>'<button class="qbtn" data-i="'+i+'">'+esc(interp(_lm(o.txt,o.en)))+'</button>').join('')
+    +'<div class="csub" id="dmCount" style="margin-top:10px">⏳ 12s</div>');
+  let left=12; const cd=setInterval(()=>{ left--; const el=$('dmCount'); if(el)el.textContent='⏳ '+left+'s';
+    if(left<=0){clearInterval(cd);dmResolve(-1);} },1000);
+  function dmResolve(i){ clearInterval(cd); if(!$('modalWrap').classList.contains('hidden')===false)return; hideModal();
+    if(i<0){ S.rel[nk]=clamp(S.rel[nk]-3,0,100); pushMsg('group',{k:'sys',text:F('dmNoReply',{name:npcName(dm.from)})}); }
+    else{ const o=dm.opts[i]; Object.keys(o.d).forEach(k=>{S.rel[k]=clamp(S.rel[k]+o.d[k],0,100);});
+      S.groupMin=Math.min(S.groupMin,S.rel.yu,S.rel.mom,S.rel.jie);
+      applyCost(o.e,o.p||0,o.s||0);
+      if(o.tag)recordQuote({txt:_lm(o.txt,o.en),npc:'group',tag:o.tag,day:5});
+      pushMsg('group',{k:'sys',text:F('dmReplied',{name:npcName(dm.from)})});
+    }
+    renderRes(); S.gi++; if(S.e<=0){endGame('dead');return;} groupRound();
+  }
+  document.querySelectorAll('#modalCard .qbtn').forEach(b=>{ b.onclick=()=>dmResolve(parseInt(b.dataset.i)); });
+}
+function finishGroup(){ pushMsg('group',{k:'sys',text:T('groupDone')}); beep(880,0.15);
+  if(S.groupMin>=20)unlockAchv('asura');
+  toast(T('groupDoneToast'));
+  S.phase='idle'; later(nextStep,1500);
+}
+
+/* ---------- 夜晚结算 ---------- */
+function showNight(day){ clearTimers(); S.phase='night';
+  /* 保底：还有没回的 beat，按已读不回记一次 */
+  if(S.pending){ const npc=S.pending.npc; S.pending=null; S.pendingQ=null; S.timeouts++;
+    S.rel[npc]=clamp(S.rel[npc]-8,0,100);
+    pushMsg(npc,{k:'sys',text:F('nightPending',{name:npcName(npc)})}); }
+  const rows=[['yu'],['mom'],['jie']].map(([k])=>{
+    const n=npcAva(k)+' '+npcName(k);
+    const d=S.rel[k]-S.dayStart[k]; const s=d>0?'<span style="color:#07c160">+'+d+'</span>':d<0?'<span style="color:#fa5151">'+d+'</span>':'<span>±0</span>';
+    return '<div class="nightRow"><span>'+n+' '+T('nightLike')+' '+Math.round(S.rel[k])+'</span><span>'+s+'</span></div>'; }).join('');
+  const comments=TA('nightC');
+  showModal('<h2>'+F('nightTitle',{day:day})+'</h2><div class="csub">'+comments[day-1]+'</div>'+rows
+    +'<div class="csub" style="margin-top:10px">'+T('nightSleep')+'</div>'
+    +'<button class="mbtn p" id="nightBtn">'+(day>=7?T('nightBtnEnd'):F('nightBtnNext',{day:day+1}))+'</button>');
+  $('nightBtn').onclick=()=>{ hideModal();
+    S.dayStart={yu:S.rel.yu,mom:S.rel.mom,jie:S.rel.jie};
+    S.e=clamp(S.e+12,0,100);S.p=clamp(S.p+10,0,100);S.s=clamp(S.s+6,0,100);
+    renderRes(); nextStep();
+  };
+}
+/* ---------- 修罗场 ---------- */
+const GROUP_ROUNDS=[
+{from:'jie',msg:'@你 兄弟，听说你最近跟{yu}走得很近啊？',msg_en:"@you Bro, I heard you've been getting close to {yu} lately?",opts:[
+ {txt:'哈哈哈，{jie}消息灵通啊',en:"Hahaha, {jie} is well-informed!",d:{yu:4,jie:4},e:5,s:4},
+ {txt:'没有的事，别瞎说',en:"That's not true, don't make things up",d:{yu:-4,jie:2},e:4,s:2},
+ {txt:'关你什么事？',en:"None of your business?",d:{yu:-6,jie:-8},e:3,s:0,tag:'dead'}],
+ dm:{from:'yu',msg:'你刚才在群里说“没有的事”，是什么意思？',msg_en:"What did you mean just now when you said \"that's not true\" in the group?",opts:[
+  {txt:'我怕大家起哄，你别多想',en:"I was afraid everyone would tease us — don't overthink it",d:{yu:5},e:4,s:5},
+  {txt:'口误口误，我的意思是低调',en:"Slip of the tongue — I meant keeping a low profile",d:{yu:2},e:3,s:2}]}},
+{from:'mom',msg:'@你 儿子，你王阿姨介绍的姑娘，你到底见不见？群里都等你表态呢',msg_en:"@you Son, that girl Auntie Wang introduced — are you meeting her or not? Everyone's waiting for your answer",opts:[
+ {txt:'妈，私聊说，给我留点面子',en:"Mom, let's talk in private — leave me some face",d:{mom:5,jie:2},e:5,p:4,s:3},
+ {txt:'见！这周末就见！',en:"Yes! Meeting her this weekend!",d:{yu:-6,mom:8,jie:3},e:5,p:3,s:3},
+ {txt:'不去，谁爱去谁去',en:"Not going — whoever wants to go can go",d:{yu:2,mom:-10,jie:2},e:4,p:0,s:0,tag:'dead'}],
+ dm:{from:'mom',msg:'你刚才说“私聊”，是不是嫌妈在群里丢你人了？',msg_en:"When you said \"in private\", were you embarrassed that mom was making a scene in the group?",opts:[
+  {txt:'怎么会！我是怕姑娘的事被大家起哄',en:"Of course not! I was afraid everyone would tease about the girl",d:{mom:6},e:4,p:4},
+  {txt:'妈你想多了',en:"Mom, you're overthinking it",d:{mom:-3},e:3,p:0}]}},
+{from:'yu',msg:'@你 你上次说请我看展，还算数吗？',msg_en:"@you You said you'd take me to that exhibition — does that still count?",opts:[
+ {txt:'算数！周六上午，我去接你',en:"It counts! Saturday morning, I'll pick you up",d:{yu:8,mom:-2,jie:2},e:6,s:6,tag:'gold'},
+ {txt:'算数算数，到时候联系',en:"Of course, we'll be in touch",d:{yu:4,jie:1},e:4,s:3},
+ {txt:'最近有点忙，再说吧',en:"Been busy lately, we'll see",d:{yu:-8},e:3,s:0,tag:'dead'}],
+ dm:{from:'jie',msg:'哟，看展？啥展啊，带兄弟一个？',msg_en:"Oh? An exhibition? What kind — can I tag along?",opts:[
+  {txt:'{jie}你这电灯泡当得理直气壮啊',en:"{jie}, you wear that third-wheel badge with pride, huh",d:{jie:4,yu:2},e:4,s:3},
+  {txt:'下次，下次一定带你',en:"Next time, definitely bringing you next time",d:{jie:2},e:3,s:2}]}},
+{from:'jie',msg:'@你 兄弟，上次借你的钱，下个月一定还，你跟大家说说，我{jie}是不是讲信用的人？',msg_en:"@you Bro, the money I borrowed — I'll pay it back next month for sure. Tell everyone, am I a man of my word?",opts:[
+ {txt:'{jie}必须讲信用！我作证',en:"{jie} is definitely a man of his word! I'll vouch for him",d:{jie:6,yu:2},e:5,s:5},
+ {txt:'哈哈，{jie}的事我不好多说',en:"Haha, I can't really comment on {jie}'s business",d:{jie:-4},e:4,s:2},
+ {txt:'你还借过我钱？我怎么不记得了',en:"You borrowed money from me? I don't remember that",d:{jie:-12},e:3,s:0,tag:'dead'}],
+ dm:{from:'jie',msg:'你刚才那话，是不是不想认这笔账了？',msg_en:"What you just said — are you trying to deny the debt?",opts:[
+  {txt:'怎么会！我是给群里留面子，私下说',en:"Of course not! I was saving face for the group — we'll talk in private",d:{jie:5},e:4,s:4},
+  {txt:'开玩笑的，{jie}别往心里去',en:"Just kidding, {jie}, don't take it to heart",d:{jie:2},e:3,s:2}]}},
+{from:'mom',msg:'@{yu} {yu}啊，我是他妈妈。这孩子从小就内向，你多担待',msg_en:"@{yu} {yu}, I'm his mom. This kid's been introverted since childhood — bear with him",opts:[
+ {txt:'妈！你怎么也在群里！',en:"Mom! What are you doing in this group?!",d:{mom:-4,yu:-2,jie:3},e:5,p:3,s:0},
+ {txt:'妈说得对，{yu}多担待[抱拳]',en:"Mom's right, {yu}, bear with me [salute]",d:{mom:4,yu:4,jie:2},e:5,p:3,s:4,tag:'gold'},
+ {txt:'……',d:{mom:-6,yu:-4},e:3,p:0,s:0,tag:'dead'}],
+ dm:{from:'yu',msg:'阿姨也在群里？！你怎么不早告诉我…',msg_en:"Your auntie is in the group too?! Why didn't you tell me sooner…",opts:[
+  {txt:'我也是刚知道！我妈神出鬼没',en:"I just found out too! My mom appears out of nowhere",d:{yu:4},e:4,s:3},
+  {txt:'没事，我妈人很好的',en:"It's fine, my mom's really nice",d:{yu:5},e:4,s:4}]}},
+{from:'yu',msg:'@{jie} 你上次说请喝酒，什么时候兑现？',msg_en:"@{jie} You said you'd buy us drinks — when are you making good on that?",opts:[
+ {txt:'对对对，{jie}，群证在此，不许赖',en:"Right right, {jie}, the group is witness — no backing out",d:{jie:3,yu:4,mom:2},e:4,s:3},
+ {txt:'吃瓜看戏中',en:"Just here for the drama",d:{yu:0},e:3,s:0},
+ {txt:'你们聊，我潜水了',en:"You guys chat, I'm going silent",d:{jie:-2,yu:-3,mom:-2},e:2,s:0,tag:'dead'}],
+ dm:{from:'mom',msg:'儿子，你和{yu}到底到哪一步了？跟妈透个底',msg_en:"Son, how far have you and {yu} gotten? Give mom a hint",opts:[
+  {txt:'妈，八字有一撇了，你就等好消息吧',en:"Mom, things are looking up — just wait for the good news",d:{mom:6,yu:3},e:4,p:3,s:5},
+  {txt:'妈你别问了，问就是单身',en:"Mom, stop asking — the answer is single",d:{mom:-4},e:3,p:0,s:0}]}},
+{from:'jie',msg:'@你 兄弟说句实话，你觉得我和{yu}…谁先脱单？',msg_en:"@you Bro, be honest — between me and {yu}… who'll get off singlehood first?",opts:[
+ {txt:'那肯定是我{jie}！你这么帅',en:"Definitely you, {jie}! You're so handsome",d:{jie:5,yu:-2,mom:2},e:4,s:3},
+ {txt:'我觉得是{yu}，她这么优秀',en:"I think {yu} — she's so amazing",d:{jie:-2,yu:5,mom:2},e:4,s:4},
+ {txt:'我先，我谈了三天了',en:"Me first, I've been dating for three days",d:{jie:2,yu:-6,mom:-4},e:4,s:2,tag:'dead'}],
+ dm:{from:'yu',msg:'你刚才说觉得我先脱单，是在给我发好人卡吗？',msg_en:"When you said you think I'll get off singlehood first — was that a consolation prize?",opts:[
+  {txt:'不是！我的意思是你值得最好的…比如我',en:"No! I meant you deserve the best… like me",d:{yu:6},e:4,s:6,tag:'gold'},
+  {txt:'你想多了，我就随口一说',en:"You're overthinking it, I just said it casually",d:{yu:-3},e:3,s:0}]}},
+{from:'mom',msg:'@所有人 大家周末来家里吃饭啊！{yu}也来！',msg_en:"@everyone Come over for dinner this weekend! {yu} too!",opts:[
+ {txt:'妈威武！我举双手赞成',en:"Mom's the best! I'm all in",d:{mom:7,yu:4,jie:3},e:5,p:3,s:5,tag:'gold'},
+ {txt:'好啊好啊，热闹',en:"Sounds great, the more the merrier",d:{mom:4,yu:2,jie:2},e:4,p:2,s:3},
+ {txt:'我周末加班，去不了',en:"Working overtime this weekend, can't make it",d:{mom:-8,yu:-5,jie:-2},e:3,p:0,s:0,tag:'dead'}],
+ dm:{from:'jie',msg:'去你家吃饭…我随多少份子合适？',msg_en:"Dinner at your place… how much should I chip in?",opts:[
+  {txt:'你人来就行，还随什么份子',en:"Just show up, no need for gifts",d:{jie:4},e:3,s:3},
+  {txt:'看着给，多少是个心意',en:"Whatever you like, it's the thought that counts",d:{jie:2},e:3,s:2}]}},
+{from:'yu',msg:'@你 今天谢谢你，群里帮我说话',msg_en:"@you Thanks for today — for speaking up for me in the group",opts:[
+ {txt:'应该的，谁让你是我…好朋友呢',en:"Of course, you're my… good friend after all",d:{yu:6,mom:2,jie:2},e:5,s:5},
+ {txt:'小事一桩',en:"No big deal",d:{jie:1,yu:3,mom:1},e:4,s:2},
+ {txt:'哦',d:{yu:-6,mom:-2,jie:-2},e:3,s:0,tag:'dead'}],
+ dm:{from:'mom',msg:'儿子，妈觉得{yu}这姑娘不错，你抓紧',msg_en:"Son, I think {yu} is a great girl — hurry up",opts:[
+  {txt:'妈，我努力！',en:"Mom, I'm on it!",d:{mom:5,yu:2},e:4,p:3,s:4},
+  {txt:'知道了妈',en:"Got it, mom",d:{mom:2},e:3,p:2,s:1}]}},
+{from:'jie',msg:'行了行了，今天这瓜吃饱了。散了吧散了吧',msg_en:"Alright alright, today's drama was filling. Let's call it a day",opts:[
+ {txt:'{jie}慢走！下次我请！',en:"{jie}, take care! Next round's on me!",d:{jie:4,yu:2,mom:2},e:4,s:3},
+ {txt:'88',en:"88",d:{jie:1,yu:1,mom:1},e:3,s:1},
+ {txt:'（已潜水）',en:"(gone silent)",d:{jie:-2,yu:-2,mom:-2},e:2,s:0,tag:'dead'}],
+ dm:{from:'yu',msg:'今天群里…你表现还不错',msg_en:"In the group today… you did pretty well",opts:[
+  {txt:'那必须的，关键时刻不能掉链子',en:"Of course — can't drop the ball at the critical moment",d:{yu:5},e:4,s:4,tag:'gold'},
+  {txt:'哈哈，还行吧',en:"Haha, I did alright",d:{yu:3},e:3,s:2}]}}
+];
+</script>
+</body>
+</html>

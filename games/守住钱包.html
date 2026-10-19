@@ -1,0 +1,1694 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<title>守住钱包 · 单机塔防</title>
+<style>
+:root{
+  --bg:#0e1116; --panel:#161b24; --panel2:#1c2330; --line:#2a3342;
+  --txt:#e8eaf0; --muted:#9aa0ae; --gold:#ffd166; --green:#3ddc84; --red:#ff5c5c;
+  --blue:#5cc8ff; --pink:#ff7ad9;
+}
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+html,body{height:100%;background:#05070a;}
+body{
+  font-family:system-ui,-apple-system,"PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;
+  color:var(--txt); display:flex; justify-content:center;
+  overscroll-behavior:none; user-select:none; -webkit-user-select:none;
+}
+#app{width:100%;max-width:520px;height:100dvh;display:flex;flex-direction:column;background:var(--bg);position:relative;overflow:hidden;}
+/* ===== HUD ===== */
+#hud{display:flex;align-items:center;gap:8px;padding:8px 10px;background:var(--panel);border-bottom:1px solid var(--line);z-index:5;}
+#depBox{min-width:0;}
+#depLabel{font-size:11px;color:var(--muted);}
+#depVal{font-size:22px;font-weight:800;color:var(--gold);line-height:1.1;font-variant-numeric:tabular-nums;}
+#depVal.danger{color:var(--red);animation:blink .6s infinite alternate;}
+@keyframes blink{from{opacity:1}to{opacity:.5}}
+#desireBox{flex:1;min-width:0;}
+#desireLabel{font-size:11px;color:var(--muted);display:flex;justify-content:space-between;}
+#desireBar{height:10px;background:#242b38;border-radius:5px;overflow:hidden;margin-top:2px;}
+#desireFill{height:100%;width:0%;background:linear-gradient(90deg,#5cc8ff,#ff7ad9);border-radius:5px;transition:width .3s;}
+#shangtou{display:none;font-size:10px;color:var(--pink);font-weight:700;}
+#shangtou.on{display:inline;animation:blink .5s infinite alternate;}
+.hbtn{width:38px;height:38px;border-radius:10px;border:1px solid var(--line);background:var(--panel2);color:var(--txt);font-size:17px;flex:none;touch-action:manipulation;cursor:pointer;}
+.hbtn:active{transform:scale(.93);}
+.hbtn.off{opacity:.45;}
+/* ===== Stage ===== */
+#stage{position:relative;flex:1;min-height:0;background:#0b0e13;}
+#cv{position:absolute;inset:0;width:100%;height:100%;display:block;touch-action:none;}
+#popLayer{position:absolute;inset:0;pointer-events:none;z-index:8;overflow:hidden;}
+#banner{position:absolute;top:10px;left:50%;transform:translateX(-50%) translateY(-8px);background:rgba(20,24,34,.95);border:1px solid var(--gold);color:var(--gold);padding:8px 16px;border-radius:12px;font-size:14px;font-weight:700;opacity:0;transition:all .3s;pointer-events:none;white-space:nowrap;z-index:9;max-width:94%;overflow:hidden;text-overflow:ellipsis;}
+#banner.show{opacity:1;transform:translateX(-50%) translateY(0);}
+#toast{position:absolute;bottom:12px;left:50%;transform:translateX(-50%) translateY(8px);background:rgba(20,24,34,.95);border:1px solid var(--green);color:var(--txt);padding:8px 14px;border-radius:12px;font-size:13px;opacity:0;transition:all .3s;pointer-events:none;z-index:9;max-width:92%;text-align:center;}
+#toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+/* discount popup */
+.dpop{position:absolute;pointer-events:auto;background:#fff8ec;color:#3a2c12;border:2px solid #ff9f1c;border-radius:14px;padding:10px 12px;width:190px;box-shadow:0 6px 24px rgba(0,0,0,.5);z-index:10;animation:popin .25s;}
+@keyframes popin{from{transform:scale(.7);opacity:0}to{transform:scale(1);opacity:1}}
+.dpop h4{font-size:14px;margin-bottom:2px;}
+.dpop p{font-size:12px;color:#7a5c28;margin-bottom:8px;}
+.dpop .tbar{height:4px;background:#f0dfc0;border-radius:2px;margin-bottom:8px;overflow:hidden;}
+.dpop .tfill{height:100%;background:#ff9f1c;width:100%;}
+.dpop .btns{display:flex;gap:8px;}
+.dpop button{flex:1;padding:8px 0;border-radius:8px;border:none;font-size:13px;font-weight:700;touch-action:manipulation;cursor:pointer;}
+.dpop .look{background:#ff9f1c;color:#fff;}
+.dpop .look:disabled{background:#c9c2b4;color:#8a8272;}
+.dpop .close{background:#e8e0cf;color:#5a4c30;}
+/* ===== Dock ===== */
+#dock{background:var(--panel);border-top:1px solid var(--line);padding:8px 8px calc(8px + env(safe-area-inset-bottom));z-index:5;}
+#towerRow{display:grid;grid-template-columns:repeat(5,1fr);gap:6px;margin-bottom:8px;}
+.tbtn{background:var(--panel2);border:1px solid var(--line);border-radius:10px;padding:6px 2px;color:var(--txt);font-size:11px;touch-action:manipulation;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:1px;}
+.tbtn .e{font-size:20px;line-height:1.1;}
+.tbtn .c{color:var(--gold);font-size:10px;font-weight:700;}
+.tbtn.sel{border-color:var(--gold);box-shadow:0 0 0 1px var(--gold);}
+.tbtn.cant{opacity:.45;}
+.tbtn:active{transform:scale(.95);}
+#actionRow{display:flex;gap:8px;align-items:stretch;}
+#dsBtn{flex:none;background:var(--panel2);border:1px solid var(--blue);color:var(--blue);border-radius:10px;padding:0 12px;font-size:13px;font-weight:700;touch-action:manipulation;cursor:pointer;}
+#dsBtn.cd{opacity:.45;border-color:var(--line);color:var(--muted);}
+#waveInfo{flex:1;min-width:0;font-size:12px;color:var(--muted);display:flex;align-items:center;padding:0 4px;}
+#goBtn{flex:none;background:linear-gradient(135deg,#ffd166,#ff9f1c);border:none;color:#3a2a05;border-radius:10px;padding:12px 22px;font-size:16px;font-weight:800;touch-action:manipulation;cursor:pointer;}
+#goBtn:active{transform:scale(.95);}
+#goBtn.hide{display:none;}
+/* ===== Modals ===== */
+.modal{position:absolute;inset:0;background:rgba(4,6,10,.82);display:flex;align-items:center;justify-content:center;z-index:20;padding:18px;backdrop-filter:blur(2px);}
+.modal.hide{display:none;}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:18px;padding:22px 20px;max-width:420px;width:100%;max-height:88%;overflow-y:auto;-webkit-overflow-scrolling:touch;}
+.card h2{font-size:22px;margin-bottom:6px;text-align:center;}
+.card .sub{font-size:13px;color:var(--muted);text-align:center;margin-bottom:14px;line-height:1.6;}
+.card p{font-size:14px;line-height:1.7;margin-bottom:8px;}
+.card .rule{background:var(--panel2);border-radius:10px;padding:10px 12px;margin-bottom:14px;font-size:13px;line-height:1.7;}
+.card .rule b{color:var(--gold);}
+.bigbtn{display:block;width:100%;background:linear-gradient(135deg,#ffd166,#ff9f1c);border:none;color:#3a2a05;border-radius:12px;padding:14px;font-size:17px;font-weight:800;margin-top:10px;touch-action:manipulation;cursor:pointer;}
+.bigbtn:active{transform:scale(.97);}
+.ghostbtn{display:block;width:100%;background:var(--panel2);border:1px solid var(--line);color:var(--txt);border-radius:12px;padding:12px;font-size:15px;margin-top:8px;touch-action:manipulation;cursor:pointer;}
+.stat-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:12px 0;}
+.stat{background:var(--panel2);border-radius:10px;padding:10px;text-align:center;}
+.stat .v{font-size:20px;font-weight:800;color:var(--gold);}
+.stat .k{font-size:11px;color:var(--muted);margin-top:2px;}
+.bill{background:var(--panel2);border-radius:10px;padding:10px 12px;margin:10px 0;font-size:13px;max-height:180px;overflow-y:auto;}
+.bill .row{display:flex;justify-content:space-between;padding:3px 0;border-bottom:1px dashed var(--line);}
+.bill .row:last-child{border:none;}
+.bill .tot{display:flex;justify-content:space-between;font-weight:800;color:var(--red);padding-top:6px;font-size:15px;}
+.achrow{display:flex;gap:10px;align-items:center;background:var(--panel2);border-radius:10px;padding:10px;margin-bottom:8px;}
+.achrow .ic{font-size:26px;flex:none;filter:grayscale(1);opacity:.4;}
+.achrow.got .ic{filter:none;opacity:1;}
+.achrow .t{font-size:14px;font-weight:700;}
+.achrow .d{font-size:12px;color:var(--muted);}
+#towerPanel{position:absolute;left:50%;bottom:118px;transform:translateX(-50%);background:var(--panel);border:1px solid var(--gold);border-radius:14px;padding:12px 14px;z-index:15;width:min(92%,380px);display:none;}
+#towerPanel.show{display:block;}
+#towerPanel h3{font-size:16px;margin-bottom:4px;}
+#towerPanel .desc{font-size:12px;color:var(--muted);margin-bottom:8px;}
+#towerPanel .btns{display:flex;gap:8px;}
+#towerPanel button{flex:1;padding:10px;border-radius:10px;border:none;font-size:14px;font-weight:700;touch-action:manipulation;cursor:pointer;}
+#upBtn{background:var(--green);color:#06301a;}
+#upBtn:disabled{background:#3a4356;color:var(--muted);}
+#sellBtn{background:#3a2b2b;color:#ff9d9d;}
+#tpClose{background:var(--panel2);color:var(--txt);flex:.6!important;}
+.hint{font-size:12px;color:var(--gold);text-align:center;padding:6px;display:none;}
+.hint.show{display:block;}
+/* ===== 主页：玩法说明 ===== */
+.howto{display:grid;gap:8px;margin-bottom:12px;}
+.hi{display:flex;gap:10px;align-items:flex-start;background:var(--panel2);border-radius:10px;padding:10px 12px;font-size:13px;line-height:1.6;}
+.hi .e{font-size:22px;flex:none;line-height:1.2;}
+.hi b{color:var(--gold);}
+.winlose{display:grid;gap:8px;margin-bottom:12px;}
+.wl{border-radius:10px;padding:10px 12px;font-size:13px;line-height:1.6;display:flex;gap:8px;align-items:center;}
+.wl span{font-weight:800;flex:none;}
+.wl.win{background:rgba(61,220,132,.10);border:1px solid var(--green);}
+.wl.win b{color:var(--green);}
+.wl.lose{background:rgba(255,92,92,.10);border:1px solid var(--red);}
+.wl.lose b{color:var(--red);}
+.codex{background:var(--panel2);border:1px solid var(--line);border-radius:10px;margin-bottom:8px;overflow:hidden;}
+.codex summary{padding:10px 12px;font-size:13px;font-weight:700;cursor:pointer;list-style:none;display:flex;align-items:center;gap:6px;}
+.codex summary::-webkit-details-marker{display:none;}
+.codex summary::before{content:'▶';font-size:10px;color:var(--muted);}
+.codex[open] summary::before{content:'▼';}
+.codex>div{padding:0 12px 10px;}
+.cxrow{display:flex;gap:8px;align-items:baseline;font-size:12px;line-height:1.5;padding:6px 0;border-top:1px dashed var(--line);}
+.cxrow:first-child{border-top:none;}
+.cxrow .e{font-size:18px;flex:none;}
+.cxrow .n{font-weight:700;flex:none;}
+.cxrow .c{color:var(--gold);font-weight:700;flex:none;margin-left:auto;white-space:nowrap;}
+.cxrow .d{color:var(--muted);flex-basis:100%;}
+.cxrow .wrap{display:flex;flex-wrap:wrap;gap:8px;align-items:baseline;flex:1;min-width:0;}
+</style>
+</head>
+<body>
+<div id="app">
+  <div id="hud">
+    <div id="depBox">
+      <div id="depLabel"></div>
+      <div id="depVal">10000</div>
+    </div>
+    <div id="desireBox">
+      <div id="desireLabel"><span><span id="desireTxt"></span> <span id="shangtou"></span></span><span id="desireNum">0</span></div>
+      <div id="desireBar"><div id="desireFill"></div></div>
+    </div>
+    <button class="hbtn" id="pauseBtn" title="暂停">⏸</button>
+    <button class="hbtn" id="speedBtn" title="加速">1x</button>
+    <button class="hbtn" id="muteBtn" title="声音">🔊</button>
+    <button class="hbtn" id="achBtn" title="成就">🏆</button>
+    <button class="hbtn" id="restartBtn" title="重开">↺</button>
+    <button class="hbtn" id="langBtn" title="语言/Language">EN</button>
+  </div>
+  <div id="stage">
+    <canvas id="cv"></canvas>
+    <div id="popLayer"></div>
+    <div id="banner"></div>
+    <div id="toast"></div>
+    <div id="towerPanel">
+      <h3 id="tpTitle"></h3>
+      <div class="desc" id="tpDesc"></div>
+      <div class="btns">
+        <button id="upBtn"></button>
+        <button id="sellBtn"></button>
+        <button id="tpClose">✕</button>
+      </div>
+    </div>
+  </div>
+  <div id="dock">
+    <div class="hint" id="placeHint"></div>
+    <div id="towerRow"></div>
+    <div id="actionRow">
+      <button id="dsBtn">🧘<br>断舍离</button>
+      <div id="waveInfo"></div>
+      <button id="goBtn"></button>
+    </div>
+  </div>
+
+  <div class="modal" id="startModal">
+    <div class="card">
+      <h2 id="homeTitle"></h2>
+      <div class="sub" id="homeSub"></div>
+      <div class="howto" id="howtoBox"></div>
+      <div class="winlose" id="winloseBox"></div>
+      <details class="codex">
+        <summary id="cxTowersSum"></summary>
+        <div id="cxTowers"></div>
+      </details>
+      <details class="codex">
+        <summary id="cxMonstersSum"></summary>
+        <div id="cxMonsters"></div>
+      </details>
+      <button class="ghostbtn" id="langBtnHome">EN</button>
+      <button class="bigbtn" id="startBtn"></button>
+    </div>
+  </div>
+
+  <div class="modal hide" id="settleModal">
+    <div class="card">
+      <h2 id="settleTitle">第 1 波 · 结算</h2>
+      <div class="sub" id="settleSub"></div>
+      <div class="stat-grid" id="settleStats"></div>
+      <button class="bigbtn" id="nextWaveBtn"></button>
+    </div>
+  </div>
+
+  <div class="modal hide" id="endModal">
+    <div class="card">
+      <h2 id="endTitle"></h2>
+      <div class="sub" id="endSub"></div>
+      <div class="stat-grid" id="endStats"></div>
+      <div class="bill" id="endBill" style="display:none"></div>
+      <button class="bigbtn" id="againBtn"></button>
+      <button class="ghostbtn" id="homeBtn"></button>
+    </div>
+  </div>
+
+  <div class="modal hide" id="achModal">
+    <div class="card">
+      <h2 id="achTitle"></h2>
+      <div class="sub" id="bestLine"></div>
+      <div id="achList"></div>
+      <button class="ghostbtn" id="achClose"></button>
+    </div>
+  </div>
+</div>
+<script>
+'use strict';
+
+/* ============================================================
+   守住钱包 · 单机塔防 —— 全部逻辑在本文件，无外部依赖
+   ============================================================ */
+const $ = id => document.getElementById(id);
+const clamp = (v,a,b)=>Math.max(a,Math.min(b,v));
+const rand = (a,b)=>a+Math.random()*(b-a);
+const randi = (a,b)=>Math.floor(rand(a,b+1));
+const d2 = (ax,ay,bx,by)=>{const dx=ax-bx,dy=ay-by;return dx*dx+dy*dy;};
+
+/* ---------------- 音效：WebAudio 合成 ---------------- */
+const AudioSys = {
+  ctx:null,
+  muted: (function(){ try{ return localStorage.getItem('szqb_mute')==='1'; }catch(e){ return false; } })(),
+  ensure(){
+    try{
+      if(!this.ctx) this.ctx = new (window.AudioContext||window.webkitAudioContext)();
+      if(this.ctx.state==='suspended') this.ctx.resume();
+    }catch(e){}
+  },
+  tone(f, dur, type, vol, slideTo, delay){
+    if(this.muted) return; this.ensure(); if(!this.ctx) return;
+    type=type||'sine'; vol=vol||0.12; delay=delay||0;
+    const t0=this.ctx.currentTime+delay;
+    const o=this.ctx.createOscillator(), g=this.ctx.createGain();
+    o.type=type; o.frequency.setValueAtTime(f,t0);
+    if(slideTo) o.frequency.exponentialRampToValueAtTime(Math.max(30,slideTo),t0+dur);
+    g.gain.setValueAtTime(vol,t0); g.gain.exponentialRampToValueAtTime(0.0001,t0+dur);
+    o.connect(g); g.connect(this.ctx.destination);
+    o.start(t0); o.stop(t0+dur+0.02);
+  },
+  click(){ this.tone(760,0.06,'square',0.06); },
+  place(){ this.tone(520,0.09,'square',0.1); this.tone(780,0.1,'square',0.08,null,0.07); },
+  upgrade(){ this.tone(440,0.1,'triangle',0.12); this.tone(660,0.12,'triangle',0.12,null,0.09); },
+  sell(){ this.tone(660,0.08,'triangle',0.1,330); },
+  deny(){ this.tone(220,0.15,'sawtooth',0.08,140); },
+  pop(){ this.tone(rand(500,700),0.05,'square',0.05); },
+  boom(){ this.tone(160,0.35,'triangle',0.16,40); this.tone(90,0.4,'sine',0.14,30,0.03); },
+  leak(){ this.tone(420,0.22,'sawtooth',0.1,150); },
+  clear(){ const self=this; [523,659,784].forEach(function(f,i){ self.tone(f,0.16,'triangle',0.12,null,i*0.1); }); },
+  boss(){ this.tone(110,0.5,'sawtooth',0.14,70); this.tone(110,0.5,'sawtooth',0.14,70,0.35); },
+  ding(){ this.tone(880,0.12,'sine',0.1); this.tone(1174,0.14,'sine',0.08,null,0.1); },
+  nuke(){ this.tone(400,0.9,'sawtooth',0.16,35); this.tone(70,1.0,'sine',0.16,28,0.05); },
+  coin(){ this.tone(990,0.07,'square',0.05); this.tone(1320,0.09,'square',0.04,null,0.05); },
+  brain(){ this.tone(1200,0.1,'sine',0.09,1800); this.tone(1500,0.1,'sine',0.07,2000,0.08); }
+};
+
+/* ---------------- 存档：成就 / 最佳 / 弹窗计数 ---------------- */
+const Store = {
+  get(k,d){ try{ const v=localStorage.getItem('szqb_'+k); return v===null?d:v; }catch(e){ return d; } },
+  set(k,v){ try{ localStorage.setItem('szqb_'+k,String(v)); }catch(e){} },
+  ach(id){ return this.get('ach_'+id,'0')==='1'; },
+  unlock(id){
+    if(this.ach(id)) return false;
+    this.set('ach_'+id,'1'); return true;
+  }
+};
+/* ---------------- I18N：中/EN ---------------- */
+const I18N={zh:{},en:{}};
+I18N.zh['doc_title']='守住钱包 · 单机塔防';
+I18N.zh['hud_deposit']='💰 存款（血量+分数）';
+I18N.zh['hud_desire']='😈 欲望值';
+I18N.zh['shangtou']='上头了！塔攻-20%';
+I18N.zh['t_pause']='暂停';
+I18N.zh['t_speed']='加速';
+I18N.zh['t_mute']='声音';
+I18N.zh['t_ach']='成就';
+I18N.zh['t_restart']='重开';
+I18N.zh['t_lang']='语言/Language';
+I18N.zh['waveinfo_prep']='准备迎接第一波消费主义冲击…';
+I18N.zh['go_btn']='🚀 出发！';
+I18N.zh['home_title']='💰 守住钱包';
+I18N.zh['home_sub']='存款保卫战：12 个月，别让消费主义掏空你';
+I18N.zh['home_howto']='<div class="hi"><span class="e">🧱</span><span><b>布塔</b>：点下方塔 → 点地图空格，敌人来之前布好防线</span></div><div class="hi"><span class="e">🚀</span><span><b>开战</b>：按"出发！"，12 波 = 12 个月，每波发工资 +8000</span></div><div class="hi"><span class="e">💰</span><span><b>存款 = 血量 = 分数</b>：漏怪扣它的消费金额，杀怪赚奖励</span></div><div class="hi"><span class="e">😈</span><span><b>管住手</b>：弹窗看看扣 500；欲望 ≥80 会"上头"，塔攻击 -20%</span></div>';
+I18N.zh['home_win']='<div class="wl win"><span>🏆 胜利</span>撑到年底，且存款 ≥ <b>80000</b></div>';
+I18N.zh['home_lose']='<div class="wl lose"><span>💀 失败</span>存款 &lt; 0，直接破产</div>';
+I18N.zh['codex_towers']='🗼 塔图鉴（点开展开）';
+I18N.zh['codex_monsters']='👾 怪图鉴（点开展开）';
+I18N.zh['start_btn']='开始守钱';
+I18N.zh['settle_next']='进入下一月 →';
+I18N.zh['settle_yearend']='查看年终结算 →';
+I18N.zh['again']='再来一次';
+I18N.zh['home_back']='返回首页';
+I18N.zh['ach_title']='🏆 成就图鉴';
+I18N.zh['ach_close']='关闭';
+I18N.zh['wave_combat']='⚔️ 第 {w} 波进行中…<br><span id="leftInfo"></span>';
+I18N.zh['wave_banner']='📅 {n} —— {tip}';
+I18N.zh['huabei_tag']='  [花呗账单日]';
+I18N.zh['settle_title']='第 {w} 波 · 结算';
+I18N.zh['settle_sub_year']='一年过去了…是时候算总账了。';
+I18N.zh['settle_sub_month']='本月结束，钱包尚存。';
+I18N.zh['stat_salary']='下月工资（已预发）';
+I18N.zh['stat_interest']='理财利息';
+I18N.zh['stat_blitz']='⚡速战速决';
+I18N.zh['stat_blitz_sub']='前5波限时清剿';
+I18N.zh['stat_kills']='累计击杀';
+I18N.zh['stat_leaks']='本波漏单';
+I18N.zh['market_steady']='行情平稳';
+I18N.zh['market_bull']='📈 牛市！利息+50%';
+I18N.zh['market_bear']='📉 熊市…绿得发慌，无利息';
+I18N.zh['next_wave']='进入第 {w} 波 →';
+I18N.zh['split_0']='分期免息！';
+I18N.zh['split_banner']='💳 {boss} 分裂出 {n} 只分期小怪！';
+I18N.zh['boss_down']='💥 击破 {name}！（{n}/3)';
+I18N.zh['leak_toast']='💸 {name} 溜走了，消费 {amt}！{flavor}';
+I18N.zh['boss_enter']='⚠️ {name} 登场：{flavor}';
+I18N.zh['deposit_breached']='定存被啃穿了！';
+I18N.zh['deposit_chewed']='🏦 定存被 {name} 啃穿了…提前支取按活期';
+I18N.zh['bond_hp']='复利羁绊！血量+20%';
+I18N.zh['err_build_money']='💸 存款不够，连塔都建不起…';
+I18N.zh['err_place']='这里放不下（挡路了/有东西了）';
+I18N.zh['err_up_money']='💸 存款不够升级…';
+I18N.zh['err_nuke_money']='💸 穷得连核弹都买不起';
+I18N.zh['err_dock_money']='💸 存款不够…先忍忍';
+I18N.zh['up_done']='升级！Lv.{lv}';
+I18N.zh['nuke_text']='眼不见，心不烦！';
+I18N.zh['dpop_title']='<h4>🔥 限时折扣！</h4><p>';
+I18N.zh['dpop_left']='<br>仅剩 <b class="cd">5</b> 秒</p>';
+I18N.zh['dpop_look']='看看 -500';
+I18N.zh['dpop_close']='关闭';
+I18N.zh['dpop_poor']='穷得看不起';
+I18N.zh['dpop_regret']='🛒 买完就后悔…（-500，欲望+20）';
+I18N.zh['dsl']='🧘 断舍离！欲望 -30，四大皆空';
+I18N.zh['dsl_btn']='断舍离';
+I18N.zh['rating_moon']='月光族';
+I18N.zh['rating_moon_c']='钱都去哪了？建议复盘购物车。';
+I18N.zh['rating_save']='小有结余';
+I18N.zh['rating_save_c']='离 80000 的目标还差一点，明年继续。';
+I18N.zh['rating_pro']='存钱达人';
+I18N.zh['rating_pro_c']='可以考虑买房了（首付还差 99%）。';
+I18N.zh['rating_god']='财神转世';
+I18N.zh['rating_god_c']='建议出书《我是如何存下钱的》（并没有人买）。';
+I18N.zh['end_win']='🎉 守住了！';
+I18N.zh['end_report']='📊 年终结算';
+I18N.zh['end_sub_win']='年终存款 <b style="color:var(--gold)">{dep}</b>（目标 80000）<br>评级：<b style="color:var(--gold)">{rating}</b><br>{comment}';
+I18N.zh['end_lose']='💸 钱包宣布破产';
+I18N.zh['end_lose_sub']='你的存款被消费主义吃干抹净。<br>以下为本局非必要支出账单，请查收：';
+I18N.zh['bill_total']='合计败家';
+I18N.zh['stat_killed']='击杀消费怪';
+I18N.zh['stat_leaked']='漏单';
+I18N.zh['stat_closed']='关闭弹窗';
+I18N.zh['stat_best']='历史最佳存款';
+I18N.zh['best_line']='历史最佳存款：<b style="color:var(--gold)">{b}</b> ｜ 目标：80000';
+I18N.zh['ach_unlocked']='🏆 成就解锁：{n}';
+I18N.zh['canvas_payday']='发薪日';
+I18N.zh['canvas_base']='存款基地';
+I18N.zh['canvas_buyit']='买它！';
+I18N.zh['pause_on']='⏸ 已暂停';
+I18N.zh['pause_off']='▶ 继续';
+I18N.zh['confirm_restart']='确定重开吗？本局进度清零，成就保留。';
+I18N.zh['left_info']='剩余 {n} 只消费怪';
+I18N.zh['place_nuke']='🗑️ 点任意位置引爆核弹（1500），范围3格';
+I18N.zh['place_range']='（射程{r}格）';
+I18N.zh['place_meat']='（堵路肉盾，不打伤害）';
+I18N.zh['place_bond']='（每波发利息，挨着定存有羁绊）';
+I18N.zh['place_hint']='{e} {n}{x}：点空格子放置';
+I18N.zh['nl_ledger']='减速{a}%→{b}%，伤害{c}→{d}';
+I18N.zh['nl_deposit']='血量{a}→{b}';
+I18N.zh['nl_cooldown']='伤害{a}→{b}，范围{c}→{d}';
+I18N.zh['nl_invest']='利率{a}%→{b}%';
+I18N.zh['tp_title']='{e} {n} Lv.{lv}';
+I18N.zh['tp_hp']='<br>❤️ 血量 {hp}/{max}';
+I18N.zh['tp_bondhp']='（复利羁绊+20%)';
+I18N.zh['tp_rate']='<br>📈 本轮利率 {v}%';
+I18N.zh['tp_bond3']='+3（羁绊）';
+I18N.zh['tp_next']='<br>⬆️ 下一级：';
+I18N.zh['up_cost']='⬆️ 升级 {c}';
+I18N.zh['up_max']='已满级';
+I18N.zh['up_no']='不可升级';
+I18N.zh['sell']='💰 出售 +{v}';
+I18N.zh['cx_cost']='{c}元';
+I18N.zh['cx_leak']='漏掉 -{s}';
+I18N.zh['cx_hp']='血量{h} · 击杀 +{r}';
+I18N.zh['cx_split']=' · 50%血量分裂';
+I18N.zh['cx_aura']=' · 光环加速小怪';
+I18N.zh['cx_brain']=' · 会洗脑';
+I18N.zh['forecast_tag']='💡 ';
+I18N.en['doc_title']='Hold the Wallet · Offline Tower Defense';
+I18N.en['hud_deposit']='💰 Savings (HP + score)';
+I18N.en['hud_desire']='😈 Desire';
+I18N.en['shangtou']='Tilted! Towers −20%';
+I18N.en['t_pause']='Pause';
+I18N.en['t_speed']='Speed';
+I18N.en['t_mute']='Sound';
+I18N.en['t_ach']='Achievements';
+I18N.en['t_restart']='Restart';
+I18N.en['t_lang']='Language/语言';
+I18N.en['waveinfo_prep']='Brace for the first wave of consumerism…';
+I18N.en['go_btn']='🚀 Go!';
+I18N.en['home_title']='💰 Hold the Wallet';
+I18N.en['home_sub']='Savings defense: 12 months. Don’t let consumerism drain you.';
+I18N.en['home_howto']='<div class="hi"><span class="e">🧱</span><span><b>Build</b>: tap a tower below → tap an empty tile. Set defenses before they come</span></div><div class="hi"><span class="e">🚀</span><span><b>Fight</b>: hit "Go!" — 12 waves = 12 months, +8000 salary each wave</span></div><div class="hi"><span class="e">💰</span><span><b>Savings = HP = score</b>: leaks cost you, kills pay you</span></div><div class="hi"><span class="e">😈</span><span><b>Hands off</b>: peeking at popups costs 500; desire ≥80 = "tilted", towers −20%</span></div>';
+I18N.en['home_win']='<div class="wl win"><span>🏆 Win</span>Survive the year with savings ≥ <b>80000</b></div>';
+I18N.en['home_lose']='<div class="wl lose"><span>💀 Lose</span>Savings &lt; 0 — bankrupt</div>';
+I18N.en['codex_towers']='🗼 Tower codex (tap to expand)';
+I18N.en['codex_monsters']='👾 Monster codex (tap to expand)';
+I18N.en['start_btn']='Start defending';
+I18N.en['settle_next']='Next month →';
+I18N.en['settle_yearend']='View year-end report →';
+I18N.en['again']='Play again';
+I18N.en['home_back']='Back to home';
+I18N.en['ach_title']='🏆 Achievements';
+I18N.en['ach_close']='Close';
+I18N.en['wave_combat']='⚔️ Wave {w} in progress…<br><span id="leftInfo"></span>';
+I18N.en['wave_banner']='📅 {n} — {tip}';
+I18N.en['huabei_tag']='  [Credit Card Bill Day]';
+I18N.en['settle_title']='Wave {w} · Settled';
+I18N.en['settle_sub_year']='A year has passed… time for the final tally.';
+I18N.en['settle_sub_month']='Month over — wallet intact.';
+I18N.en['stat_salary']='Next month’s salary (advance)';
+I18N.en['stat_interest']='Invest interest';
+I18N.en['stat_blitz']='⚡Blitz';
+I18N.en['stat_blitz_sub']='Clear the first 5 waves fast';
+I18N.en['stat_kills']='Total kills';
+I18N.en['stat_leaks']='Leaked this wave';
+I18N.en['market_steady']='Steady market';
+I18N.en['market_bull']='📈 Bull market! Interest +50%';
+I18N.en['market_bear']='📉 Bear market… deep red, no interest';
+I18N.en['next_wave']='Start Wave {w} →';
+I18N.en['split_0']='0% installments!';
+I18N.en['split_banner']='💳 {boss} splits into {n} installment imps!';
+I18N.en['boss_down']='💥 {name} down! ({n}/3)';
+I18N.en['leak_toast']='💸 {name} slipped away, spent {amt}! {flavor}';
+I18N.en['boss_enter']='⚠️ {name} appears: {flavor}';
+I18N.en['deposit_breached']='Deposit breached!';
+I18N.en['deposit_chewed']='🏦 {name} chewed through Fixed Deposit… early withdrawal applies';
+I18N.en['bond_hp']='Compound bond! HP +20%';
+I18N.en['err_build_money']='💸 Not enough savings to build…';
+I18N.en['err_place']='Can’t build here (path blocked / occupied)';
+I18N.en['err_up_money']='💸 Not enough savings to upgrade…';
+I18N.en['err_nuke_money']='💸 Too broke for the nuke';
+I18N.en['err_dock_money']='💸 Not enough… hold tight';
+I18N.en['up_done']='Upgraded! Lv.{lv}';
+I18N.en['nuke_text']='Out of sight, out of mind!';
+I18N.en['dpop_title']='<h4>🔥 Flash Sale!</h4><p>';
+I18N.en['dpop_left']='<br>Only <b class="cd">5</b>s left</p>';
+I18N.en['dpop_look']='Take a look −500';
+I18N.en['dpop_close']='Close';
+I18N.en['dpop_poor']='Can’t afford to look';
+I18N.en['dpop_regret']='🛒 Buyer’s remorse… (−500, desire +20)';
+I18N.en['dsl']='🧘 Declutter! Desire −30, mind at peace';
+I18N.en['dsl_btn']='Declutter';
+I18N.en['rating_moon']='Paycheck-to-paycheck';
+I18N.en['rating_moon_c']='Where did it all go? Review your cart.';
+I18N.en['rating_save']='Modest savings';
+I18N.en['rating_save_c']='Just short of 80000 — keep going next year.';
+I18N.en['rating_pro']='Saving pro';
+I18N.en['rating_pro_c']='You could buy a house (still 99% short on down payment).';
+I18N.en['rating_god']='God of Wealth reborn';
+I18N.en['rating_god_c']='You should write “How I Saved Money” (no one would buy it).';
+I18N.en['end_win']='🎉 You held the line!';
+I18N.en['end_report']='📊 Year-end report';
+I18N.en['end_sub_win']='Year-end savings <b style="color:var(--gold)">{dep}</b> (goal 80000)<br>Rating: <b style="color:var(--gold)">{rating}</b><br>{comment}';
+I18N.en['end_lose']='💸 Wallet bankrupt';
+I18N.en['end_lose_sub']='Consumerism cleaned you out.<br>Your unnecessary-spending bill:';
+I18N.en['bill_total']='Total splurged';
+I18N.en['stat_killed']='Spenders killed';
+I18N.en['stat_leaked']='Leaked';
+I18N.en['stat_closed']='Popups closed';
+I18N.en['stat_best']='Best savings';
+I18N.en['best_line']='Best savings: <b style="color:var(--gold)">{b}</b> | Goal: 80000';
+I18N.en['ach_unlocked']='🏆 Achievement unlocked: {n}';
+I18N.en['canvas_payday']='Payday';
+I18N.en['canvas_base']='Savings base';
+I18N.en['canvas_buyit']='Buy it!';
+I18N.en['pause_on']='⏸ Paused';
+I18N.en['pause_off']='▶ Resume';
+I18N.en['confirm_restart']='Restart? Progress resets, achievements are kept.';
+I18N.en['left_info']='{n} spenders left';
+I18N.en['place_nuke']='🗑️ Tap anywhere to detonate (1500), 3-tile radius';
+I18N.en['place_range']=' (range {r})';
+I18N.en['place_meat']=' (meat shield, no damage)';
+I18N.en['place_bond']=' (interest each wave, bond next to Fixed Deposit)';
+I18N.en['place_hint']='{e} {n}{x}: tap an empty tile';
+I18N.en['nl_ledger']='Slow {a}%→{b}%, DoT {c}→{d}';
+I18N.en['nl_deposit']='HP {a}→{b}';
+I18N.en['nl_cooldown']='DMG {a}→{b}, range {c}→{d}';
+I18N.en['nl_invest']='Rate {a}%→{b}%';
+I18N.en['tp_title']='{e} {n} Lv.{lv}';
+I18N.en['tp_hp']='<br>❤️ HP {hp}/{max}';
+I18N.en['tp_bondhp']=' (compound bond +20%)';
+I18N.en['tp_rate']='<br>📈 Rate this round: {v}%';
+I18N.en['tp_bond3']='+3 (bond)';
+I18N.en['tp_next']='<br>⬆️ Next: ';
+I18N.en['up_cost']='⬆️ Upgrade {c}';
+I18N.en['up_max']='Maxed';
+I18N.en['up_no']='N/A';
+I18N.en['sell']='💰 Sell +{v}';
+I18N.en['cx_cost']='¥{c}';
+I18N.en['cx_leak']='Leak −{s}';
+I18N.en['cx_hp']='HP {h} · Kill +{r}';
+I18N.en['cx_split']=' · splits at 50% HP';
+I18N.en['cx_aura']=' · aura speeds minions';
+I18N.en['cx_brain']=' · brainwashes';
+I18N.en['forecast_tag']='💡 ';
+let LANG='zh';
+function TR(k,v){var d=I18N[LANG]||I18N.zh;var s=(d&&d[k]!=null)?d[k]:I18N.zh[k];if(s==null)s=k;if(v)s=s.replace(/\{(\w+)\}/g,function(m,k2){return v[k2]!=null?v[k2]:m;});return s;}
+function L(o,f){return (LANG==='en'&&o[f+'_en'])?o[f+'_en']:o[f];}
+function setLang(l){LANG=(l==='en')?'en':'zh';try{localStorage.setItem('sq_lang',LANG);}catch(e){}applyLang();}
+function initLang(){var l=null;try{l=localStorage.getItem('sq_lang');}catch(e){}if(!l){l=((navigator.language||'zh')+'').toLowerCase().indexOf('en')===0?'en':'zh';}LANG=(l==='en')?'en':'zh';}
+
+const ACH_DEF = [
+  {id:'first30k', icon:'\u{1F947}', name:'第一桶金', name_en:'First Pot of Gold', desc:'存款首次突破 30000 —— 万事开头难', desc_en:'Savings first break 30000 \u2014 the hardest step is the first'},
+  {id:'noleak',   icon:'\u{1F6E1}\uFE0F', name:'月光守护者', name_en:'Guardian of the Purse', desc:'一整波零漏怪 —— 铁公鸡本鸡', desc_en:'Zero leaks for a whole wave \u2014 certified miser'},
+  {id:'closer20', icon:'\u{1F9D8}', name:'断舍离大师', name_en:'Declutter Master', desc:'累计关闭 20 个限时折扣弹窗 —— 心如止水', desc_en:'Closed 20 flash-sale popups \u2014 mind like still water'},
+  {id:'rich80k',  icon:'\u{1F4BC}', name:'裸辞勇气金', name_en:'Quit-Your-Job Fund', desc:'存款突破 80000 —— 世界那么大我想去看看', desc_en:'Savings break 80000 \u2014 the world is vast, go see it'},
+  {id:'boss3',    icon:'\u{1F451}', name:'全Boss击破', name_en:'Boss Slayer', desc:'击败 618、双11、黑五 —— 消费主义退散', desc_en:'Beat 618, Double 11 and Black Friday \u2014 consumerism repelled'},
+];
+function unlockAch(id){
+  if(Store.unlock(id)){
+    const a=ACH_DEF.find(function(x){return x.id===id;});
+    toast(a.icon+' '+TR('ach_unlocked',{n:L(a,'name')}));
+    AudioSys.clear();
+  }
+}
+
+
+/* ---------------- 语言切换：重渲染所有可见文本 ---------------- */
+function applyLang(){
+  document.title=TR('doc_title');
+  $('depLabel').textContent=TR('hud_deposit');
+  $('desireTxt').textContent=TR('hud_desire');
+  $('shangtou').textContent=TR('shangtou');
+  $('pauseBtn').title=TR('t_pause'); $('speedBtn').title=TR('t_speed');
+  $('muteBtn').title=TR('t_mute'); $('achBtn').title=TR('t_ach');
+  $('restartBtn').title=TR('t_restart');
+  $('langBtn').title=TR('t_lang'); $('langBtnHome').title=TR('t_lang');
+  var lbl=LANG==='en'?'中':'EN';
+  $('langBtn').textContent=lbl; $('langBtnHome').textContent=lbl;
+  $('goBtn').textContent=TR('go_btn');
+  $('homeTitle').textContent=TR('home_title');
+  $('homeSub').textContent=TR('home_sub');
+  $('howtoBox').innerHTML=TR('home_howto');
+  $('winloseBox').innerHTML=TR('home_win')+TR('home_lose');
+  $('cxTowersSum').textContent=TR('codex_towers');
+  $('cxMonstersSum').textContent=TR('codex_monsters');
+  $('startBtn').textContent=TR('start_btn');
+  $('againBtn').textContent=TR('again');
+  $('homeBtn').textContent=TR('home_back');
+  $('achTitle').textContent=TR('ach_title');
+  $('achClose').textContent=TR('ach_close');
+  renderHomeCodex(); renderDock(); syncHUD(); renderAch();
+  if(S){
+    if(S.phase==='idle') setWaveInfo(TR('waveinfo_prep'));
+    if(S.phase==='prep'){ var def=WAVES[S.wave-1]; setWaveInfo('\u{1F4C5} '+waveForecast(S.wave)+'<br>\u{1F4A1} '+L(def,'tip')); }
+    if(S.selTower) showTowerPanel(S.selTower);
+    if(S._settle) showSettle(S._settle.i,S._settle.mkt,S._settle.s);
+    if(S._end) renderEnd();
+  }
+}
+
+/* ---------------- 基础配置 ---------------- */
+const COLS=9, ROWS=13;
+const PATH_PTS=[[-0.7,1],[8,1],[8,4],[0,4],[0,7],[8,7],[8,10],[2,10],[2,12],[8.7,12]];
+
+const MONSTERS = {
+  milk:       {name:'奶茶', name_en:'Bubble Tea', emoji:'\u{1F9CB}', hp:60,   speed:1.65, steal:80,   reward:25,   dps:22,  r:0.42, flavor:'一点点去冰三分糖', flavor_en:'Light ice, 30% sugar'},
+  food:       {name:'外卖满减', name_en:'Takeout Deal', emoji:'\u{1F6F5}', hp:220,  speed:1.10, steal:300,  reward:70,   dps:30,  r:0.46, flavor:'满25减12，不吃就亏了', flavor_en:'Spend 25 save 12 \u2014 skipping it is losing money'},
+  live:       {name:'直播带货', name_en:'Live Shopping', emoji:'\u{1F4E2}', hp:550,  speed:0.72, steal:900,  reward:160,  dps:45,  r:0.50, flavor:'买它买它买它！', flavor_en:'Buy it buy it buy it!', brainwash:true},
+  installment:{name:'分期小怪', name_en:'Installment Imp', emoji:'\u{1F4B3}', hp:90,   speed:1.50, steal:120,  reward:30,   dps:20,  r:0.40, flavor:'分12期，毫无压力（才怪）', flavor_en:'12 easy payments, zero pressure (yeah right)'},
+  boss618:    {name:'618', name_en:'618', emoji:'\u{1F6CD}\uFE0F', hp:5200, speed:0.60, steal:4000, reward:2200, dps:130, r:0.62, boss:true, flavor:'年中大促，错过等一年', flavor_en:'Mid-year mega sale \u2014 miss it, wait a year'},
+  boss1111:   {name:'双11', name_en:'Double 11', emoji:'\u{1F381}', hp:9500, speed:0.55, steal:6000, reward:3600, dps:170, r:0.66, boss:true, split:true, flavor:'尾款人，请集合', flavor_en:'Balance-duers, assemble'},
+  bossblack:  {name:'黑五', name_en:'Black Friday', emoji:'\u{1F5A4}', hp:15000,speed:0.50, steal:8000, reward:5200, dps:210, r:0.70, boss:true, aura:true,  flavor:'最后的疯狂', flavor_en:'The final frenzy'},
+};
+const TOWERS = {
+  ledger:  {name:'记账', name_en:'Ledger', emoji:'\u{1F4D2}', cost:300,  up:[450,900],   range:[2.2,2.4,2.7], slow:[0.35,0.50,0.65], dps:[0,8,25],
+            desc:'范围内怪物减速（取最高，不叠加）。2级起附带持续伤害。', desc_en:'Slows monsters in range (strongest only, no stacking). DoT from Lv.2.', flavor:'把每笔奶茶记下来，然后继续喝。', flavor_en:'Logs every bubble tea\u2026 then keeps drinking.'},
+  deposit: {name:'定存', name_en:'Fixed Deposit', emoji:'\u{1F3E6}', cost:500,  up:[600,1000],  hp:[800,1600,3000],
+            desc:'高血量路障：怪物靠近会停下来啃它，只拖时间不打伤害。', desc_en:'High-HP roadblock: monsters stop to chew it. Stalls only, no damage.', flavor:'爱存不存，反正跑不了。', flavor_en:'Save or not, it is not going anywhere.'},
+  cooldown:{name:'冷静期', name_en:'Cooling-off', emoji:'\u{1F9CA}', cost:700,  up:[800,1200],  range:[1.8,2.0,2.2], boomR:1.5, dmg:[120,260,500], delay:2.0,
+            desc:'进入范围的怪物被延迟标记，2秒后爆炸造成范围伤害。', desc_en:'Marks monsters in range; detonates after 2s for AoE damage.', flavor:'放购物车三天再说。', flavor_en:'Leave it in the cart for three days first.'},
+  invest:  {name:'理财', name_en:'Invest', emoji:'\u{1F4C8}', cost:800,  up:[900,1400],  rate:[0.06,0.09,0.13],
+            desc:'每波结算发利息=本金(800×等级)×利率。相邻定存触发复利羁绊：利率+3%，定存血量+20%。', desc_en:'Pays interest each wave = principal (800\u00d7level)\u00d7rate. Bond with adjacent Fixed Deposit: +3% rate, +20% its HP.', flavor:'你不理财，财不理你（但财也可能绿得发慌）。', flavor_en:'You ignore money, money ignores you (and it may bleed red).'},
+  uninstall:{name:'卸载App', name_en:'Uninstall App', emoji:'\u{1F5D1}\uFE0F', cost:1500, consumable:true, dmg:1500, radius:3.0,
+            desc:'一次性核弹：点选后在任意位置引爆，3格范围1500伤害，用完即焚。', desc_en:'One-shot nuke: tap to arm, detonate anywhere. 1500 damage in 3-tile radius. Burns after use.', flavor:'眼不见，心不烦。', flavor_en:'Out of sight, out of mind.'},
+};
+// groups: [type,count,interval,delay]
+const WAVES = [
+  {name:'一月·奶茶季', name_en:'Jan \u00b7 Bubble Tea Season', tip:'一点点去冰三分糖，快乐水不能停', tip_en:'Light ice, 30% sugar \u2014 happy water never stops', groups:[['milk',12,0.5,0],['food',3,1.1,3]]},
+  {name:'二月·外卖觉醒', name_en:'Feb \u00b7 Takeout Awakening', tip:'外卖小哥比你还准时', tip_en:'The delivery rider is more punctual than you',             groups:[['milk',16,0.45,0],['food',6,1.0,2]]},
+  {name:'三月·花呗账单日', name_en:'Mar \u00b7 Credit Card Bill Day', tip:'痛并快乐着：怪+25%血，赏+15%', tip_en:'Bittersweet: +25% monster HP, +15% rewards', huabei:true, groups:[['milk',15,0.42,0],['food',9,0.85,1]]},
+  {name:'四月·直播入侵', name_en:'Apr \u00b7 Live Shopping Invasion', tip:'买它！买它！买它！', tip_en:'Buy it! Buy it! Buy it!',              groups:[['food',12,0.55,0],['live',5,1.7,3]]},
+  {name:'五月·混合双打', name_en:'May \u00b7 Combo Attack', tip:'钱包左右为难', tip_en:'Your wallet is torn',                   groups:[['milk',24,0.22,0],['food',12,0.5,2],['live',5,1.4,5]]},
+  {name:'六月·618大促', name_en:'Jun \u00b7 618 Sale', tip:'Boss预警：618 来了！', tip_en:'Boss alert: 618 is here!', huabei:true, boss:true, groups:[['boss618',1,1,0],['food',6,1.4,2]]},
+  {name:'七月·带货天团', name_en:'Jul \u00b7 Shopping Host Squad', tip:'全网最低价（不是）', tip_en:'Lowest price on the internet (not really)',              groups:[['live',6,1.6,0],['food',10,0.7,4]]},
+  {name:'八月·暑期消费潮', name_en:'Aug \u00b7 Summer Spending Spree', tip:'热到只想买买买', tip_en:'Too hot to do anything but buy buy buy',                groups:[['milk',20,0.35,0],['food',10,0.7,5],['live',4,1.8,8]]},
+  {name:'九月·花呗账单日', name_en:'Sep \u00b7 Credit Card Bill Day', tip:'痛并快乐着：怪+25%血，赏+15%', tip_en:'Bittersweet: +25% monster HP, +15% rewards', huabei:true, groups:[['food',12,0.6,0],['live',6,1.4,5]]},
+  {name:'十月·囤货季', name_en:'Oct \u00b7 Stock-up Season', tip:'双11预售：先交定金', tip_en:'Double 11 presale: pay the deposit first',              groups:[['milk',24,0.3,0],['food',12,0.6,4],['live',6,1.4,7]]},
+  {name:'十一月·双11', name_en:'Nov \u00b7 Double 11', tip:'Boss预警：尾款人集合！50%血量会分裂出分期小怪', tip_en:'Boss alert: balance-duers assemble! Splits into installment imps at 50% HP', boss:true, groups:[['boss1111',1,1,0],['food',8,1.3,3]]},
+  {name:'十二月·黑五收官', name_en:'Dec \u00b7 Black Friday Finale', tip:'Boss预警：最后一战！黑五光环让小怪加速', tip_en:'Boss alert: final battle! Black Friday aura speeds up minions', boss:true, groups:[['bossblack',1,1,0],['food',10,1.1,2],['live',4,2.0,5]]},
+];
+const DPOP_GOODS=['AirPods 只要999！','李佳琦同款面膜 3 折！','Switch 现货不用抢！','限量球鞋发售！','奶茶第二杯半价！','机票盲盒 99 元！','Steam 史低特惠！','早鸟咖啡券 5 折！'];
+const DPOP_GOODS_EN=['AirPods only 999!','Influencer serum 70% off!','Switch in stock, no queue!','Limited sneaker drop!','Bubble tea: 2nd cup half price!','Mystery flight tickets 99!','Steam all-time-low sale!','Early-bird coffee 50% off!'];
+const DS_CD=30;
+
+/* ---------------- 游戏状态 ---------------- */
+let S=null;
+function newState(){
+  return {
+    phase:'idle',
+    wave:0,
+    deposit:10000,
+    desire:0,
+    towers:[], monsters:[], fx:[], floats:[],
+    spawnQueue:[], spawnT:0,
+    pendingBuild:null,
+    selTower:null,
+    time:0, speed:1, paused:false,
+    kills:0, leaks:0, closes:0,
+    leaksThisWave:0, bill:[],
+    bossesBeaten:{},
+    dsCd:0,
+    dpopTimer:-1, dpopLeft:0,
+    maxDeposit:10000,
+    shake:0,
+    over:null,
+    tid:0, mid:0,
+  };
+}
+
+/* ---------------- 路径 ---------------- */
+const PATH=(function(){
+  const segs=[]; let total=0;
+  for(let i=0;i<PATH_PTS.length-1;i++){
+    const x1=PATH_PTS[i][0], y1=PATH_PTS[i][1], x2=PATH_PTS[i+1][0], y2=PATH_PTS[i+1][1];
+    const len=Math.hypot(x2-x1,y2-y1);
+    segs.push({x1:x1,y1:y1,x2:x2,y2:y2,len:len,start:total}); total+=len;
+  }
+  const cells=new Set();
+  for(let d=0; d<=total; d+=0.15){
+    const p=posAtRaw(d);
+    cells.add(Math.round(p.x)+','+Math.round(p.y));
+  }
+  function posAtRaw(d){
+    d=clamp(d,0,total);
+    for(let i=0;i<segs.length;i++){ const s=segs[i];
+      if(d<=s.start+s.len){ const t=s.len>0?(d-s.start)/s.len:0;
+        return {x:s.x1+(s.x2-s.x1)*t, y:s.y1+(s.y2-s.y1)*t}; } }
+    const l=segs[segs.length-1]; return {x:l.x2,y:l.y2};
+  }
+  return {segs:segs,total:total,cells:cells,posAt:posAtRaw};
+})();
+function isPathCell(c,r){ return PATH.cells.has(c+','+r); }
+
+/* ---------------- 画布 ---------------- */
+const cv=$('cv'), ctx=cv.getContext('2d');
+let CW=0, CH=0, CELL=40, DPR=1;
+const FONT='"PingFang SC","Hiragino Sans GB","Microsoft YaHei",system-ui,-apple-system,sans-serif';
+function resize(){
+  const stage=$('stage');
+  const w=stage.clientWidth, h=stage.clientHeight;
+  DPR=Math.min(2, window.devicePixelRatio||1);
+  CW=w; CH=h; CELL=w/COLS;
+  cv.width=Math.round(w*DPR); cv.height=Math.round(h*DPR);
+  ctx.setTransform(DPR,0,0,DPR,0,0);
+}
+window.addEventListener('resize', resize);
+function gridToPx(c,r){ return {x:(c+0.5)*CELL, y:(r+0.5)*CELL}; }
+function pxToGrid(x,y){ return {c:Math.floor(x/CELL), r:Math.floor(y/CELL)}; }
+
+/* ---------------- 经济：存款增减 ---------------- */
+function addDeposit(n, silent){
+  S.deposit=Math.round(S.deposit+n);
+  if(S.deposit>S.maxDeposit) S.maxDeposit=S.deposit;
+  if(!silent){
+    if(S.deposit>=30000) unlockAch('first30k');
+    if(S.deposit>=80000) unlockAch('rich80k');
+  }
+  if(S.deposit<0 && !S.over){ gameOver(false); }
+  syncHUD();
+}
+function desireMul(){ return S.desire>=80?0.8:1; } // 上头 debuff
+
+/* ---------------- 波次管理 ---------------- */
+function waveForecast(w){
+  const def=WAVES[w-1];
+  const parts=def.groups.map(function(g){
+    const m=MONSTERS[g[0]];
+    return g[1]+'×'+m.emoji;
+  });
+  return L(def,'name')+'：'+parts.join(' ') + (def.huabei?TR('huabei_tag'):'');
+}
+function startPrep(){
+  S.phase='prep';
+  S.wave++;
+  const def=WAVES[S.wave-1];
+  addDeposit(8000,true); // 工资到账（不触发成就检测，避免工资直接解锁时音效混乱——其实无妨，保留检测）
+  if(S.deposit>=30000) unlockAch('first30k');
+  if(S.deposit>=80000) unlockAch('rich80k');
+  S.desire=clamp(S.desire+3,0,100); // 消费主义氛围：每波欲望自然+3（半强制压力，可管理）
+  S.leaksThisWave=0;
+  $('goBtn').classList.remove('hide');
+  setWaveInfo('📅 '+waveForecast(S.wave)+'<br>💡 '+L(def,'tip'));
+  banner(TR('wave_banner',{n:L(def,'name'),tip:L(def,'tip')}), def.huabei||def.boss);
+  if(def.boss) AudioSys.boss();
+  syncHUD(); renderDock();
+}
+function startCombat(){
+  if(S.phase!=='prep') return;
+  S.phase='combat';
+  const def=WAVES[S.wave-1];
+  S.spawnQueue=[];
+  def.groups.forEach(function(g){
+    const type=g[0], count=g[1], interval=g[2], delay=g[3]||0;
+    for(let i=0;i<count;i++) S.spawnQueue.push({type:type, at:delay+i*interval});
+  });
+  S.spawnQueue.sort(function(a,b){return a.at-b.at;});
+  S.spawnT=0;
+  S.parAt = S.time + (S.spawnQueue.length?S.spawnQueue[S.spawnQueue.length-1].at:0) + 30; // 速战速决par线（游戏时间·秒）
+  S.dpopLeft = S.wave>=2 ? randi(1,2) : 0;
+  S.dpopTimer = S.dpopLeft>0 ? rand(6,12) : -1;
+  $('goBtn').classList.add('hide');
+  setWaveInfo(TR('wave_combat',{w:S.wave}));
+  AudioSys.click();
+}
+function spawnMonster(type, distOffset){
+  const cfg=MONSTERS[type];
+  const def=WAVES[S.wave-1];
+  const hb = def.huabei?1.25:1;
+  const rw = def.huabei?1.15:1;
+  S.mid++;
+  S.monsters.push({
+    id:S.mid, type:type, cfg:cfg,
+    hp:Math.round(cfg.hp*hb), maxHp:Math.round(cfg.hp*hb),
+    reward:Math.round(cfg.reward*rw),
+    dist:distOffset||0, x:0, y:0,
+    marks:{}, markCd:{},
+    pulseT: cfg.brainwash?rand(4,8):-1,
+    auraT:0, auraOn:false,
+    brainBubble:0,
+    splitDone:false,
+    wob:rand(0,6.28),
+  });
+}
+function waveCleared(){
+  // 结算
+  S.phase='settle';
+  clearPopups();
+  AudioSys.clear();
+  if(S.leaksThisWave===0) unlockAch('noleak');
+  // ⚡速战速决：前5波零漏单且在par线内清剿，+500
+  let speedBonus=0;
+  if(S.wave<=5 && S.leaksThisWave===0 && S.time<=S.parAt){ speedBonus=500; addDeposit(500,true); }
+  // 工资在 startPrep 预发；这里只结算理财利息
+  // 理财利息
+  let interest=0, market='steady';
+  const invests=S.towers.filter(function(t){return t.type==='invest';});
+  if(invests.length>0){
+    const roll=Math.random();
+    let mult=1; market='steady';
+    if(roll<0.15){ mult=1.5; market='bull'; }
+    else if(roll<0.30){ mult=0; market='bear'; }
+    invests.forEach(function(t){
+      const lvl=t.level;
+      let rate=TOWERS.invest.rate[lvl-1];
+      if(t.bonded) rate+=0.03;
+      interest+=Math.round(800*lvl*rate*mult);
+    });
+  }
+  if(interest>0){ addDeposit(interest,true); AudioSys.coin(); }
+  showSettle(interest, market, speedBonus);
+}
+function showSettle(interest, market, speedBonus){
+  S._settle={i:interest,mkt:market,s:speedBonus};
+  const w=S.wave;
+  $('settleTitle').textContent=TR('settle_title',{w:w});
+  $('settleSub').innerHTML = w>=12 ? TR('settle_sub_year') : TR('settle_sub_month');
+  let html='';
+  html+='<div class="stat"><div class="v">+8000</div><div class="k">'+TR('stat_salary')+'</div></div>';
+  html+='<div class="stat"><div class="v">+'+interest+'</div><div class="k">'+TR('stat_interest')+'<br><span style="font-size:10px">'+TR('market_'+S._settle.mkt)+'</span></div></div>';
+  if(speedBonus>0) html+='<div class="stat"><div class="v" style="color:var(--gold)">+'+speedBonus+'</div><div class="k">'+TR('stat_blitz')+'<br><span style="font-size:10px">'+TR('stat_blitz_sub')+'</span></div></div>';
+  html+='<div class="stat"><div class="v">'+S.kills+'</div><div class="k>'+TR('stat_kills')+'</div></div>';
+  html+='<div class="stat"><div class="v" style="color:'+(S.leaksThisWave>0?'var(--red)':'var(--green)')+'">'+S.leaksThisWave+'</div><div class="k>'+TR('stat_leaks')+'</div></div>';
+  $('settleStats').innerHTML=html;
+  $('nextWaveBtn').textContent = w>=12 ? TR('settle_yearend') : TR('next_wave',{w:w+1});
+  $('settleModal').classList.remove('hide');
+}
+function nextWave(){
+  $('settleModal').classList.add('hide');
+  if(S.wave>=12){ gameOver(true); return; }
+  startPrep();
+}
+
+/* ---------------- 战斗更新 ---------------- */
+function damageMonster(m, dmg, kx, ky){
+  if(m.hp<=0) return;
+  m.hp-=dmg;
+  if(m.hp<=0){ killMonster(m); return; }
+  // boss 分裂
+  if(m.cfg.split && !m.splitDone && m.hp<=m.maxHp/2){
+    m.splitDone=true;
+    for(let i=0;i<6;i++) spawnMonster('installment', Math.max(0,m.dist-(i+1)*0.5));
+    addFloat(m.x, m.y-20, TR('split_0'), '#ff7ad9', 15);
+    banner(TR('split_banner',{boss:L(MONSTERS.boss1111,'name'),n:6}));
+    AudioSys.brain();
+  }
+}
+function killMonster(m){
+  if(m.dead) return;
+  m.dead=true;
+  S.kills++;
+  addDeposit(m.reward);
+  addFloat(m.x, m.y-14, '+'+m.reward, '#ffd166', 13);
+  burst(m.x, m.y, '#ffd166', 8);
+  AudioSys.pop();
+  if(m.cfg.boss){
+    const key=m.type;
+    if(!S.bossesBeaten[key]){
+      S.bossesBeaten[key]=true;
+      const n=Object.keys(S.bossesBeaten).length;
+      toast(TR('boss_down',{name:L(m.cfg,'name'),n:n}));
+      if(n>=3) unlockAch('boss3');
+    }
+    S.shake=10;
+    AudioSys.boom();
+  }
+}
+function leakMonster(m){
+  m.dead=true; m.leaked=true;
+  S.leaks++; S.leaksThisWave++;
+  const amt=m.cfg.steal;
+  S.bill.push({type:m.type, amount:amt, wave:S.wave});
+  addFloat(CW-40, PATH.posAt(PATH.total).y*CELL, '-'+amt, '#ff5c5c', 15);
+  burst(CW-30, PATH.posAt(PATH.total).y*CELL, '#ff5c5c', 10);
+  AudioSys.leak();
+  toast(TR('leak_toast',{name:L(m.cfg,'name'),amt:amt,flavor:L(m.cfg,'flavor')}));
+  addDeposit(-amt);
+}
+function updateCombat(dt){
+  // 生成
+  if(S.spawnQueue.length>0){
+    S.spawnT+=dt;
+    while(S.spawnQueue.length>0 && S.spawnQueue[0].at<=S.spawnT){
+      const q=S.spawnQueue.shift();
+      spawnMonster(q.type, 0);
+      if(MONSTERS[q.type].boss){
+        banner(TR('boss_enter',{name:L(MONSTERS[q.type],'name'),flavor:L(MONSTERS[q.type],'flavor')}), true);
+        AudioSys.boss(); S.shake=6;
+      }
+    }
+  }
+  const dmul=desireMul();
+  // 黑五光环状态
+  const black5=S.monsters.find(function(m){return m.type==='bossblack'&&!m.dead;});
+  // 塔：先算减速光环与伤害
+  S.towers.forEach(function(t){
+    if(t.stunUntil>S.time) return;
+    if(t.type==='ledger'){
+      const lvl=t.level-1, R=TOWERS.ledger.range[lvl]*CELL;
+      const dps=TOWERS.ledger.dps[lvl]*dmul;
+      S.monsters.forEach(function(m){
+        if(m.dead) return;
+        if(d2(m.x,m.y,t.x,t.y)<=R*R){
+          if(dps>0) damageMonster(m, dps*dt);
+        }
+      });
+    }
+  });
+  // 怪物移动
+  S.monsters.forEach(function(m){
+    if(m.dead) return;
+    let slowMul=1;
+    S.towers.forEach(function(t){
+      if(t.type!=='ledger'||t.stunUntil>S.time) return;
+      const lvl=t.level-1, R=TOWERS.ledger.range[lvl]*CELL;
+      if(d2(m.x,m.y,t.x,t.y)<=R*R){
+        const f=1-TOWERS.ledger.slow[lvl];
+        if(f<slowMul) slowMul=f;
+      }
+    });
+    // 黑五光环：小怪加速
+    if(black5 && black5.auraOn && !m.cfg.boss){
+      const dx=m.x-black5.x, dy=m.y-black5.y;
+      if(dx*dx+dy*dy<=(3*CELL)*(3*CELL)) slowMul*=1.3;
+    }
+    // 定存：接触则停下啃
+    let blocked=null, bd=1.05*CELL;
+    S.towers.forEach(function(t){
+      if(t.type!=='deposit'||t.hp<=0) return;
+      const dd=Math.sqrt(d2(m.x,m.y,t.x,t.y));
+      if(dd<bd){ bd=dd; blocked=t; }
+    });
+    if(blocked){
+      blocked.hp-=m.cfg.dps*dt;
+      m.hitT=(m.hitT||0)+dt;
+      if(blocked.hp<=0){
+        burst(blocked.x, blocked.y, '#9aa0ae', 14);
+        addFloat(blocked.x, blocked.y-16, TR('deposit_breached'), '#ff5c5c', 13);
+        AudioSys.boom();
+        removeTower(blocked);
+        toast(TR('deposit_chewed',{name:L(m.cfg,'name')}));
+      }
+    }else{
+      m.dist+=m.cfg.speed*slowMul*dt;
+    }
+    const p=PATH.posAt(m.dist);
+    m.x=p.x*CELL; m.y=p.y*CELL;
+    if(m.dist>=PATH.total){ leakMonster(m); return; }
+    // 直播带货：洗脑脉冲
+    if(m.cfg.brainwash){
+      m.pulseT-=dt;
+      if(m.pulseT<=0){
+        m.pulseT=8;
+        const cands=S.towers.filter(function(t){
+          return (t.type==='ledger'||t.type==='cooldown')&&t.stunUntil<=S.time
+            && d2(m.x,m.y,t.x,t.y)<=(2.5*CELL)*(2.5*CELL);
+        });
+        if(cands.length>0){
+          const t=cands[randi(0,cands.length-1)];
+          t.stunUntil=S.time+3;
+          m.brainBubble=1.6;
+          addFloat(t.x, t.y-22, TR('canvas_buyit'), '#ff7ad9', 15);
+          AudioSys.brain();
+        }
+      }
+    }
+    if(m.brainBubble>0) m.brainBubble-=dt;
+    // 黑五光环周期
+    if(m.cfg.aura){
+      m.auraT+=dt;
+      const cyc=m.auraT%12;
+      m.auraOn = cyc<5;
+    }
+  });
+  // 冷静期：标记与引爆
+  S.towers.forEach(function(t){
+    if(t.type!=='cooldown'||t.stunUntil>S.time) return;
+    const lvl=t.level-1, R=TOWERS.cooldown.range[lvl]*CELL;
+    S.monsters.forEach(function(m){
+      if(m.dead) return;
+      if(m.marks[t.id]!==undefined) return;
+      if((m.markCd[t.id]||0)>S.time) return;
+      if(d2(m.x,m.y,t.x,t.y)<=R*R){
+        m.marks[t.id]=TOWERS.cooldown.delay;
+      }
+    });
+  });
+  // 标记倒计时
+  S.monsters.forEach(function(m){
+    if(m.dead) return;
+    for(const tid in m.marks){
+      m.marks[tid]-=dt;
+      if(m.marks[tid]<=0){
+        delete m.marks[tid];
+        m.markCd[tid]=S.time+0.6;
+        const t=getTowerById(+tid);
+        const lvl=t?t.level-1:0;
+        const dmg=TOWERS.cooldown.dmg[lvl]*dmul;
+        const R=TOWERS.cooldown.boomR*CELL;
+        burst(m.x, m.y, '#5cc8ff', 16);
+        addFloat(m.x, m.y-18, '💥', '#5cc8ff', 18);
+        AudioSys.boom();
+        // 用快照避免遍历中修改
+        S.monsters.slice().forEach(function(o){
+          if(!o.dead && d2(o.x,o.y,m.x,m.y)<=R*R) damageMonster(o, dmg);
+        });
+      }
+    }
+  });
+  // 清理死亡
+  S.monsters=S.monsters.filter(function(m){return !m.dead;});
+  // 波次结束判定
+  if(S.spawnQueue.length===0 && S.monsters.length===0 && S.phase==='combat' && !S.over){
+    waveCleared();
+  }
+}
+function getTowerById(id){
+  for(let i=0;i<S.towers.length;i++) if(S.towers[i].id===id) return S.towers[i];
+  return null;
+}
+function removeTower(t){
+  S.towers=S.towers.filter(function(x){return x.id!==t.id;});
+  if(S.selTower&&S.selTower.id===t.id){ S.selTower=null; hideTowerPanel(); }
+}
+
+/* ---------------- 特效 ---------------- */
+function burst(x,y,color,n){
+  for(let i=0;i<n;i++){
+    S.fx.push({x:x,y:y,vx:rand(-90,90),vy:rand(-90,90),life:rand(.3,.7),t:0,color:color,r:rand(2,5)});
+  }
+}
+function addFloat(x,y,text,color,size){
+  S.floats.push({x:clamp(x,40,CW-40),y:y,text:text,color:color,size:size||13,t:0,life:1.2});
+}
+function updateFx(dt){
+  S.fx.forEach(function(p){ p.t+=dt; p.x+=p.vx*dt; p.y+=p.vy*dt; p.vy+=160*dt; });
+  S.fx=S.fx.filter(function(p){return p.t<p.life;});
+  S.floats.forEach(function(f){ f.t+=dt; f.y-=28*dt; });
+  S.floats=S.floats.filter(function(f){return f.t<f.life;});
+  if(S.shake>0) S.shake=Math.max(0,S.shake-dt*22);
+}
+
+/* ---------------- 建塔 / 升级 / 出售 ---------------- */
+function towerAt(c,r){
+  for(let i=0;i<S.towers.length;i++){ const t=S.towers[i]; if(t.c===c&&t.r===r) return t; }
+  return null;
+}
+function canPlace(type,c,r){
+  if(c<0||c>=COLS||r<0||r>=ROWS) return false;
+  if(isPathCell(c,r)) return false;
+  if(towerAt(c,r)) return false;
+  return true;
+}
+function placeTower(type,c,r){
+  const cfg=TOWERS[type];
+  if(S.deposit<cfg.cost){ toast(TR('err_build_money')); AudioSys.deny(); return false; }
+  if(!canPlace(type,c,r)){ toast(TR('err_place')); AudioSys.deny(); return false; }
+  addDeposit(-cfg.cost,true);
+  S.tid++;
+  const p=gridToPx(c,r);
+  const t={id:S.tid,type:type,c:c,r:r,x:p.x,y:p.y,level:1,invested:cfg.cost,stunUntil:0};
+  if(type==='deposit'){ t.hp=cfg.hp[0]; t.maxHp=cfg.hp[0]; t.bonded=false; }
+  if(type==='invest'){ t.bonded=false; }
+  S.towers.push(t);
+  refreshBonds();
+  burst(p.x,p.y,'#3ddc84',10);
+  AudioSys.place();
+  return true;
+}
+function refreshBonds(){
+  // 复利羁绊：理财四方向相邻定存
+  S.towers.forEach(function(t){
+    if(t.type==='invest'){
+      t.bonded=S.towers.some(function(o){
+        return o.type==='deposit'&&Math.abs(o.c-t.c)+Math.abs(o.r-t.r)===1;
+      });
+    }
+    if(t.type==='deposit'){
+      const bonded=S.towers.some(function(o){
+        return o.type==='invest'&&Math.abs(o.c-t.c)+Math.abs(o.r-t.r)===1;
+      });
+      if(bonded&&!t.bonded){
+        t.bonded=true;
+        t.maxHp=Math.round(TOWERS.deposit.hp[t.level-1]*1.2);
+        t.hp=Math.min(t.maxHp, t.hp+Math.round(TOWERS.deposit.hp[t.level-1]*0.2));
+        addFloat(t.x,t.y-20,TR('bond_hp'),'#ffd166',13);
+      }else if(!bonded&&t.bonded){
+        t.bonded=false;
+        t.maxHp=TOWERS.deposit.hp[t.level-1];
+        t.hp=Math.min(t.hp,t.maxHp);
+      }
+    }
+  });
+}
+function upgradeTower(t){
+  const cfg=TOWERS[t.type];
+  if(t.level>=3||!cfg.up) return;
+  const cost=cfg.up[t.level-1];
+  if(S.deposit<cost){ toast(TR('err_up_money')); AudioSys.deny(); return; }
+  addDeposit(-cost,true);
+  t.invested+=cost; t.level++;
+  if(t.type==='deposit'){
+    const ratio=t.hp/t.maxHp;
+    t.maxHp=t.bonded?Math.round(cfg.hp[t.level-1]*1.2):cfg.hp[t.level-1];
+    t.hp=Math.round(t.maxHp*ratio);
+  }
+  burst(t.x,t.y,'#ffd166',12);
+  addFloat(t.x,t.y-20,TR('up_done',{lv:t.level}),'#ffd166',14);
+  AudioSys.upgrade();
+  refreshBonds(); showTowerPanel(t); syncHUD(); renderDock();
+}
+function sellTower(t){
+  const back=Math.round(t.invested*0.7);
+  addDeposit(back,true);
+  addFloat(t.x,t.y-16,'+'+back,'#3ddc84',13);
+  AudioSys.sell();
+  removeTower(t); refreshBonds(); syncHUD(); renderDock();
+}
+function detonateNuke(x,y){
+  const cfg=TOWERS.uninstall;
+  if(S.deposit<cfg.cost){ toast(TR('err_nuke_money')); AudioSys.deny(); return; }
+  addDeposit(-cfg.cost,true);
+  const R=cfg.radius*CELL;
+  S.shake=16;
+  burst(x,y,'#ff9f1c',40); burst(x,y,'#ff5c5c',24);
+  addFloat(x,y-24,TR('nuke_text'),'#ff9f1c',18);
+  AudioSys.nuke();
+  S.monsters.slice().forEach(function(m){
+    if(!m.dead && d2(m.x,m.y,x,y)<=R*R) damageMonster(m, cfg.dmg*desireMul());
+  });
+  S.monsters=S.monsters.filter(function(m){return !m.dead;});
+  syncHUD(); renderDock();
+}
+
+/* ---------------- 欲望值 / 折扣弹窗 / 断舍离 ---------------- */
+function schedulePopups(dt){
+  if(S.phase!=='combat'||S.over) return;
+  if(S.dpopLeft>0 && S.dpopTimer>0){
+    S.dpopTimer-=dt;
+    if(S.dpopTimer<=0){
+      S.dpopLeft--; S.dpopCount++;
+      showDpop();
+      S.dpopTimer = S.dpopLeft>0 ? rand(8,16) : -1;
+    }
+  }
+}
+function showDpop(){
+  const layer=$('popLayer');
+  const el=document.createElement('div');
+  el.className='dpop';
+  const goods=LANG==='en'?DPOP_GOODS_EN:DPOP_GOODS;const good=goods[randi(0,goods.length-1)];
+  el.style.left=rand(4,Math.max(5,CW-200))+'px';
+  el.style.top=rand(8,Math.max(10,CH-170))+'px';
+  el.innerHTML=TR('dpop_title')+good+TR('dpop_left')+
+    '<div class="tbar"><div class="tfill"></div></div>'+
+    '<div class="btns"><button class="look">'+TR('dpop_look')+'</button><button class="close">'+TR('dpop_close')+'</button></div>';
+  const lookBtn=el.querySelector('.look'), closeBtn=el.querySelector('.close');
+  const cdEl=el.querySelector('.cd'), fillEl=el.querySelector('.tfill');
+  if(S.deposit<500){ lookBtn.disabled=true; lookBtn.textContent=TR('dpop_poor'); }
+  let left=5, done=false;
+  const timer=setInterval(function(){
+    left-=0.1;
+    if(left<=0){ finish(false,true); return; }
+    cdEl.textContent=Math.ceil(left);
+    fillEl.style.width=(left/5*100)+'%';
+  },100);
+  function finish(looked, auto){
+    if(done) return; done=true;
+    clearInterval(timer);
+    if(el.parentNode) el.parentNode.removeChild(el);
+    if(looked){
+      addDeposit(-500,true); // 看看按钮仅在存款>=500时可用，不会直接致贫
+      S.desire=clamp(S.desire+20,0,100);
+      toast(TR('dpop_regret'));
+      AudioSys.coin();
+    }else{
+      S.desire=clamp(S.desire-5,0,100);
+      S.closes++;
+      const total=+Store.get('closes','0')+1;
+      Store.set('closes',total);
+      if(total>=20) unlockAch('closer20');
+      if(!auto) AudioSys.click();
+    }
+    syncHUD();
+    if(S.deposit<0&&!S.over) gameOver(false);
+  }
+  lookBtn.addEventListener('click',function(e){ e.stopPropagation(); AudioSys.ensure(); finish(true,false); });
+  closeBtn.addEventListener('click',function(e){ e.stopPropagation(); AudioSys.ensure(); finish(false,false); });
+  layer.appendChild(el);
+  AudioSys.ding();
+}
+function clearPopups(){ $('popLayer').innerHTML=''; }
+function doDuanSheLi(){
+  if(S.dsCd>0||S.over) return;
+  S.dsCd=DS_CD;
+  S.desire=clamp(S.desire-30,0,100);
+  toast(TR('dsl'));
+  AudioSys.upgrade();
+  syncHUD(); renderDock();
+}
+
+/* ---------------- 结束 ---------------- */
+function gameOver(win){
+  if(S.over) return;
+  clearPopups();
+  S.over={win:win};
+  S.phase='over';
+  const best=Math.max(+Store.get('best','0'), S.maxDeposit);
+  Store.set('best', best);
+  const dep=S.deposit;
+  if(win){
+    AudioSys.clear();
+    let rating, comment;
+    if(dep<30000){ rating=TR('rating_moon'); comment=TR('rating_moon_c'); }
+    else if(dep<80000){ rating=TR('rating_save'); comment=TR('rating_save_c'); }
+    else if(dep<100000){ rating=TR('rating_pro'); comment=TR('rating_pro_c'); }
+    else { rating=TR('rating_god'); comment=TR('rating_god_c'); }
+    S._end={win:win,dep:dep,rating:rating,comment:comment,best:best,realWin:dep>=80000};
+    renderEnd();
+  }else{
+    AudioSys.leak();
+    S._end={win:win,dep:dep,rating:null,comment:null,best:best,realWin:false};
+    renderEnd();
+  }
+}
+function renderEnd(){
+  var e=S._end; if(!e) return;
+  var win=e.win;
+  if(win){
+    $('endTitle').textContent = e.realWin ? TR('end_win') : TR('end_report');
+    $('endSub').innerHTML=TR('end_sub_win',{dep:e.dep,rating:e.rating,comment:e.comment});
+    $('endBill').style.display='none';
+  }else{
+    $('endTitle').textContent=TR('end_lose');
+    $('endSub').innerHTML=TR('end_lose_sub');
+    var agg={};
+    S.bill.forEach(function(b){ var bk=b.type||b.name; agg[bk]=(agg[bk]||0)+b.amount; });
+    var rows='';
+    Object.keys(agg).forEach(function(k){
+      rows+='<div class="row"><span>'+L(MONSTERS[k],'name')+'</span><span>-'+agg[k]+'</span></div>';
+    });
+    var tot=S.bill.reduce(function(a,b){return a+b.amount;},0);
+    $('endBill').style.display='block';
+    $('endBill').innerHTML=rows+'<div class="tot"><span>'+TR('bill_total')+'</span><span>-'+tot+'</span></div>';
+  }
+  if(win) $('endBill').style.display='none';
+  $('endStats').innerHTML=
+    '<div class="stat"><div class="v">'+S.kills+'</div><div class="k">'+TR('stat_killed')+'</div></div>'+
+    '<div class="stat"><div class="v">'+S.leaks+'</div><div class="k">'+TR('stat_leaked')+'</div></div>'+
+    '<div class="stat"><div class="v">'+S.closes+'</div><div class="k">'+TR('stat_closed')+'</div></div>'+
+    '<div class="stat"><div class="v">'+e.best+'</div><div class="k">'+TR('stat_best')+'</div></div>';
+  $('endModal').classList.remove('hide');
+}
+
+/* ---------------- 渲染 ---------------- */
+function draw(){
+  ctx.save();
+  if(S.shake>0) ctx.translate(rand(-S.shake,S.shake)*0.4, rand(-S.shake,S.shake)*0.4);
+  // 背景
+  ctx.fillStyle='#0b0e13'; ctx.fillRect(-20,-20,CW+40,CH+40);
+  // 网格
+  ctx.strokeStyle='rgba(255,255,255,0.035)'; ctx.lineWidth=1;
+  ctx.beginPath();
+  for(let c=0;c<=COLS;c++){ ctx.moveTo(c*CELL,0); ctx.lineTo(c*CELL,CH); }
+  const rowsH=Math.ceil(CH/CELL);
+  for(let r=0;r<=rowsH;r++){ ctx.moveTo(0,r*CELL); ctx.lineTo(CW,r*CELL); }
+  ctx.stroke();
+  drawPath();
+  drawBonds();
+  drawTowers();
+  drawMonsters();
+  drawFx();
+  drawGhost();
+  ctx.restore();
+}
+function drawPath(){
+  // 路面
+  ctx.lineCap='round'; ctx.lineJoin='round';
+  ctx.strokeStyle='#232936'; ctx.lineWidth=CELL*0.92;
+  ctx.beginPath();
+  PATH.segs.forEach(function(s,i){
+    const x1=s.x1*CELL, y1=s.y1*CELL, x2=s.x2*CELL, y2=s.y2*CELL;
+    if(i===0) ctx.moveTo(x1,y1); ctx.lineTo(x2,y2);
+  });
+  ctx.stroke();
+  ctx.strokeStyle='rgba(255,209,102,0.25)'; ctx.lineWidth=2; ctx.setLineDash([8,10]);
+  ctx.beginPath();
+  PATH.segs.forEach(function(s,i){
+    const x1=s.x1*CELL, y1=s.y1*CELL, x2=s.x2*CELL, y2=s.y2*CELL;
+    if(i===0) ctx.moveTo(x1,y1); ctx.lineTo(x2,y2);
+  });
+  ctx.stroke(); ctx.setLineDash([]);
+  // 起点：发薪日
+  const sp=PATH.posAt(0);
+  ctx.font=(CELL*0.5)+'px '+FONT; ctx.textAlign='center'; ctx.textBaseline='middle';
+  ctx.fillText('💵', clamp(sp.x*CELL, CELL*0.5, CW-CELL*0.5), sp.y*CELL);
+  ctx.font='bold '+Math.max(10,CELL*0.22)+'px '+FONT; ctx.fillStyle='#3ddc84';
+  ctx.fillText(TR('canvas_payday'), clamp(sp.x*CELL, CELL*0.5, CW-CELL*0.5), sp.y*CELL+CELL*0.5);
+  // 终点：存款基地
+  const ep=PATH.posAt(PATH.total);
+  const bx=clamp(ep.x*CELL, CELL*0.5, CW-CELL*0.5), by=ep.y*CELL;
+  ctx.fillStyle='rgba(255,209,102,0.12)';
+  ctx.beginPath(); ctx.arc(bx,by,CELL*0.62,0,6.29); ctx.fill();
+  ctx.strokeStyle='#ffd166'; ctx.lineWidth=2;
+  ctx.beginPath(); ctx.arc(bx,by,CELL*0.62,0,6.29); ctx.stroke();
+  ctx.font=(CELL*0.55)+'px '+FONT;
+  ctx.fillText('🏦', bx, by-CELL*0.06);
+  ctx.font='bold '+Math.max(10,CELL*0.2)+'px '+FONT; ctx.fillStyle='#ffd166';
+  ctx.fillText(TR('canvas_base'), bx, by+CELL*0.52);
+}
+function drawBonds(){
+  ctx.strokeStyle='rgba(255,209,102,0.5)'; ctx.lineWidth=2; ctx.setLineDash([5,5]);
+  S.towers.forEach(function(t){
+    if(t.type==='invest'&&t.bonded){
+      S.towers.forEach(function(o){
+        if(o.type==='deposit'&&Math.abs(o.c-t.c)+Math.abs(o.r-t.r)===1){
+          ctx.beginPath(); ctx.moveTo(t.x,t.y); ctx.lineTo(o.x,o.y); ctx.stroke();
+        }
+      });
+    }
+  });
+  ctx.setLineDash([]);
+}
+function drawTowers(){
+  S.towers.forEach(function(t){
+    const cfg=TOWERS[t.type];
+    // 底座
+    ctx.fillStyle = S.selTower&&S.selTower.id===t.id ? 'rgba(255,209,102,0.25)' : 'rgba(255,255,255,0.06)';
+    ctx.beginPath(); ctx.arc(t.x,t.y,CELL*0.44,0,6.29); ctx.fill();
+    ctx.strokeStyle = S.selTower&&S.selTower.id===t.id ? '#ffd166' : 'rgba(255,255,255,0.14)';
+    ctx.lineWidth=2; ctx.stroke();
+    // 洗脑遮罩
+    if(t.stunUntil>S.time){
+      ctx.fillStyle='rgba(255,122,217,0.35)';
+      ctx.beginPath(); ctx.arc(t.x,t.y,CELL*0.44,0,6.29); ctx.fill();
+      ctx.font='bold '+Math.max(10,CELL*0.24)+'px '+FONT; ctx.fillStyle='#ff7ad9';
+      ctx.textAlign='center'; ctx.fillText(TR('canvas_buyit'), t.x, t.y-CELL*0.55);
+    }
+    ctx.font=(CELL*0.48)+'px '+FONT; ctx.textAlign='center'; ctx.textBaseline='middle';
+    ctx.fillText(cfg.emoji, t.x, t.y-CELL*0.04);
+    // 等级点
+    ctx.fillStyle='#ffd166';
+    for(let i=0;i<t.level;i++){ ctx.beginPath(); ctx.arc(t.x-(t.level-1)*5+i*10, t.y+CELL*0.34, 3, 0, 6.29); ctx.fill(); }
+    // 定存血条
+    if(t.type==='deposit'){
+      const w=CELL*0.8, pct=clamp(t.hp/t.maxHp,0,1);
+      ctx.fillStyle='rgba(0,0,0,0.5)'; ctx.fillRect(t.x-w/2, t.y-CELL*0.52, w, 6);
+      ctx.fillStyle=pct>0.4?'#3ddc84':'#ff5c5c'; ctx.fillRect(t.x-w/2, t.y-CELL*0.52, w*pct, 6);
+    }
+    // 记账光环（常显淡）
+    if(t.type==='ledger'){
+      const R=TOWERS.ledger.range[t.level-1]*CELL;
+      ctx.strokeStyle='rgba(92,200,255,0.18)'; ctx.lineWidth=1.5;
+      ctx.beginPath(); ctx.arc(t.x,t.y,R,0,6.29); ctx.stroke();
+    }
+    // 选中/放置时显示射程
+    if((S.selTower&&S.selTower.id===t.id)){
+      let R=0;
+      if(t.type==='ledger') R=TOWERS.ledger.range[t.level-1]*CELL;
+      if(t.type==='cooldown') R=TOWERS.cooldown.range[t.level-1]*CELL;
+      if(R>0){ ctx.strokeStyle='rgba(255,209,102,0.6)'; ctx.lineWidth=2;
+        ctx.beginPath(); ctx.arc(t.x,t.y,R,0,6.29); ctx.stroke(); }
+    }
+  });
+}
+function drawMonsters(){
+  S.monsters.forEach(function(m){
+    if(m.dead) return;
+    const big=m.cfg.boss?1.5:1;
+    const wob=Math.sin(S.time*6+m.wob)*2;
+    // 黑五光环
+    if(m.cfg.aura&&m.auraOn){
+      ctx.strokeStyle='rgba(255,92,92,0.5)'; ctx.lineWidth=3;
+      ctx.beginPath(); ctx.arc(m.x,m.y,3*CELL*(0.9+0.1*Math.sin(S.time*4)),0,6.29); ctx.stroke();
+    }
+    // 延迟标记
+    const markIds=Object.keys(m.marks);
+    if(markIds.length>0){
+      ctx.strokeStyle='#5cc8ff'; ctx.lineWidth=2;
+      const pct=1-(m.marks[markIds[0]]/TOWERS.cooldown.delay);
+      ctx.beginPath(); ctx.arc(m.x,m.y+wob,CELL*0.55,-1.57,-1.57+pct*6.29); ctx.stroke();
+      ctx.font=(CELL*0.3)+'px '+FONT; ctx.textAlign='center'; ctx.textBaseline='middle';
+      ctx.fillText('⏳', m.x, m.y+wob-CELL*0.62);
+    }
+    // 本体
+    ctx.font=(CELL*0.55*big)+'px '+FONT; ctx.textAlign='center'; ctx.textBaseline='middle';
+    ctx.fillText(m.cfg.emoji, m.x, m.y+wob);
+    // 洗脑泡泡
+    if(m.brainBubble>0){
+      ctx.font='bold '+Math.max(11,CELL*0.26)+'px '+FONT; ctx.fillStyle='#ff7ad9';
+      ctx.fillText(TR('canvas_buyit'), m.x, m.y+wob-CELL*0.7);
+    }
+    // 血条
+    const w=CELL*(m.cfg.boss?1.1:0.7), pct=clamp(m.hp/m.maxHp,0,1);
+    const by=m.y+wob-CELL*(m.cfg.boss?0.75:0.62);
+    ctx.fillStyle='rgba(0,0,0,0.55)'; ctx.fillRect(m.x-w/2,by,w,5);
+    ctx.fillStyle=pct>0.5?'#3ddc84':(pct>0.25?'#ffd166':'#ff5c5c');
+    ctx.fillRect(m.x-w/2,by,w*pct,5);
+    if(m.cfg.boss){
+      ctx.font='bold '+Math.max(10,CELL*0.22)+'px '+FONT; ctx.fillStyle='#ffb3b3';
+      ctx.fillText(L(m.cfg,'name'), m.x, by-10);
+    }
+  });
+}
+function drawFx(){
+  S.fx.forEach(function(p){
+    ctx.globalAlpha=clamp(1-p.t/p.life,0,1);
+    ctx.fillStyle=p.color;
+    ctx.beginPath(); ctx.arc(p.x,p.y,p.r,0,6.29); ctx.fill();
+  });
+  ctx.globalAlpha=1;
+  S.floats.forEach(function(f){
+    ctx.globalAlpha=clamp(1-f.t/f.life,0,1);
+    ctx.font='bold '+f.size+'px '+FONT; ctx.textAlign='center'; ctx.textBaseline='middle';
+    ctx.fillStyle=f.color;
+    ctx.fillText(f.text,f.x,f.y);
+  });
+  ctx.globalAlpha=1;
+}
+function drawGhost(){
+  if(!S.pendingBuild||S.pendingBuild==='uninstall') return;
+  if(!S.hoverCell) return;
+  const c=S.hoverCell.c, r=S.hoverCell.r;
+  const ok=canPlace(S.pendingBuild,c,r)&&S.deposit>=TOWERS[S.pendingBuild].cost;
+  const p=gridToPx(c,r);
+  ctx.strokeStyle=ok?'#3ddc84':'#ff5c5c'; ctx.lineWidth=2;
+  ctx.strokeRect(c*CELL+2,r*CELL+2,CELL-4,CELL-4);
+  let R=0;
+  const cfg=TOWERS[S.pendingBuild];
+  if(cfg.range) R=cfg.range[0]*CELL;
+  if(R>0){ ctx.strokeStyle=ok?'rgba(61,220,132,0.6)':'rgba(255,92,92,0.6)';
+    ctx.beginPath(); ctx.arc(p.x,p.y,R,0,6.29); ctx.stroke(); }
+}
+
+/* ---------------- 输入 ---------------- */
+function canvasPos(e){
+  const rect=cv.getBoundingClientRect();
+  return {x:e.clientX-rect.left, y:e.clientY-rect.top};
+}
+cv.addEventListener('pointerdown', function(e){
+  e.preventDefault();
+  AudioSys.ensure();
+  if(S.phase==='over'||S.paused) return;
+  const pos=canvasPos(e);
+  const g=pxToGrid(pos.x,pos.y);
+  if(S.pendingBuild==='uninstall'){
+    detonateNuke(pos.x,pos.y);
+    S.pendingBuild=null; updatePlaceHint(); renderDock();
+    return;
+  }
+  if(S.pendingBuild){
+    if(g.c>=0&&g.c<COLS&&g.r>=0&&g.r<ROWS){
+      const existing=towerAt(g.c,g.r);
+      if(existing){ // 点到已有塔：直接看面板，不用先取消放置模式
+        S.pendingBuild=null; updatePlaceHint(); renderDock();
+        showTowerPanel(existing); AudioSys.click(); return;
+      }
+      if(placeTower(S.pendingBuild,g.c,g.r)){
+        // 连续放置：按住 shift? 手机无 shift，单次放置后保持模式更顺手——改为保持
+        syncHUD(); renderDock();
+      }
+    }
+    return;
+  }
+  const t=towerAt(g.c,g.r);
+  if(t){ showTowerPanel(t); AudioSys.click(); }
+  else hideTowerPanel();
+});
+cv.addEventListener('pointermove', function(e){
+  const pos=canvasPos(e);
+  const g=pxToGrid(pos.x,pos.y);
+  S.hoverCell=(g.c>=0&&g.c<COLS&&g.r>=0&&g.r<ROWS)?g:null;
+});
+cv.addEventListener('pointerleave', function(){ S.hoverCell=null; });
+
+/* ---------------- UI 同步 ---------------- */
+function syncHUD(){
+  const dv=$('depVal');
+  dv.textContent=S.deposit;
+  dv.classList.toggle('danger', S.deposit<3000);
+  $('desireFill').style.width=clamp(S.deposit>=0?S.desire:0,0,100)+'%';
+  $('desireNum').textContent=Math.round(S.desire);
+  $('shangtou').classList.toggle('on', S.desire>=80);
+  const li=$('leftInfo');
+  if(li&&S.phase==='combat'){
+    const n=S.monsters.length+S.spawnQueue.length;
+    let txt=TR('left_info',{n:n});
+    if(S.wave<=5&&S.leaksThisWave===0&&S.parAt){ // 速战速决倒计时外显
+      const left=Math.max(0,Math.ceil(S.parAt-S.time));
+      txt+=' · ⚡'+left+'s';
+    }
+    li.textContent=txt;
+  }
+}
+function setWaveInfo(html){ $('waveInfo').innerHTML=html; }
+let bannerTimer=null;
+function banner(text, important){
+  const b=$('banner');
+  b.textContent=text;
+  b.style.borderColor=important?'#ff5c5c':'';
+  b.style.color=important?'#ff5c5c':'';
+  b.classList.add('show');
+  clearTimeout(bannerTimer);
+  bannerTimer=setTimeout(function(){ b.classList.remove('show'); }, 2600);
+}
+let toastTimer=null;
+function toast(text){
+  const t=$('toast');
+  t.textContent=text;
+  t.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer=setTimeout(function(){ t.classList.remove('show'); }, 2400);
+}
+function renderDock(){
+  const row=$('towerRow');
+  row.innerHTML='';
+  Object.keys(TOWERS).forEach(function(key){
+    const cfg=TOWERS[key];
+    const b=document.createElement('button');
+    b.className='tbtn'+(S.pendingBuild===key?' sel':'')+(S.deposit<cfg.cost?' cant':'');
+    b.innerHTML='<span class="e">'+cfg.emoji+'</span><span>'+L(cfg,'name')+'</span><span class="c">'+cfg.cost+'</span>';
+    b.title=L(cfg,'name')+'：'+L(cfg,'desc');
+    b.addEventListener('click', function(){
+      AudioSys.ensure(); AudioSys.click();
+      if(S.phase==='over'||S.paused) return;
+      if(S.pendingBuild===key){ S.pendingBuild=null; }
+      else{
+        if(S.deposit<cfg.cost){ toast(TR('err_dock_money')); AudioSys.deny(); return; }
+        S.pendingBuild=key; hideTowerPanel();
+      }
+      updatePlaceHint(); renderDock();
+    });
+    row.appendChild(b);
+  });
+  const ds=$('dsBtn');
+  ds.classList.toggle('cd', S.dsCd>0);
+  ds.innerHTML = S.dsCd>0 ? '🧘<br>'+Math.ceil(S.dsCd)+'s' : '🧘<br>'+TR('dsl_btn');
+}
+function updatePlaceHint(){
+  const h=$('placeHint');
+  if(S.pendingBuild==='uninstall'){ h.textContent=TR('place_nuke'); h.classList.add('show'); }
+  else if(S.pendingBuild){
+    const cfg=TOWERS[S.pendingBuild];
+    let extra='';
+    if(cfg.range) extra=TR('place_range',{r:cfg.range[0]});
+    else if(S.pendingBuild==='deposit') extra=TR('place_meat');
+    else if(S.pendingBuild==='invest') extra=TR('place_bond');
+    h.textContent=TR('place_hint',{e:cfg.emoji,n:L(cfg,'name'),x:extra});
+    h.classList.add('show');
+  } else h.classList.remove('show');
+}
+function nextLevelDesc(t){
+  const cfg=TOWERS[t.type], n=t.level; // n: 1->2 or 2->3, arrays are 0-indexed
+  if(!cfg.up||n>=3) return '';
+  if(t.type==='ledger') return TR('nl_ledger',{a:Math.round(cfg.slow[n-1]*100),b:Math.round(cfg.slow[n]*100),c:cfg.dps[n-1],d:cfg.dps[n]});
+  if(t.type==='deposit') return TR('nl_deposit',{a:cfg.hp[n-1],b:cfg.hp[n]});
+  if(t.type==='cooldown') return TR('nl_cooldown',{a:cfg.dmg[n-1],b:cfg.dmg[n],c:cfg.range[n-1],d:cfg.range[n]});
+  if(t.type==='invest') return TR('nl_invest',{a:Math.round(cfg.rate[n-1]*100),b:Math.round(cfg.rate[n]*100)});
+  return '';
+}
+function showTowerPanel(t){
+  S.selTower=t;
+  const cfg=TOWERS[t.type];
+  $('tpTitle').textContent=TR('tp_title',{e:cfg.emoji,n:L(cfg,'name'),lv:t.level});
+  let info=L(cfg,'desc')+'<br>💡 '+L(cfg,'flavor');
+  if(t.type==='deposit') info+=TR('tp_hp',{hp:Math.ceil(t.hp),max:t.maxHp})+(t.bonded?TR('tp_bondhp'):'');
+  if(t.type==='invest') info+=TR('tp_rate',{v:Math.round(TOWERS.invest.rate[t.level-1]*100)+(t.bonded?TR('tp_bond3'):' ')});
+  const nl=nextLevelDesc(t);
+  if(nl) info+=TR('tp_next')+nl;
+  $('tpDesc').innerHTML=info;
+  const up=$('upBtn');
+  if(cfg.up&&t.level<3){
+    const cost=cfg.up[t.level-1];
+    up.textContent=TR('up_cost',{c:cost});
+    up.disabled=S.deposit<cost;
+  }else{ up.textContent=t.level>=3?TR('up_max'):TR('up_no'); up.disabled=true; }
+  $('sellBtn').textContent=TR('sell',{v:Math.round(t.invested*0.7)});
+  $('towerPanel').classList.add('show');
+}
+function hideTowerPanel(){ S.selTower=null; $('towerPanel').classList.remove('show'); }
+$('upBtn').addEventListener('click',function(){ if(S.selTower) upgradeTower(S.selTower); });
+$('sellBtn').addEventListener('click',function(){ if(S.selTower) sellTower(S.selTower); });
+$('tpClose').addEventListener('click',function(){ hideTowerPanel(); });
+
+/* ---------------- 主循环 ---------------- */
+let lastT=0;
+function loop(ts){
+  requestAnimationFrame(loop);
+  if(!S) return;
+  if(!lastT) lastT=ts;
+  let dt=Math.min(0.05,(ts-lastT)/1000);
+  lastT=ts;
+  if(S.paused||S.phase==='over'){ draw(); return; }
+  dt*=S.speed;
+  S.time+=dt;
+  if(S.phase==='combat'){
+    updateCombat(dt);
+    schedulePopups(dt);
+    if(S.phase==='combat') syncHUD(); // 战斗中刷新剩余数
+  }
+  if(S.dsCd>0){ S.dsCd-=dt; if(S.dsCd<=0){ renderDock(); } }
+  updateFx(dt);
+  draw();
+}
+
+/* ---------------- 按钮 wiring ---------------- */
+$('goBtn').addEventListener('click',function(){ AudioSys.ensure(); startCombat(); });
+$('nextWaveBtn').addEventListener('click',function(){ AudioSys.ensure(); AudioSys.click(); nextWave(); });
+$('dsBtn').addEventListener('click',function(){ AudioSys.ensure(); doDuanSheLi(); });
+$('pauseBtn').addEventListener('click',function(){
+  AudioSys.ensure();
+  if(S.phase!=='combat'&&S.phase!=='prep') return;
+  S.paused=!S.paused;
+  $('pauseBtn').textContent=S.paused?'▶':'⏸';
+  banner(S.paused?TR('pause_on'):TR('pause_off'));
+});
+$('speedBtn').addEventListener('click',function(){
+  AudioSys.ensure(); AudioSys.click();
+  S.speed=S.speed===1?2:1;
+  $('speedBtn').textContent=S.speed+'x';
+});
+$('muteBtn').addEventListener('click',function(){
+  AudioSys.ensure();
+  AudioSys.muted=!AudioSys.muted;
+  Store.set('mute',AudioSys.muted?'1':'0');
+  $('muteBtn').textContent=AudioSys.muted?'🔇':'🔊';
+  $('muteBtn').classList.toggle('off',AudioSys.muted);
+});
+$('achBtn').addEventListener('click',function(){
+  AudioSys.ensure(); AudioSys.click();
+  renderAch(); $('achModal').classList.remove('hide');
+});
+$('achClose').addEventListener('click',function(){ $('achModal').classList.add('hide'); });
+$('restartBtn').addEventListener('click',function(){
+  AudioSys.ensure();
+  if(confirm(TR('confirm_restart'))){ resetGame(); }
+});
+$('langBtn').addEventListener('click',function(){ AudioSys.ensure(); AudioSys.click(); setLang(LANG==='en'?'zh':'en'); });
+$('langBtnHome').addEventListener('click',function(){ AudioSys.ensure(); AudioSys.click(); setLang(LANG==='en'?'zh':'en'); });
+$('startBtn').addEventListener('click',function(){
+  AudioSys.ensure(); AudioSys.click();
+  $('startModal').classList.add('hide');
+  startPrep();
+});
+$('againBtn').addEventListener('click',function(){
+  AudioSys.ensure(); AudioSys.click();
+  $('endModal').classList.add('hide');
+  resetGame();
+});
+$('homeBtn').addEventListener('click',function(){
+  AudioSys.ensure(); AudioSys.click();
+  $('endModal').classList.add('hide');
+  resetGame(true);
+});
+function renderAch(){
+  const best=+Store.get('best','0');
+  $('bestLine').innerHTML=TR('best_line',{b:best});
+  $('achList').innerHTML=ACH_DEF.map(function(a){
+    const got=Store.ach(a.id);
+    return '<div class="achrow'+(got?' got':'')+'"><div class="ic">'+a.icon+'</div>'+
+      '<div><div class="t">'+L(a,'name')+(got?' ✅':' 🔒')+'</div><div class="d">'+L(a,'desc')+'</div></div></div>';
+  }).join('');
+}
+function resetGame(toHome){
+  S=newState();
+  clearPopups();
+  hideTowerPanel();
+  S.pendingBuild=null;
+  $('pauseBtn').textContent='⏸';
+  $('speedBtn').textContent='1x';
+  $('goBtn').classList.add('hide');
+  renderDock(); syncHUD(); updatePlaceHint();
+  if(toHome){ $('startModal').classList.remove('hide'); }
+  else startPrep();
+}
+
+/* ---------------- 主页图鉴（展示层，只读配置） ---------------- */
+function renderHomeCodex(){
+  const te=$('cxTowers');
+  if(te){
+    te.innerHTML=Object.keys(TOWERS).map(function(k){
+      const c=TOWERS[k];
+      var dd=L(c,'desc');var role=LANG==='en'?dd.split('.')[0]+'.':dd.split('。')[0]+'。';
+      return '<div class="cxrow"><div class="wrap"><span class="e">'+c.emoji+'</span><span class="n">'+L(c,'name')+'</span><span class="c">'+TR('cx_cost',{c:c.cost})+'</span><span class="d">'+role+'</span></div></div>';
+    }).join('');
+  }
+  const me=$('cxMonsters');
+  if(me){
+    const order=['milk','food','live','installment','boss618','boss1111','bossblack'];
+    me.innerHTML=order.map(function(k){
+      const m=MONSTERS[k];
+      const tag=m.boss?' <span style="color:var(--red)">BOSS</span>':'';
+      const extra=(m.split?TR('cx_split'):'')+(m.aura?TR('cx_aura'):'')+(m.brainwash?TR('cx_brain'):'');
+      return '<div class="cxrow"><div class="wrap"><span class="e">'+m.emoji+'</span><span class="n">'+L(m,'name')+tag+'</span><span class="c">'+TR('cx_leak',{s:m.steal})+'</span><span class="d">'+TR('cx_hp',{h:m.hp,r:m.reward})+extra+'</span></div></div>';
+    }).join('');
+  }
+}
+
+/* ---------------- 启动 ---------------- */
+function init(){
+  S=newState();
+  initLang();
+  applyLang();
+  resize();
+  $('muteBtn').textContent=AudioSys.muted?'🔇':'🔊';
+  $('muteBtn').classList.toggle('off',AudioSys.muted);
+  renderDock(); syncHUD();
+  // 防止 iOS 双击缩放
+  document.addEventListener('dblclick',function(e){ e.preventDefault(); },{passive:false});
+  requestAnimationFrame(loop);
+}
+init();
+</script>
+</body>
+</html>

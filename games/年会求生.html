@@ -1,0 +1,758 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<title>年会求生 · 活着散场</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+:root{--bg:#14161c;--panel:#1e222c;--panel2:#262b38;--gold:#e8b34b;--red:#e05c5c;--green:#5fd08a;--blue:#5aa9e6;--txt:#eef0f5;--mut:#9aa0ae}
+html,body{height:100%}
+body{background:var(--bg);color:var(--txt);font-family:-apple-system,"PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;font-size:15px;line-height:1.55;overflow-x:hidden}
+#app{max-width:480px;margin:0 auto;min-height:100%;padding:12px 12px 90px;position:relative}
+.screen{display:none}
+.screen.on{display:block;animation:fade .25s ease}
+@keyframes fade{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+h1.logo{text-align:center;font-size:34px;letter-spacing:6px;margin:26px 0 4px;color:var(--gold);text-shadow:0 2px 18px rgba(232,179,75,.25)}
+.sub{text-align:center;color:var(--mut);font-size:13px;margin-bottom:18px}
+.card{background:var(--panel);border:1px solid #2e3442;border-radius:14px;padding:14px;margin-bottom:12px}
+.card h3{font-size:16px;margin-bottom:6px;color:var(--gold)}
+.btn{display:block;width:100%;background:var(--panel2);border:1px solid #3a4152;color:var(--txt);border-radius:12px;padding:12px;margin:8px 0;font-size:15px;text-align:left;cursor:pointer}
+.btn:active{transform:scale(.985);background:#2e3444}
+.btn.primary{background:linear-gradient(135deg,#b97f1f,#e8b34b);border:none;color:#1a1405;font-weight:700;text-align:center;font-size:17px}
+.btn.ghost{background:transparent}
+.btn:disabled{opacity:.38;cursor:not-allowed}
+.btn .fx{display:block;font-size:12px;color:var(--mut);margin-top:4px}
+.opt-persona{border:2px solid #2e3442}
+.opt-persona.sel{border-color:var(--gold);background:#2a2415}
+.topbar{position:sticky;top:0;z-index:20;background:rgba(20,22,28,.96);backdrop-filter:blur(6px);padding:8px 2px 6px;border-bottom:1px solid #2e3442}
+.roundline{display:flex;justify-content:space-between;align-items:center;font-size:13px;color:var(--mut);margin-bottom:6px}
+.stat{margin:5px 0}
+.statwarn{font-size:12px;color:var(--red);margin:3px 0;font-weight:700;animation:blink 1.2s infinite}
+@keyframes blink{50%{opacity:.45}}
+.stat .row{display:flex;justify-content:space-between;font-size:12px;margin-bottom:2px}
+.bar{height:8px;background:#2a2f3b;border-radius:5px;overflow:hidden}
+.bar i{display:block;height:100%;border-radius:5px;transition:width .3s}
+.hand{display:flex;gap:8px;overflow-x:auto;padding:6px 2px 10px}
+.pcard{flex:0 0 118px;background:var(--panel2);border:1px solid #3a4152;border-radius:10px;padding:8px;font-size:12px;cursor:pointer}
+.pcard:active{transform:scale(.96)}
+.pcard .nm{font-weight:700;font-size:13px;color:var(--gold);margin-bottom:2px}
+.pcard .cost{color:var(--blue);font-size:11px}
+.pcard .cmbb{display:inline-block;font-size:11px;color:var(--gold);border:1px solid var(--gold);border-radius:20px;padding:0 8px;margin-top:4px}
+.pcard.played{opacity:.35;pointer-events:none}
+.evtitle{font-size:19px;font-weight:800;margin-bottom:6px}
+.evdesc{color:#cfd4de;font-size:14px;margin-bottom:4px}
+.tag{display:inline-block;font-size:11px;background:#2a2f3b;color:var(--mut);border-radius:20px;padding:2px 10px;margin:2px 4px 2px 0}
+#log{background:#101218;border:1px solid #2e3442;border-radius:12px;padding:10px;height:150px;overflow-y:auto;font-size:13px;color:#c6cbd6;margin-top:6px}
+#log div{margin-bottom:4px}
+#log .good{color:var(--green)} #log .bad{color:var(--red)} #log .gold{color:var(--gold)}
+.netwrap{text-align:center}
+#npcnet{width:100%;height:auto}
+.secttl{font-size:13px;color:var(--mut);margin:14px 0 6px;letter-spacing:2px}
+.big{font-size:40px;text-align:center;margin:10px 0}
+.center{text-align:center}
+.muted{color:var(--mut);font-size:13px}
+.kv{display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px dashed #2e3442;font-size:14px}
+.toast{position:fixed;left:50%;bottom:110px;transform:translateX(-50%);background:#000d;border:1px solid var(--gold);color:var(--gold);padding:10px 18px;border-radius:30px;font-size:14px;z-index:99;white-space:nowrap;animation:fade .3s}
+.mutebtn{position:fixed;right:14px;bottom:20px;z-index:50;width:44px;height:44px;border-radius:50%;background:var(--panel2);border:1px solid #3a4152;color:var(--txt);font-size:18px}
+.achline{font-size:13px;color:var(--gold);margin:4px 0}
+.howto .howrow{display:flex;gap:10px;align-items:flex-start;padding:8px 0;border-bottom:1px dashed #2e3442}
+.howto .howrow:last-child{border-bottom:none;padding-bottom:2px}
+.howem{font-size:22px;line-height:1.35}
+.howrow b{display:block;font-size:14px}
+.howrow span{font-size:12.5px;color:var(--mut)}
+.winline{border-radius:12px;padding:10px 14px;margin-bottom:10px;font-size:14px;border:1px solid;line-height:1.5}
+.winline.win{border-color:#3f6b4f;background:#16241b;color:var(--green)}
+.winline.lose{border-color:#6b3f3f;background:#241616;color:var(--red)}
+.winline b{color:var(--txt)}
+details.fold summary{cursor:pointer;font-size:15px;font-weight:700;color:var(--gold);list-style:none}
+details.fold summary::-webkit-details-marker{display:none}
+details.fold summary:before{content:'▸ ';color:var(--mut)}
+details.fold[open] summary:before{content:'▾ '}
+.fold table{width:100%;font-size:13px;border-collapse:collapse;margin-top:6px}
+.fold td{padding:7px 4px;border-bottom:1px dashed #2e3442;vertical-align:top}
+.fold td:first-child{white-space:nowrap;font-size:16px;padding-right:8px}
+.fold .cmb{color:var(--gold);font-size:13px;margin:6px 0}
+
+</style>
+</head>
+<body>
+<div id="app">
+
+<!-- 开始屏 -->
+<div class="screen on" id="scr-start">
+  <h1 class="logo" data-t="logo">年会求生</h1>
+  <div class="sub" data-t="tagline">活着散场 · 一场酒桌上的潜行游戏</div>
+  <div class="center" style="margin-bottom:14px"><button class="btn ghost" id="langBtnHome" style="width:auto;display:inline-block;padding:6px 20px;font-size:13px;text-align:center">🇺🇸 English</button></div>
+  <div class="card howto" id="howtoCard"></div>
+  <div class="winline win" data-t="winWin">👑 <b>最高评级「老板心腹」</b>：老板好感 ≥90 <b>且</b>零社死</div>
+  <div class="winline lose" data-t="winLose">💀 <b>直接「社死现场」</b>：社死 ≥2，当场出局</div>
+  <details class="card fold"><summary data-t="foldPersonaT">🎭 人设详解</summary>
+    <table id="personaTable"></table>
+  </details>
+  <details class="card fold"><summary data-t="advT">🃏 进阶：combo · 隐藏选项 · 职位</summary>
+    <div id="advBody"></div>
+  </details>
+  <div class="card"><h3 data-t="choosePersona">🎭 选择你的人设</h3><div id="personaPick"></div></div>
+  <button class="btn primary" id="btnToPrep" data-t="btnToPrep">下一步：战前准备 →</button>
+  <div class="center muted" style="margin-top:10px" id="bestLine"></div>
+</div>
+
+<!-- 准备屏 -->
+<div class="screen" id="scr-prep">
+  <h1 class="logo" style="font-size:24px" data-t="prepTitle">战前准备</h1>
+  <div class="sub" id="prepInfo"></div>
+  <div class="card"><h3 data-t="teaTitle">🍵 以茶代酒</h3>
+    <div class="muted" style="margin-bottom:8px" data-t="teaDesc">花 <b>10 点人缘</b> 提前准备 3 杯"特调茶"，敬酒时可偷梁换柱（老板好感照涨不误）。</div>
+    <button class="btn" id="btnBuyTea" data-t="btnBuyTea">兑换 3 杯特调茶（人缘-10）</button>
+    <div class="muted" id="teaInfo">当前：0 杯</div>
+  </div>
+  <button class="btn primary" id="btnStart" data-t="btnStart">🔥 入场！年会开始</button>
+</div>
+
+<!-- 游戏屏 -->
+<div class="screen" id="scr-game">
+  <div class="topbar">
+    <div class="roundline"><span id="roundLab">第 1 / 10 轮</span><span id="posLab"></span><span id="teaLab">🍵×0</span><button class="btn ghost" id="langBtnTop" style="width:auto;padding:2px 10px;font-size:12px;margin:0">🇺🇸 EN</button></div>
+    <div id="stats"></div>
+    <div id="washRow"></div>
+  </div>
+  <div class="secttl" data-t="netTitle">🕸️ 人脉网络 <span class="muted">（点击展开）</span></div>
+  <div class="card netwrap" id="netCard" style="display:none"><svg id="npcnet" viewBox="0 0 400 240"></svg></div>
+  <div class="card" id="evCard"><div class="evtitle" id="evTitle"></div><div id="evTags"></div><div class="evdesc" id="evDesc"></div><div id="evOpts"></div></div>
+  <div class="secttl">🃏 话术手牌 <span class="muted" id="handHint">（每轮限打 2 张）</span></div>
+  <div class="hand" id="hand"></div>
+  <div class="secttl" data-t="feedTitle">📝 晚宴实况</div>
+  <div id="log"></div>
+</div>
+
+<!-- 结算屏 -->
+<div class="screen" id="scr-end">
+  <h1 class="logo" style="font-size:26px" data-t="endTitle">散场结算</h1>
+  <div class="big" id="endEmoji">🎉</div>
+  <div class="center" style="font-size:22px;font-weight:800;color:var(--gold)" id="endRating"></div>
+  <div class="center muted" id="endComment" style="margin:6px 0 12px"></div>
+  <div class="card" id="endStats"></div>
+  <div class="card"><h3 data-t="achTitle">🏅 成就</h3><div id="endAch"></div></div>
+  <button class="btn primary" id="btnAgain" data-t="btnAgain">🔄 再战一年</button>
+  <button class="btn ghost center" id="btnHome" style="text-align:center" data-t="btnHome">回首页换人设</button>
+</div>
+
+</div>
+<button class="mutebtn" id="muteBtn" title="声音">🔊</button>
+<script>
+'use strict';
+/* ============ 基础 ============ */
+const $=id=>document.getElementById(id);
+const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
+const rnd=n=>Math.floor(Math.random()*n);
+const pick=a=>a[rnd(a.length)];
+const shuffle=a=>{a=a.slice();for(let i=a.length-1;i>0;i--){const j=rnd(i+1);[a[i],a[j]]=[a[j],a[i]];}return a;};
+
+/* ============ I18N ============ */
+const store={
+get(k,d){try{const v=localStorage.getItem('nianhui_'+k);return v==null?d:JSON.parse(v);}catch(e){return d;}},
+set(k,v){try{localStorage.setItem('nianhui_'+k,JSON.stringify(v));}catch(e){}}
+};
+let LANG=(function(){const s=store.get('nh_lang',null);if(s==='en'||s==='zh')return s;
+return (navigator.language||'zh').toLowerCase().indexOf('en')===0?'en':'zh';})();
+function tx(o,k){return (LANG==='en'&&o[k+'_en']!=null)?o[k+'_en']:o[k];}
+const I18N={
+title:{zh:'年会求生 · 活着散场',en:'Holiday Party Survival · Survive the Night'},
+logo:{zh:'年会求生',en:'Party Survival'},
+tagline:{zh:'活着散场 · 一场酒桌上的潜行游戏',en:'Survive the night · a stealth game at the drinks table'},
+langToggle:{zh:'🇺🇸 English',en:'🇨🇳 中文'},
+howto:{zh:'<h3>🎮 怎么玩 <span class="muted" style="font-weight:400;font-size:12px">· 30秒上手</span></h3>'
++'<div class="howrow"><span class="howem">🍺</span><div><b>10 轮事件，每轮三选一</b><span>敬酒、罚酒、八卦……能躲就躲</span></div></div>'
++'<div class="howrow"><span class="howem">🃏</span><div><b>话术手牌，每轮可打 2 张</b><span>打牌耗清醒；凑对 combo 有奇效</span></div></div>'
++'<div class="howrow"><span class="howem">🫣</span><div><b>别社死</b><span>酒量/清醒归零各 +1 社死，嘴比酒量先崩</span></div></div>'
++'<div class="howrow"><span class="howem">👔</span><div><b>刷老板好感</b><span>吹、敬、端水，目标直指 90 分</span></div></div>',
+en:'<h3>🎮 How to play <span class="muted" style="font-weight:400;font-size:12px">· 30-second start</span></h3>'
++'<div class="howrow"><span class="howem">🍺</span><div><b>10 rounds, pick 1 of 3 each</b><span>Toasts, dares, gossip… dodge what you can</span></div></div>'
++'<div class="howrow"><span class="howem">🃏</span><div><b>Play up to 2 tactic cards per round</b><span>Cards cost composure; combos are gold</span></div></div>'
++'<div class="howrow"><span class="howem">🫣</span><div><b>Avoid social death</b><span>Empty tolerance/composure = +1 social death. Your mouth quits before your liver</span></div></div>'
++'<div class="howrow"><span class="howem">👔</span><div><b>Win the boss\'s favor</b><span>Flatter, toast, schmooze — aim for 90</span></div></div>'},
+winWin:{zh:'👑 <b>最高评级「老板心腹」</b>：老板好感 ≥90 <b>且</b>零社死',en:'👑 <b>Top rating "Boss\'s Favorite"</b>: boss favor ≥90 <b>and</b> zero social deaths'},
+winLose:{zh:'💀 <b>直接「社死现场」</b>：社死 ≥2，当场出局',en:'💀 <b>Instant "Party Foul"</b>: 2+ social deaths and you\'re done'},
+foldPersonaT:{zh:'🎭 人设详解',en:'🎭 Persona details'},
+advT:{zh:'🃏 进阶：combo · 隐藏选项 · 职位',en:'🃏 Advanced: combos · hidden options · titles'},
+choosePersona:{zh:'🎭 选择你的人设',en:'🎭 Choose your persona'},
+btnToPrep:{zh:'下一步：战前准备 →',en:'Next: pre-party prep →'},
+bestLineNew:{zh:'新的一年，新的年会，新的劫。',en:'New year, new party, new perils.'},
+bestLineHas:{zh:'历史最高年终奖：',en:'Best bonus: '},
+bestLinePos:{zh:' · 当前开局职位：',en:' · Starting title: '},
+prepTitle:{zh:'战前准备',en:'Pre-Party Prep'},
+teaTitle:{zh:'🍵 以茶代酒',en:'🍸 The Mocktail Swap'},
+teaDesc:{zh:'花 <b>10 点人缘</b> 提前准备 3 杯"特调茶"，敬酒时可偷梁换柱（老板好感照涨不误）。',en:'Spend <b>10 popularity</b> to prep 3 mocktails — swap them in during toasts (boss favor still climbs).'},
+btnBuyTea:{zh:'兑换 3 杯特调茶（人缘-10）',en:'Get 3 mocktails (−10 popularity)'},
+btnStart:{zh:'🔥 入场！年会开始',en:"🔥 Enter the party!"},
+netTitle:{zh:'🕸️ 人脉网络 <span class="muted">（点击展开）</span>',en:'🕸️ Relationship map <span class="muted">(tap to expand)</span>'},
+feedTitle:{zh:'📝 晚宴实况',en:'📝 Party feed'},
+endTitle:{zh:'散场结算',en:'After-Party Report'},
+achTitle:{zh:'🏅 成就',en:'🏅 Achievements'},
+btnAgain:{zh:'🔄 再战一年',en:'🔄 Party again next year'},
+btnHome:{zh:'回首页换人设',en:'Back home · switch persona'},
+you:{zh:'你',en:'You'},
+youChoose:{zh:'👉 你选择：',en:'👉 You choose: '},
+roundFmt:{zh:'第 {r} / 10 轮',en:'Round {r} / 10'},
+statJiu:{zh:'酒量',en:'Tolerance'},statQing:{zh:'清醒',en:'Composure'},statBoss:{zh:'老板好感',en:'Boss favor'},statRen:{zh:'人缘',en:'Popularity'},
+warnJiu:{zh:'⚠️ 酒量告急：再喝就断片（+1 社死）！',en:'⚠️ Tolerance critical: one more drink = blackout (+1 social death)!'},
+warnQing:{zh:'⚠️ 清醒告急：归零会说错话（+1 社死）！',en:'⚠️ Composure critical: hitting zero = foot-in-mouth (+1 social death)!'},
+tagRare:{zh:'稀有',en:'Rare'},tagDodge:{zh:'挡酒技可用',en:'Drink-dodge cards work here'},
+handHint:{zh:'（每轮限打 2 张，已打 {n}）',en:'(max 2 per round, played {n})'},
+handEmpty:{zh:'手牌空空，下一轮会补充。',en:"Hand's empty — more cards next round."},
+mocktailOpt:{zh:'以茶代酒',en:'Mocktail swap'},
+noTea:{zh:'没准备特调茶（开局准备阶段可兑换）',en:'No mocktails prepped (get them in pre-party prep)'},
+noTeaToast:{zh:'没准备特调茶！（开局准备阶段可兑换）',en:'No mocktails ready! (grab some in pre-party prep)'},
+notEnoughQing:{zh:'清醒不足，打不出这张牌',en:'Not enough composure to play this card'},
+playedCard:{zh:'🃏 打出（清醒-{c}）',en:'🃏 Played (composure −{c})'},
+hxToast:{zh:'🗝️ 你手中的{card}触发了隐藏选项！',en:'🗝️ Your {card} unlocks a hidden option!'},
+washBtn:{zh:'🎭 自黑解围（本局一次性）',en:'🎭 Self-roast save (once per game)'},
+washFx:{zh:'清空清醒，洗白 1 点社死',en:'Drain composure, clear 1 social death'},
+washNeed:{zh:' · 需要清醒≥60（当前 {q}）',en:' · needs composure ≥60 (now {q})'},
+kvBonus:{zh:'年终奖',en:'Bonus'},kvPos:{zh:'最终职位',en:'Final title'},kvNextPos:{zh:'下局开局：',en:'Next game starts as: '},
+kvPromoted:{zh:'（↑升职！）',en:' (↑ promoted!)'},kvNewRec:{zh:' <span style="color:var(--gold)">新纪录！</span>',en:' <span style="color:var(--gold)">New record!</span>'},
+kvJQ:{zh:'酒量 / 清醒',en:'Tolerance / Composure'},kvBR:{zh:'老板好感 / 人缘',en:'Boss favor / Popularity'},
+kvShesi:{zh:'社死次数',en:'Social deaths'},kvShesiUnit:{zh:' 次',en:''},kvHb:{zh:'红包小金库',en:'Raffle stash'},
+achUnlock:{zh:'🏅 成就解锁：',en:'🏅 Achievement unlocked: '},
+noAch:{zh:'本局未解锁新成就。下次一定。',en:'No new achievements this time. Next year!'},
+achTotal:{zh:'累计成就：',en:'All achievements: '},achNone:{zh:'无',en:'none'},
+muteTitle:{zh:'声音',en:'Sound'},
+achA1:{zh:'全身而退（零社死通关）',en:'Clean Getaway (zero social deaths)'},
+achA2:{zh:'端水大师（所有NPC好感≥60）',en:'Diplomat (all NPC favor ≥60)'},
+achA3:{zh:'猎头之友（和赵总全身而退）',en:"Headhunter's Friend"}
+};
+function T(k){const e=I18N[k];return LANG==='en'?e.en:e.zh;}
+function tf(k,m){let s=T(k);for(const x in m)s=s.replace('{'+x+'}',m[x]);return s;}
+
+/* ============ 音效 ============ */
+let muted=false, AC=null;
+function beep(f,d,type){ if(muted)return; try{ AC=AC||new (window.AudioContext||window.webkitAudioContext)();
+  const o=AC.createOscillator(),g=AC.createGain(); o.type=type||'sine'; o.frequency.value=f;
+  g.gain.setValueAtTime(.08,AC.currentTime); g.gain.exponentialRampToValueAtTime(.001,AC.currentTime+d);
+  o.connect(g); g.connect(AC.destination); o.start(); o.stop(AC.currentTime+d);}catch(e){} }
+const sfx={ click:()=>beep(600,.06,'square'), card:()=>beep(880,.08,'triangle'),
+  good:()=>{beep(523,.1);setTimeout(()=>beep(784,.12),90);}, bad:()=>{beep(220,.15,'sawtooth');setTimeout(()=>beep(147,.2,'sawtooth'),120);} };
+$('muteBtn').onclick=()=>{muted=!muted;$('muteBtn').textContent=muted?'🔇':'🔊';};
+
+/* ============ 常量数据 ============ */
+const POSITIONS=[
+ {name:'实习生',name_en:'Intern',coeff:1.0,danger:0},
+ {name:'专员',name_en:'Associate',coeff:1.2,danger:.12},
+ {name:'主管',name_en:'Manager',coeff:1.5,danger:.22},
+ {name:'总监',name_en:'Director',coeff:2.0,danger:.32}];
+function posName(i){return tx(POSITIONS[i],'name');}
+const RATING_IDX={'社死现场':0,'透明人':1,'气氛组':2,'老板心腹':3};
+const PERSONAS={
+ haoliang:{name:'海量',name_en:'The Tank',emoji:'🍺',desc:'千杯不倒，传说中的酒桌战神。代价是：没人记得你清醒时说过什么。',desc_en:'Bottomless. A legendary drinker. The price: nobody remembers a word you said sober.',mod:{jiu:40,ren:-10},tip:'酒量+40，人缘-10',tip_en:'Tolerance +40, popularity −10'},
+ sheNiu:{name:'社牛',name_en:'Social Butterfly',emoji:'🦚',desc:'全场人脉王，见谁都能聊三句。代价是：手里永远多一张牌，脑子永远少一根弦。',desc_en:'Knows everyone, charms everyone. The price: one extra card in hand, one fewer brain cell.',mod:{ren:30},tip:'人缘+30，每轮多抽1张话术牌',tip_en:'Popularity +30, draw 1 extra card per round'},
+ yinXing:{name:'隐形人',name_en:'Wallflower',emoji:'👻',desc:'存在感稀薄的神秘存在。老板很难注意到你——好的坏的都是。',desc_en:'Barely there. The boss hardly notices you — for better or worse.',mod:{qing:20},tip:'清醒+20，老板好感涨幅-30%，社死计数减半',tip_en:'Composure +20, boss-favor gains −30%, social deaths count half'}
+};
+const NPCS=[
+ {id:'boss',name:'陈总',name_en:'Mr. Carter',role:'老板',role_en:'CEO',emoji:'🤵'},
+ {id:'zhishu',name:'Lisa',name_en:'Lisa',role:'直属领导',role_en:'Direct manager',emoji:'💼'},
+ {id:'wangjie',name:'王姐',name_en:'Margaret',role:'财务大姐',role_en:'Finance lead',emoji:'🧾'},
+ {id:'ak',name:'阿K',name_en:'Kyle',role:'销售冠军',role_en:'Sales champ',emoji:'🏆'},
+ {id:'xiaomei',name:'小美',name_en:'Mia',role:'前台',role_en:'Receptionist',emoji:'🌸'},
+ {id:'xiaolin',name:'小林',name_en:'Leo',role:'实习生',role_en:'Intern',emoji:'🐣'},
+ {id:'lietou',name:'赵总',name_en:'Victor',role:'猎头',role_en:'Headhunter',emoji:'🕶'},
+ {id:'laozhou',name:'老周',name_en:'Owen',role:'竞争对手',role_en:'Rival exec',emoji:'🦊'}];
+function npcName(id){const n=NPCS.find(x=>x.id===id);return n?tx(n,'name'):id;}
+
+/* 话术牌池（18种） */
+const CARDS=[
+ {id:'shangye',nm:'商业互吹',nm_en:'Mutual Hype',cost:6,desc:'老板好感+8',desc_en:'Boss favor +8',fx:{boss:8},combo:'A'},
+ {id:'caihong',nm:'彩虹屁连击',nm_en:'Compliment Combo',cost:10,desc:'老板好感+12',desc_en:'Boss favor +12',fx:{boss:12},combo:'B'},
+ {id:'jiuzhuo',nm:'酒桌文学',nm_en:'Toastmaster Prose',cost:7,desc:'老板好感+6，人缘+6',desc_en:'Boss favor +6, popularity +6',fx:{boss:6,ren:6},combo:'B'},
+ {id:'zhuanyi',nm:'转移火力',nm_en:'Deflect!',cost:6,desc:'人缘+6，随机一人好感-5',desc_en:'Popularity +6, a random person\'s favor −5',fx:{ren:6},sp:'zhuanyi',combo:'A'},
+ {id:'duanshui',nm:'端水大师',nm_en:'Diplomat',cost:8,desc:'所有NPC好感+4',desc_en:'All NPC favor +4',fx:{},sp:'duanshui',combo:'C'},
+ {id:'kuakua',nm:'夸夸群群主',nm_en:'Hype Captain',cost:6,desc:'人缘+10',desc_en:'Popularity +10',fx:{ren:10},combo:'C'},
+ {id:'zihei',nm:'自黑解围',nm_en:'Self-Roast Save',cost:5,desc:'清醒+8；可抵消本轮1次社死',desc_en:'Composure +8; blocks 1 social death this round',fx:{qing:8},sp:'zihei'},
+ {id:'zhuangsha',nm:'装傻充愣',nm_en:'Play Dumb',cost:4,desc:'本轮酒量消耗减半',desc_en:'Alcohol damage halved this round',fx:{},sp:'zhuangsha'},
+ {id:'jingjiu',nm:'敬酒词库',nm_en:'Toast Library',cost:5,desc:'本轮真喝伤害减半，老板好感+3',desc_en:'Real-drink damage halved, boss favor +3',fx:{},sp:'jingjiu'},
+ {id:'ganfan',nm:'干饭人',nm_en:'Snack Attack',cost:3,desc:'酒量+10，清醒+3',desc_en:'Tolerance +10, composure +3',fx:{jiu:10,qing:3}},
+ {id:'hongbao',nm:'红包雨',nm_en:'Cash Toss',cost:4,desc:'人缘+8，年终奖-200',desc_en:'Popularity +8, bonus −200',fx:{ren:8,hb:-200}},
+ {id:'paizhao',nm:'拍照C位',nm_en:'Photo Op',cost:4,desc:'人缘+5，老板好感+3',desc_en:'Popularity +5, boss favor +3',fx:{ren:5,boss:3}},
+ {id:'qingting',nm:'倾听者',nm_en:'Good Listener',cost:3,desc:'随机一位NPC好感+6',desc_en:'A random NPC\'s favor +6',fx:{},sp:'qingting'},
+ {id:'yiku',nm:'忆苦思甜',nm_en:'Nostalgia Trip',cost:5,desc:'Lisa好感+8',desc_en:'Lisa favor +8',fx:{},sp:'yiku'},
+ {id:'beiguo',nm:'背锅侠',nm_en:'Fall Guy',cost:8,desc:'Lisa好感+10，清醒-5',desc_en:'Lisa favor +10, composure −5',fx:{qing:-5},sp:'beiguo'},
+ {id:'hexini',nm:'和稀泥',nm_en:'Peacemaker',cost:5,desc:'好感最低的NPC+10',desc_en:'Lowest-favor NPC +10',fx:{},sp:'hexini'},
+ {id:'shetui',nm:'战略性社恐',nm_en:'Strategic Introvert',cost:4,desc:'清醒+8，人缘+3',desc_en:'Composure +8, popularity +3',fx:{qing:8,ren:3}},
+ {id:'jiadianhua',nm:'假装接电话',nm_en:'Fake Phone Call',cost:5,desc:'跳过本轮事件（人缘-3）',desc_en:'Skip this round\'s event (popularity −3)',fx:{ren:-3},sp:'skip'}];
+
+/* ============ 24 种事件 ============ */
+/* fx keys: jiu酒量 qing清醒 boss老板好感 ren人缘 npc{...} shesi社死 hb年终奖修正 tea茶 */
+const EVENTS=[
+{id:'e1',type:'toast',tag:'敬酒',tag_en:'Toast',name:'开场敬酒 · 陈总举杯',name_en:'Opening Toast · Mr. Carter Raises His Glass',desc:'陈总站起来举杯："这一杯，敬大家今年的付出！都得干了啊！"全桌的目光齐刷刷看向你。',desc_en:'Mr. Carter stands up with his glass: "To a great year, team — bottoms up, all of you!" Every eye at the table turns to you.',
+ opts:[
+  {t:'🍺 真喝！先干为敬',t_en:'🍺 Drink it for real! Bottoms up!',fx:{jiu:-15,boss:8},log:'你一口闷了，陈总满意地点点头。',log_en:'You down it in one go. Mr. Carter nods approvingly.'},
+  {t:'🍵 以茶代酒',t_en:'🍸 Mocktail swap',tea:true,fx:{boss:3},log:'陈总眯了眯眼，好像看出来了，又好像没看出来。',log_en:'Mr. Carter squints... did he notice? Maybe not.'},
+  {t:'🤝 找挡酒侠',t_en:'🤝 Find a drink shield',fx:{ren:-15,boss:4},npc:{zhishu:5},log:'Lisa姐替你干了，低声说：欠我一杯奶茶。',log_en:'Lisa takes the hit for you and whispers: you owe me a latte.'},
+  {t:'🚻 尿遁',t_en:'🚻 Bathroom escape',fx:{qing:5,ren:-5,boss:-3},log:'你错过了开场合影，行政小群里已经在问你去哪了。',log_en:'You miss the group photo. The admin chat is already asking where you went.'}]},
+{id:'e2',type:'toast',tag:'敬酒',tag_en:'Toast',name:'部门车轮战',name_en:'Department Relay Drinking',desc:'隔壁部门组团杀过来："兄弟部门，一年没好好喝一杯了！"带头大哥的杯子比你的脸还大。',desc_en:'The neighboring department rolls in: "Sister team — we haven\'t had a proper drink all year!" Their leader\'s glass is bigger than your face.',
+ opts:[
+  {t:'🍺 真喝！来者不拒',t_en:'🍺 Drink for real! Bring it on',fx:{jiu:-20,ren:8},log:'三杯下肚，你成了今晚的传奇。',log_en:"Three glasses down. You're tonight's legend."},
+  {t:'🍵 以茶代酒',t_en:'🍸 Mocktail swap',tea:true,fx:{ren:2},log:'你以茶会友，对方居然没发现，还夸你海量。',log_en:"You charm them with mocktails. They don't even notice — they call you a legend."},
+  {t:'🤝 找小美挡',t_en:'🤝 Get Mia to cover',fx:{ren:-15},npc:{xiaomei:6},log:'小美一杯倒的气势把对面镇住了。',log_en:"Mia's one-glass bravado stuns them into silence."},
+  {t:'🚻 尿遁',t_en:'🚻 Bathroom escape',fx:{qing:5,ren:-8},log:'你溜了，对面在背后喊：这就不行了？',log_en:'You slip away. You can hear them behind you: "Already tapping out?"'}]},
+{id:'e3',type:'toast',tag:'敬酒',tag_en:'Toast',name:'销售冠军阿K拼酒',name_en:"Kyle's Drinking Challenge",desc:'阿K端着酒杯晃过来："兄弟，感情深一口闷，感情浅舔一舔！你选哪个？"他的笑容里写满了KPI。',desc_en:'Kyle the sales champ swaggers over: "Deep feelings — bottoms up! Shallow feelings — just a sip! Your call?" His grin screams quarterly targets.',
+ opts:[
+  {t:'🍺 真喝！一口闷',t_en:'🍺 Drink it! Bottoms up!',fx:{jiu:-25,ren:12},npc:{ak:10},log:'阿K拍着你的肩：够意思！明年大客户介绍给你！',log_en:'Kyle slaps your shoulder: "My kind of people! I\'ll intro you to my biggest client!"'},
+  {t:'🍵 以茶代酒',t_en:'🍸 Mocktail swap',tea:true,fx:{},npc:{ak:-5},log:'阿K眯起眼："你这杯里是茶吧？行，记下了。"',log_en:'Kyle narrows his eyes: "That\'s not champagne in there, is it? Noted."'},
+  {t:'🤝 找挡酒侠',t_en:'🤝 Find a drink shield',fx:{ren:-15},log:'你拉了个垫背的，阿K意犹未尽。',log_en:'You grab a human shield. Kyle looks unsatisfied.'},
+  {t:'🚻 尿遁',t_en:'🚻 Bathroom escape',fx:{qing:5,ren:-5},npc:{ak:-8},log:'阿K到处跟人说：那谁，酒桌上跑了。',log_en:'Kyle tells everyone: that one ran from the table.'}]},
+{id:'e4',type:'toast',tag:'敬酒',tag_en:'Toast',name:'陈总单独敬你',name_en:"Mr. Carter's Personal Toast",desc:'陈总端着杯子走过来："小X，今年辛苦了，我单独敬你一杯。"全桌安静了，都在看你。',desc_en:'Mr. Carter walks over with his glass: "Hard work this year — let me toast you personally." The whole table goes quiet.',
+ opts:[
+  {t:'🍺 真喝！领导我干了',t_en:"🍺 Drink it! For you, boss!",fx:{jiu:-15,boss:15},log:'陈总："好！年轻人有冲劲！"',log_en:'Mr. Carter: "Now that\'s spirit!"'},
+  {t:'🍵 以茶代酒',t_en:'🍸 Mocktail swap',tea:true,fx:{boss:5},log:'陈总愣了一下，随即大笑："好小子，鸡贼啊，不过我喜欢。"',log_en:'Mr. Carter pauses, then roars with laughter: "Sneaky! I like it."'},
+  {t:'🤝 求Lisa救场',t_en:'🤝 Ask Lisa to save you',fx:{ren:-15,boss:5},npc:{zhishu:5},log:'Lisa笑着打圆场，陈总也没再说什么。',log_en:"Lisa smooths it over with a joke. Mr. Carter lets it slide."},
+  {t:'🚻 尿遁',t_en:'🚻 Bathroom escape',fx:{boss:-10},log:'陈总的杯子悬在半空，空气凝固了三秒。',log_en:"Mr. Carter's glass hangs in midair. Three seconds of pure silence."}]},
+{id:'e5',type:'toast',tag:'敬酒',tag_en:'Toast',name:'老周的挑衅',name_en:"Owen's Provocation",desc:'竞争对手老周晃着杯子过来："听说你们部门KPI没完成啊？来，走一个压压惊？"',desc_en:'Owen from the rival firm swirls his glass: "Heard your team missed its targets? Come on, drink away the pain."',
+ opts:[
+  {t:'🍺 真喝！奉陪到底',t_en:"🍺 Drink! I'll keep up",fx:{jiu:-20,ren:6},npc:{laozhou:5},log:'老周："够意思！KPI的事，酒桌上不提了。"',log_en:'Owen: "Respect! Let\'s not talk targets tonight."'},
+  {t:'🍵 以茶代酒',t_en:'🍸 Mocktail swap',tea:true,fx:{},npc:{laozhou:-5},log:'老周冷笑："玩花样是吧？行。"',log_en:'Owen smirks: "Playing tricks, huh? Noted."'},
+  {t:'🤝 拉人挡',t_en:'🤝 Drag someone in',fx:{ren:-15},npc:{laozhou:-3},log:'你拉上阿K，老周悻悻走了。',log_en:'You drag Kyle in. Owen slinks off.'},
+  {t:'🚻 尿遁',t_en:'🚻 Bathroom escape',fx:{ren:-3},npc:{laozhou:-10},log:'老周逢人便说：那谁，酒桌上怂了。',log_en:'Owen tells everyone: that one chickened out.'}]},
+{id:'e6',type:'toast',tag:'敬酒',tag_en:'Toast',name:'散场前最后一杯',name_en:'One for the Road',desc:'主持人："最后一杯，敬明年！敬在座的每一位！"你感觉胃在抗议，大脑在狂欢。',desc_en:'The host: "One last toast — to next year, and to everyone here!" Your stomach protests; your brain celebrates.',
+ opts:[
+  {t:'🍺 真喝！有始有终',t_en:'🍺 Drink! Finish what you started',fx:{jiu:-15,ren:8,qing:-5},log:'你站着喝完了最后一杯，赢得了全桌的掌声。',log_en:'You finish standing. The whole table applauds.'},
+  {t:'🍵 以茶代酒',t_en:'🍸 Mocktail swap',tea:true,fx:{ren:3},log:'茶都喝出酒味了，你如是想。',log_en:'The mocktail is starting to taste like champagne. Or so you tell yourself.'},
+  {t:'🤝 意思一下',t_en:'🤝 Just a sip',fx:{ren:-10},log:'你抿了一口，有人翻了个白眼。',log_en:'You take a sip. Someone rolls their eyes.'},
+  {t:'🚻 提前溜了',t_en:'🚻 Slip out early',fx:{ren:-5,qing:10},log:'你提前撤了，躲过了散场后的第二场。明智。',log_en:'You slip out early and dodge the after-party. Wise.'}]},
+{id:'e7',tag:'发言',tag_en:'Speech',name:'老板cue你总结',name_en:'Boss Calls on You',desc:'陈总突然点名："小X，你来总结一下今年！"几十双眼睛齐刷刷看向你，话筒递到了面前。',desc_en:'Mr. Carter suddenly points: "Give us your year in review!" Dozens of eyes swivel to you as the mic slides over.',
+ opts:[
+  {t:'🎤 即兴发挥，脱稿演讲',t_en:'🎤 Improvise — no notes',fx:{qing:-10,boss:12,ren:5},log:'你讲了三分钟，从Q1讲到Q4，陈总带头鼓掌。',log_en:'You speak for three minutes, Q1 to Q4. Mr. Carter leads the applause.'},
+  {t:'📄 照着手机念',t_en:'📄 Read off your phone',fx:{boss:5,ren:-3},log:'你念完了准备好的小作文，中规中矩。',log_en:'You read your prepared notes. Solid, unremarkable.'},
+  {t:'🙈 装没听见',t_en:'🙈 Pretend not to hear',fx:{boss:-12,ren:-5},log:'"小X？小X？"陈总连喊三声，你假装去夹菜。',log_en:'"Hello? Hello?" Mr. Carter calls three times while you suddenly find the buffet fascinating.'}]},
+{id:'e8',tag:'发言',tag_en:'Speech',name:'明年OKR翻倍',name_en:"Next Year's Targets Double",desc:'Lisa举杯宣布："明年部门目标翻倍！大家有没有信心！"',desc_en:'Lisa raises her glass: "Next year we double our targets! Who\'s with me?!"',
+ opts:[
+  {t:'📣 带头喊"有！"',t_en:'📣 Lead the "YES!" cheer',fx:{boss:8,ren:6,qing:-5},log:'你的声音最大，Lisa欣慰地看了你一眼。',log_en:"You're the loudest. Lisa beams at you."},
+  {t:'🍚 低头干饭',t_en:'🍚 Focus on the buffet',fx:{boss:-5},log:'你专注干饭，假装没听见。',log_en:'You focus on the buffet, pretending not to hear.'},
+  {t:'❓ 追问细节',t_en:'❓ Ask for details',fx:{boss:5},npc:{zhishu:8},log:'"Lisa姐，翻倍的资源配套呢？"她欣赏你的较真。',log_en:'"Lisa, what resources come with double targets?" She admires your nerve.'}]},
+{id:'e9',tag:'发言',tag_en:'Speech',rare:true,name:'神秘嘉宾空降',name_en:'Surprise VIP',desc:'集团副总裁突然出现在宴会厅！陈总都站起来了。全场骚动。',desc_en:'The group VP just walked into the hall! Even Mr. Carter stood up. The room buzzes.',
+ opts:[
+  {t:'🤝 主动自我介绍',t_en:'🤝 Introduce yourself',fx:{qing:-8,boss:10,ren:8},log:'大老板记住了你的名字，陈总与有荣焉。',log_en:'The big boss remembers your name. Mr. Carter looks proud.'},
+  {t:'👥 躲在人群后面',t_en:'👥 Hide in the crowd',fx:{ren:-3},log:'你选择了安全，但也错过了露脸。',log_en:'You choose safety — and miss the spotlight.'},
+  {t:'🍵 帮大老板倒酒',t_en:'🥂 Pour the VIP a drink',fx:{jiu:-5,boss:15},log:'"这小伙子有眼力见。"陈总事后跟你说。',log_en:'"This one\'s got instincts." Mr. Carter tells you later.'}]},
+{id:'e10',tag:'表演',tag_en:'Performance',name:'节目点名',name_en:'Volunteered for the Show',desc:'主持人拿着话筒："下面有请X部门的小X上台表演！"你的同事们开始起哄，手机都举起来了。',desc_en:'The host grabs the mic: "Let\'s welcome our colleague to the stage!" Your coworkers start cheering, phones raised.',
+ opts:[
+  {t:'🎭 硬着头皮上',t_en:'🎭 Take the stage anyway',fx:{qing:-10,ren:12,boss:8},log:'你唱了一首《孤勇者》，破音三次，掌声雷动。',log_en:'You belt out a power ballad, off-key three times. Thunderous applause.'},
+  {t:'🐣 推荐小林',t_en:'🐣 Nominate Leo',fx:{ren:5},npc:{xiaolin:10},log:'小林感激涕零，跳了一支宅舞，全场沸腾。',log_en:'Leo is overwhelmed with gratitude and does a viral dance. The room erupts.'},
+  {t:'🤢 装肚子疼',t_en:'🤢 Fake a stomach ache',fx:{ren:-8,qing:5},log:'你捂着肚子溜了，但大家都看出来了。',log_en:'You clutch your stomach and slip away. Everyone saw through it.'}]},
+{id:'e11',tag:'游戏',tag_en:'Game',name:'你画我猜',name_en:'Party Pictionary',desc:'年会游戏环节，抽签抽中了你上台画画。题目是"画饼"。',desc_en:'Party game time — you\'re picked to draw. The prompt: "synergy."',
+ opts:[
+  {t:'🎨 灵魂画手',t_en:'🎨 Trust your inner artist',fx:{ren:10,qing:-5},log:'你画了个大饼，Lisa说：这不就是明年的OKR吗？全场大笑。',log_en:'You draw two stick figures high-fiving. Lisa: "That\'s literally our Q3 deck." The room howls.'},
+  {t:'😑 摆烂',t_en:'😑 Give up',fx:{ren:-5},log:'你画了三笔就下来了，队友想刀了你。',log_en:'You draw three lines and walk off. Your teammates want to strangle you.'},
+  {t:'🏆 拉阿K组队',t_en:'🏆 Team up with Kyle',fx:{ren:8},npc:{ak:8},log:'阿K一眼看穿："画饼！这我熟！"你们拿了第一。',log_en:'Kyle gets it instantly: "Synergy! I invented that!" You take first place.'}]},
+{id:'e12',tag:'游戏',tag_en:'Game',name:'真心话大冒险',name_en:'Truth or Dare',desc:'酒瓶口缓缓停下，直直指向你。全场："真心话还是大冒险？"',desc_en:'The bottle slows... and points at you. The room chants: "Truth or dare?!"',
+ opts:[
+  {t:'🗣️ 真心话：工资多少',t_en:"🗣️ Truth: what's your salary?",fx:{ren:8,qing:-5},log:'你报了个数，全场哗然，HR的脸绿了。',log_en:"You name a number. The room gasps. HR's smile freezes."},
+  {t:'📞 大冒险：给前任打电话',t_en:'📞 Dare: call your ex',fx:{ren:12,qing:-10,shesi:1},log:'电话接通了，你说了三秒就挂了。社死，但大家爱你。',log_en:'They pick up. You last three seconds. Cringe — but the crowd loves you.'},
+  {t:'🍺 罚酒三杯代替',t_en:'🍺 Take 3 penalty drinks instead',fx:{jiu:-20},log:'你连干三杯，保住了秘密，输掉了今晚的记忆。',log_en:"You down three in a row. Secret kept; tonight's memories lost."}]},
+{id:'e13',tag:'游戏',tag_en:'Game',name:'抢红包大战',name_en:'Raffle Cash Grab',desc:'陈总在群里发了个拼手气大红包！所有人的手机都亮了。',desc_en:'Mr. Carter drops a big cash prize in the group chat! Every phone in the room lights up.',
+ opts:[
+  {t:'⚡ 单身二十年手速',t_en:'⚡ Fastest fingers in the room',fx:{ren:5,hb:300},log:'你抢到了手气最佳！288块！今晚的酒钱回来了。',log_en:"Fastest fingers win! $288! Tonight's drinks just paid for themselves."},
+  {t:'🧘 佛系围观',t_en:'🧘 Watch serenely',fx:{},log:'你淡定地看着大家抢，保住了体面。',log_en:'You watch serenely. Dignity intact.'},
+  {t:'🌸 帮小美抢',t_en:'🌸 Tap it for Mia',fx:{ren:5},npc:{xiaomei:8},log:'你帮小美点了一下，她抢到了66，小脸通红。',log_en:'You tap it for Mia — she wins $66, cheeks flushed.'}]},
+{id:'e14',tag:'八卦',tag_en:'Gossip',name:'裁员传闻',name_en:'Layoff Rumors',desc:'邻桌压低声音："听说隔壁部门要优化30%，名单都拟好了。"你的筷子停在了半空。',desc_en:'The next table leans in: "Heard the other department\'s cutting 30%. The list is already drafted." Your fork freezes mid-air.',
+ opts:[
+  {t:'👂 参与讨论',t_en:'👂 Join the discussion',fx:{ren:8,qing:-5},log:'你加入了情报交换，知道了三个版本的故事。',log_en:'You join the intel exchange and learn three versions of the story.'},
+  {t:'🕊️ 劝大家别传了',t_en:"🕊️ Ask everyone to drop it",fx:{ren:5,boss:3},log:'"都是同事，积点口德。"有人默默给你点了赞。',log_en:'"We\'re all colleagues — let\'s not spread it." Someone silently likes that.'},
+  {t:'📝 默默更新简历',t_en:"📝 Quietly update your résumé",fx:{qing:5,ren:-3},log:'你打开手机备忘录，写下了三个备选公司。',log_en:'You open your notes app and jot down three backup companies.'}]},
+{id:'e15',tag:'八卦',tag_en:'Gossip',name:'王姐聊报销',name_en:"Margaret's Expense Report Chat",desc:'财务王姐凑过来："小X，你上个月那张发票抬头开错了，知道不？"',desc_en:'Margaret from Finance sidles over: "That invoice from last month — wrong billing header, you know?"',
+ opts:[
+  {t:'🙏 虚心请教',t_en:'🙏 Ask humbly',fx:{ren:3},npc:{wangjie:10},log:'王姐手把手教你，报销秒过。',log_en:'Margaret walks you through it. Expense approved instantly.'},
+  {t:'📱 现在就改',t_en:'📱 Fix it right now',fx:{qing:-5},npc:{wangjie:8},log:'你当场改完，王姐：这孩子靠谱。',log_en:'You fix it on the spot. Margaret: "This one\'s reliable."'},
+  {t:'🙉 装没听见',t_en:'🙉 Pretend not to hear',fx:{},npc:{wangjie:-8},log:'王姐的笑容消失了。你的报销，悬了。',log_en:"Margaret's smile vanishes. Your expenses... pending."}]},
+{id:'e16',tag:'八卦',tag_en:'Gossip',name:'老周说胡话',name_en:'Owen Runs His Mouth',desc:'老周喝多了，舌头大了："陈总那个决策，就是拍脑袋！我跟你们说…"半桌人都听见了。',desc_en:'Owen\'s had too many. Tongue loose: "Carter\'s strategy is pure gut instinct, I\'m telling you..." Half the table heard.',
+ opts:[
+  {t:'👍 附和两句',t_en:'👍 Nod along',fx:{boss:-10},npc:{laozhou:8},log:'老周把你引为知己。但愿陈总没听见。',log_en:"Owen claims you as a kindred spirit. Let's hope Mr. Carter didn't hear."},
+  {t:'🤝 打圆场',t_en:'🤝 Smooth it over',fx:{ren:6,qing:-5},log:'"老周喝多了，喝多了。"你笑着把话题岔开。',log_en:'"Owen\'s had a few, had a few." You laugh and change the subject.'},
+  {t:'🎙️ 悄悄录音',t_en:'🎙️ Secretly record it',fx:{qing:3,ren:-5},log:'你握住了把柄，也握住了风险。这段录音，删还是不删？',log_en:"You've got leverage — and risk. Delete that recording, or keep it?"}]},
+{id:'e17',tag:'稀有',tag_en:'Rare',rare:true,name:'猎头搭讪',name_en:'The Headhunter',desc:'一位气质不凡的男士递上名片："赵总，XX猎头。X总，有没有兴趣聊聊？package涨50%起。"',desc_en:'A sharp-looking man hands you a card: "Victor, executive search. Ever thought about a move? 50% bump, easy."',
+ opts:[
+  {t:'💬 加微信细聊',t_en:'💬 Connect and chat later',fx:{},npc:{lietou:15},sp:'lietou',log:'赵总："保持联系，好机会都留给有准备的人。"',log_en:'Victor: "Stay in touch. The best roles go to the prepared."'},
+  {t:'🙂 婉拒',t_en:'🙂 Decline politely',fx:{ren:3},npc:{lietou:5},log:'"谢谢赵总，暂时稳定。"他：理解，随时找我。',log_en:'"Thanks, Victor — I\'m settled for now." He: "Understood. Anytime."'},
+  {t:'📢 大声说"我爱公司"',t_en:'📢 Shout "I LOVE this company"',fx:{boss:10},npc:{lietou:-10},log:'全桌都听见了。陈总很欣慰，赵总把名片收回去了。',log_en:"The whole table hears. Mr. Carter is delighted; Victor pockets his card."}]},
+{id:'e18',tag:'社交',tag_en:'Mingle',name:'合影站位学',name_en:'Group Photo Politics',desc:'摄影师："大家往中间挤挤！靠拢一点！"C位只有一个，战争一触即发。',desc_en:'Photographer: "Everyone squeeze in! Closer!" There\'s only one center spot. War begins.',
+ opts:[
+  {t:'📸 抢C位',t_en:'📸 Grab the center spot',fx:{boss:5,ren:5},npc:{laozhou:-5},log:'你一个箭步站到陈总旁边，老周被挤到了第二排。',log_en:"You lunge next to Mr. Carter. Owen gets squeezed to row two."},
+  {t:'🧍 站边上',t_en:'🧍 Take the edge',fx:{},log:'你在边上比了个耶，岁月静好。',log_en:'You flash a peace sign from the edge. Serene.'},
+  {t:'👜 帮小美拿包',t_en:"👜 Hold Mia's bag",fx:{ren:8},npc:{xiaomei:10},log:'你帮小美拿包站前排，她：你人真好！',log_en:'You hold Mia\'s bag up front. Mia: "You\'re the sweetest!"'}]},
+{id:'e19',tag:'社交',tag_en:'Mingle',name:'小林取经',name_en:'Leo Asks for Advice',desc:'实习生小林端着可乐过来："前辈，怎么做才能像你一样优秀啊？"眼神清澈得让人心疼。',desc_en:'Intern Leo comes over with a soda: "How do I become as awesome as you?" His eyes are heartbreakingly earnest.',
+ opts:[
+  {t:'💡 倾囊相授',t_en:'💡 Share everything you know',fx:{ren:6,qing:-5},npc:{xiaolin:12},log:'你传授了三年踩坑经验，小林记了满满一页。',log_en:'You share three years of hard-won lessons. Leo fills a whole page.'},
+  {t:'🍰 画饼',t_en:'🍰 Make big promises',fx:{ren:3},npc:{xiaolin:-5},log:'"好好干，明年升你。"小林似懂非懂地点头。',log_en:'"Work hard, promotion next year." Leo nods, not quite getting it.'},
+  {t:'👉 让他去问Lisa',t_en:'👉 Send him to Lisa',fx:{},npc:{zhishu:5},log:'Lisa被问得一愣，随即笑了：这孩子，甩锅挺快。',log_en:"Lisa blinks, then laughs: 'This kid deflects fast.'"}]},
+{id:'e20',tag:'社交',tag_en:'Mingle',name:'Lisa求挡酒',name_en:'Lisa Needs a Shield',desc:'Lisa低声跟你说："帮我挡三杯，回去给你秒批报销。成交不？"',desc_en:'Lisa murmurs: "Cover three drinks for me and I\'ll fast-track your expenses. Deal?"',
+ opts:[
+  {t:'⚔️ 义不容辞',t_en:"⚔️ Absolutely",fx:{jiu:-15},npc:{zhishu:15,wangjie:5},log:'你连挡三杯，王姐在旁边：这孩子，懂事。',log_en:"You take all three. Margaret, watching: 'This kid gets it.'"},
+  {t:'🤝 讨价还价',t_en:'🤝 Negotiate',fx:{jiu:-10},npc:{zhishu:8},log:'"再加一次调休！"Lisa：成交！',log_en:'"Throw in an extra day off!" Lisa: "Deal!"'},
+  {t:'🙈 装没听见',t_en:'🙈 Pretend not to hear',fx:{},npc:{zhishu:-10},log:'Lisa的笑容僵住了。你的报销，悬了。',log_en:"Lisa's smile freezes. Your expenses... pending."}]},
+{id:'e21',tag:'稀有',tag_en:'Rare',rare:true,name:'厕所偶遇陈总',name_en:'Bathroom Run-In with the Boss',desc:'你在洗手间门口和陈总狭路相逢。空气突然安静，只有水声。',desc_en:'You and Mr. Carter reach the restroom door at the same time. Sudden silence, just running water.',
+ opts:[
+  {t:'💼 聊两句项目',t_en:'💼 Chat about the project',fx:{boss:10,qing:-3},log:'三言两语，陈总："这个思路不错，年后细聊。"',log_en:'A few quick words. Mr. Carter: "Interesting angle — let\'s dig in next year."'},
+  {t:'🙂 点头微笑快走',t_en:'🙂 Smile, nod, keep walking',fx:{},log:'你微笑、点头、快走，一气呵成。',log_en:'Smile, nod, brisk walk. Flawless execution.'},
+  {t:'🧻 递纸巾',t_en:'🧻 Offer a paper towel',fx:{boss:5,ren:3},log:'"谢谢啊。"陈总说，细节见人品。',log_en:'"Thanks." Details make the person.'}]},
+{id:'e22',tag:'幸运',tag_en:'Lucky',name:'阳光普照奖',name_en:'Everyone-Wins Raffle',desc:'主持人念到你的名字：三等奖——空气炸锅！虽然人人都有，但上台领奖的感觉真好。',desc_en:"The host calls your name: third prize — an air fryer! Everyone gets one, but the walk-up feels great.",
+ opts:[
+  {t:'🎤 发表获奖感言',t_en:'🎤 Give an acceptance speech',fx:{ren:8,boss:5},log:'"感谢公司，感谢陈总，感谢Lisa！"你鞠了一躬。',log_en:'"Thanks to the company, to Mr. Carter, to Lisa!" You take a bow.'},
+  {t:'🎁 转送给小美',t_en:'🎁 Gift it to Mia',fx:{ren:10},npc:{xiaomei:12},log:'小美：啊？给我的？她眼睛亮了。',log_en:'Mia: "Wait — for me?" Her eyes light up.'},
+  {t:'📦 低调收下',t_en:'📦 Accept quietly',fx:{},log:'你默默抱走了炸锅，今晚加餐有着落了。',log_en:"You quietly claim your fryer. Tonight's snack situation: handled."}]},
+{id:'e23',tag:'稀有',tag_en:'Rare',rare:true,name:'和大老板同桌',name_en:'Seated with the Big Boss',desc:'座位调整，你被安排到了大老板那桌！左右都是总监级，你是全桌title最小的。',desc_en:"Seat shuffle lands you at the VP's table! Directors on both sides — you're the most junior title there.",
+ opts:[
+  {t:'🍺 敬大老板',t_en:'🍺 Toast the VP',fx:{jiu:-10,boss:12},log:'大老板："年轻人不错。"陈总在旁边与有荣焉。',log_en:'The VP: "Promising young talent." Mr. Carter beams beside you.'},
+  {t:'🍚 安静干饭',t_en:'🍚 Focus on the food',fx:{qing:8},log:'你专注干饭，听了一耳朵行业大瓜。',log_en:'You focus on the food and overhear premium industry gossip.'},
+  {t:'😂 讲个段子',t_en:'😂 Tell a joke',fx:{ren:10,qing:-5,boss:5},log:'你的段子把整桌逗笑了，大老板记住你了。',log_en:'Your joke cracks up the whole table. The VP remembers you.'}]},
+{id:'e24',tag:'状态',tag_en:'Status',name:'有点上头',name_en:'Feeling It',desc:'你感觉世界开始缓慢旋转，灯光有了重影。是时候做个决定了。',desc_en:'The world starts rotating slowly. The lights have halos. Time for a decision.',
+ opts:[
+  {t:'🍬 找颗葡萄糖',t_en:'🍫 Grab an energy bar',fx:{jiu:20,qing:5},log:'一颗葡萄糖下肚，你满血复活了一半。',log_en:"One energy bar down — you're half-resurrected."},
+  {t:'🌬️ 出去透透气',t_en:'🌬️ Step out for air',fx:{qing:10,ren:-3},log:'冷风一吹，你清醒多了，也错过了一轮拼酒。',log_en:'Cold air sobers you up — and you miss a drinking round.'},
+  {t:'🎉 继续嗨！',t_en:'🎉 Keep partying!',fx:{ren:10,jiu:-15},log:'你选择继续战斗，今晚的你是传奇，明早的你是教训。',log_en:"Tonight you're a legend; tomorrow morning, a cautionary tale."}]}
+];
+
+/* ============ 持牌隐藏选项 ============ */
+/* 持有指定话术牌时，对应事件追加一个高回报隐藏选项（打出该牌，不消耗行动） */
+const HIDDEN_OPTS={
+ e21:{card:'shangye',t:'💼 商业互吹开场白',t_en:'💼 Mutual-Hype Opener',sub:'打出【商业互吹】',sub_en:'Play [Mutual Hype]',fx:{boss:18,qing:-5},log:'三句话把项目包装成集团战略方向，陈总眼睛亮了："年后细聊！"',log_en:'Three sentences framing the project as group strategy. Mr. Carter\'s eyes light up: "Let\'s dig in next year!"'},
+ e15:{card:'qingting',t:'👂 倾听者模式',t_en:'👂 Listener Mode',sub:'打出【倾听者】',sub_en:'Play [Good Listener]',fx:{qing:-3},npc:{wangjie:15},log:'你听王姐吐槽了半小时报销制度，她拍着你的肩："小X，你是懂财务的。"',log_en:'You listen to Margaret vent about expense policy for half an hour. She pats your shoulder: "You get finance."'},
+ e7:{card:'jiuzhuo',t:'🎤 酒桌文学式总结',t_en:'🎤 Toastmaster-Style Review',sub:'打出【酒桌文学】',sub_en:'Play [Toastmaster Prose]',fx:{boss:15,ren:8,qing:-8},log:'你把Q1到Q4讲成了评书，陈总带头鼓掌，Lisa偷偷录了视频。',log_en:'You turn Q1–Q4 into a stand-up routine. Mr. Carter leads the applause; Lisa secretly records it.'}
+};
+function cardName(id){const c=CARDS.find(x=>x.id===id);if(!c)return '';const n=tx(c,'nm');return LANG==='en'?'['+n+']':'【'+n+'】';}
+/* combo搭档：id→id，只用于展示，帮助玩家凑combo */
+const COMBO_MATE={shangye:'zhuanyi',zhuanyi:'shangye',caihong:'jiuzhuo',jiuzhuo:'caihong',duanshui:'kuakua',kuakua:'duanshui'};
+function comboBadge(c){const m=COMBO_MATE[c.id];if(!m)return '';const mc=CARDS.find(x=>x.id===m);return '<div class="cmbb">✨ combo·'+(mc?tx(mc,'nm'):m)+'</div>';}
+function hiddenOptFor(ev){const h=HIDDEN_OPTS[ev.id];if(!h||!S||!S.hand)return null;return S.hand.some(c=>c.id===h.card)?h:null;}
+
+/* ============ 存档（store 已在 I18N 段定义） ============ */
+
+/* ============ 状态 ============ */
+let S=null, deck=[], selPersona='haoliang';
+function newState(personaKey){
+const p=PERSONAS[personaKey], posIdx=store.get('pos',0);
+const npc={}; NPCS.forEach(n=>npc[n.id]=50);
+return {persona:personaKey,posIdx,round:0,jiu:100+(p.mod.jiu||0),jiuMax:100+(p.mod.jiu||0),
+qing:100+(p.mod.qing||0),qingMax:100+(p.mod.qing||0),boss:50,ren:50+(p.mod.ren||0),
+tea:0,hb:0,shesiRaw:0,washUsed:false,washShield:false,npc,hand:[],played:0,flags:{},lietou:false,log:[],over:false};
+}
+function effShesi(){return Math.floor(S.shesiRaw+1e-9);}
+function log(html,cls){S.log.push({html,cls});const el=$('log');const d=document.createElement('div');if(cls)d.className=cls;d.innerHTML=html;el.appendChild(d);el.scrollTop=el.scrollHeight;}
+
+/* ============ 人设选择 ============ */
+function renderPersona(){
+$('personaPick').innerHTML=Object.keys(PERSONAS).map(k=>{const p=PERSONAS[k];
+return '<button class="btn opt-persona'+(selPersona===k?' sel':'')+'" data-k="'+k+'"><b>'+p.emoji+' '+tx(p,'name')+'</b> <span class="muted">'+tx(p,'tip')+'</span><span class="fx">'+tx(p,'desc')+'</span></button>';}).join('');
+document.querySelectorAll('#personaPick .btn').forEach(b=>b.onclick=()=>{sfx.click();selPersona=b.dataset.k;renderPersona();});
+$('personaTable').innerHTML=Object.keys(PERSONAS).map(k=>{const p=PERSONAS[k];
+return '<tr><td>'+p.emoji+'</td><td><b>'+tx(p,'name')+'</b> · '+tx(p,'tip')+'<br><span class="muted">'+tx(p,'desc')+'</span></td></tr>';}).join('');
+renderAdv();
+const best=store.get('best',0),bp=store.get('pos',0);
+$('bestLine').textContent=best>0?(T('bestLineHas')+'$'+best+T('bestLinePos')+posName(bp)):T('bestLineNew');
+}
+function renderAdv(){
+const cn=id=>{const c=CARDS.find(x=>x.id===id);return c?tx(c,'nm'):id;};
+const posList=POSITIONS.map(p=>tx(p,'name')).join('→');
+$('advBody').innerHTML=
+ '<div class="cmb">✨ <b>'+(LANG==='en'?'Play these two in the same round':'同轮打出')+'</b>'+(LANG==='en'?' for a combo:':'以下两张即触发 combo:')+'</div>'
+ +'<div class="muted" style="font-size:13px">'+cn('shangye')+' + '+cn('zhuanyi')+' → '+T('statBoss')+'+15<br>'+cn('caihong')+' + '+cn('jiuzhuo')+' → '+T('statBoss')+'+20<br>'+cn('duanshui')+' + '+cn('kuakua')+' → '+T('statRen')+'+15</div>'
+ +'<div class="cmb" style="margin-top:10px">'+(LANG==='en'?'🗝️ <b>Hidden options</b>: in certain events, holding the matching tactic card reveals a <b style="color:var(--gold)">gold option</b> — playing it consumes the card. Use it now or save it for a combo — your call.'
+  :'🗝️ <b>隐藏选项</b>：特定事件中，手里有对应话术牌会出现<b style="color:var(--gold)">金色选项</b>——打出该牌解锁（牌会消耗，留着还是现在用，自己掂量）。')+'</div>'
+ +'<div class="cmb" style="margin-top:10px">'+(LANG==='en'?'🎭 <b>Self-roast save</b>: usable when social deaths &gt;0 and composure ≥60, once per game — drains composure, clears 1 social death.'
+  :'🎭 <b>自黑解围</b>：社死&gt;0 且清醒≥60 时可用，本局一次——清空清醒，洗白 1 点社死。')+'</div>'
+ +'<div class="muted" style="font-size:13px;margin-top:10px">'+(LANG==='en'?'🪜 Tonight\'s rating sets your <b>starting title</b> next game: '+posList+'. Higher titles, bigger rewards — and nastier events. NPCs at favor ≤20 will <b>settle scores</b> in rounds 5/8/10.'
+  :'🪜 本局评级决定<b>下局开局职位</b>：'+posList+'。职位越高奖励越高，事件也越凶险。8 位 NPC 好感≤20 会在第 5/8/10 轮「秋后算账」。')+'</div>';
+}
+$('btnToPrep').onclick=()=>{sfx.click();S=newState(selPersona);show('scr-prep');renderPrep();};
+
+/* ============ 准备阶段 ============ */
+function renderPrep(){
+const p=PERSONAS[S.persona];
+$('prepInfo').textContent=(LANG==='en'?'Persona: ':'人设：')+p.emoji+tx(p,'name')+'（'+tx(p,'tip')+'）'+(LANG==='en'?' · Starting title: ':' · 开局职位：')+posName(S.posIdx);
+$('teaInfo').textContent=(LANG==='en'?'Now: ':'当前：')+S.tea+(LANG==='en'?' mocktails · Popularity: ':' 杯 · 人缘：')+S.ren;
+$('btnBuyTea').disabled=S.ren<10;
+}
+$('btnBuyTea').onclick=()=>{if(S.ren<10)return;sfx.card();S.ren-=10;S.tea+=3;log(LANG==='en'?'🍸 Spent 10 popularity on 3 mocktails.':'🍵 花10点人缘，备好3杯特调茶。','gold');renderPrep();};
+$('btnStart').onclick=()=>{sfx.good();show('scr-game');startGame();};
+
+/* ============ 游戏流程 ============ */
+function show(id){document.querySelectorAll('.screen').forEach(s=>s.classList.remove('on'));$(id).classList.add('on');}
+function startGame(){
+$('log').innerHTML='';S.log=[];
+deck=shuffle(EVENTS);
+log('🎊 '+(LANG==='en'?'The party begins! You are <b>':'年会开始！你是<b>')+tx(PERSONAS[S.persona],'name')+'</b>'+(LANG==='en'?', entering as <b>':'，以<b>')+posName(S.posIdx)+'</b>'+(LANG==='en'?'':'身份入场。'),'gold');
+log(LANG==='en'?'Goal: survive 10 rounds and leave with dignity.':'目标：活过10轮，体面散场。','gold');
+nextRound();
+}
+function drawCards(){
+const n=S.persona==='sheNiu'?3:2;
+let guard=0;
+for(let i=0;i<n&&S.hand.length<6;i++){
+if(++guard>300)break;
+let c=pick(CARDS);
+if(S.hand.filter(h=>h.id===c.id).length>=2){i--;continue;}
+S.hand.push(Object.assign({},c));
+}
+}
+function nextRound(){
+S.round++;S.played=0;S.flags={};S._roundShesi=0;S._playedNames=[];
+if(S.round>10)return endGame();
+// 秋后算账
+if([5,8,10].indexOf(S.round)>=0){
+const bad=NPCS.filter(n=>S.npc[n.id]<=20);
+if(bad.length){const v=pick(bad);
+S.boss=clamp(S.boss-10,0,100);S.ren=clamp(S.ren-5,0,150);
+log(LANG==='en'?'🌩️ <b>Score settled</b>: '+npcName(v.id)+' bad-mouthed you to Mr. Carter. Boss favor −10, popularity −5.':'🌩️ <b>秋后算账</b>：'+v.name+'在陈总面前阴阳了你一句，老板好感-10，人缘-5。','bad');sfx.bad();}
+}
+drawCards();
+const ev=deck[(S.round-1)%deck.length];
+renderAll(ev);
+log((LANG==='en'?'—— Round ':'—— 第 ')+S.round+(LANG==='en'?' / 10: <b>':' / 10 轮：<b>')+tx(ev,'name')+'</b> ——');
+}
+function currentEvent(){return deck[(S.round-1)%deck.length];}
+
+/* ---- 出牌 ---- */
+function playCard(idx){
+const c=S.hand[idx];if(!c||S.played>=2)return;
+if(S.qing<c.cost){toast(T('notEnoughQing'));return;}
+sfx.card();S.qing=clamp(S.qing-c.cost,0,S.qingMax);S.played++;
+S.hand.splice(idx,1);
+log(tf('playedCard',{c:c.cost}));
+applyFx(c.fx||{},'card');
+if(c.sp==='zhuanyi'){const others=NPCS.filter(n=>n.id!=='boss');const v=pick(others);S.npc[v.id]=clamp(S.npc[v.id]-5,0,100);log(npcName(v.id)+(LANG==='en'?' favor −5 (deflection successful)':'好感-5（火力转移成功）'),'bad');}
+if(c.sp==='duanshui'){NPCS.forEach(n=>S.npc[n.id]=clamp(S.npc[n.id]+4,0,100));log(LANG==='en'?'All NPC favor +4. Diplomacy!':'所有NPC好感+4，雨露均沾。','good');}
+if(c.sp==='qingting'){const v=pick(NPCS);S.npc[v.id]=clamp(S.npc[v.id]+6,0,100);log(npcName(v.id)+(LANG==='en'?" thinks you're a great listener. Favor +6.":'觉得你是个很好的倾听者，好感+6。'),'good');}
+if(c.sp==='yiku'){S.npc.zhishu=clamp(S.npc.zhishu+8,0,100);log('Lisa '+(LANG==='en'?'favor +8.':'好感+8。'),'good');}
+if(c.sp==='beiguo'){S.npc.zhishu=clamp(S.npc.zhishu+10,0,100);log('Lisa '+(LANG==='en'?'favor +10: reliable when it counts.':'好感+10：关键时刻还是你靠得住。'),'good');}
+if(c.sp==='hexini'){let w=NPCS[0];NPCS.forEach(n=>{if(S.npc[n.id]<S.npc[w.id])w=n;});S.npc[w.id]=clamp(S.npc[w.id]+10,0,100);log((LANG==='en'?'You smooth things over. ':'你撮合了一下，')+npcName(w.id)+(LANG==='en'?' favor +10.':'好感+10。'),'good');}
+if(c.sp==='zihei'){S.flags.zihei=true;log(LANG==='en'?'Self-roast ready: blocks 1 social death this round.':'已备好自黑话术，本轮可抵消1次社死。');}
+if(c.sp==='zhuangsha'){S.flags.zhuangsha=true;log(LANG==='en'?'Playing dumb: alcohol damage halved this round.':'装傻模式启动：本轮酒量消耗减半。');}
+if(c.sp==='jingjiu'){S.flags.jingjiu=true;log(LANG==='en'?'Toast library loaded: real-drink damage halved.':'敬酒词库加载：本轮真喝伤害减半。');}
+if(c.sp==='lietou'||c.id==='dummy'){}
+// combo判定
+const names=S._playedNames||(S._playedNames=[]);names.push(c.id);
+const has=id=>names.indexOf(id)>=0;
+if(has('shangye')&&has('zhuanyi')&&!S.flags['cA']){S.flags.cA=1;S.boss=clamp(S.boss+15,0,100);log('✨ <b>COMBO</b>'+(LANG==='en'?': boss favor +15!':'：老板好感+15！'),'gold');sfx.good();}
+if(has('caihong')&&has('jiuzhuo')&&!S.flags['cB']){S.flags.cB=1;S.boss=clamp(S.boss+20,0,100);log('✨ <b>COMBO</b>'+(LANG==='en'?': boss favor +20!':'：老板好感+20！'),'gold');sfx.good();}
+if(has('duanshui')&&has('kuakua')&&!S.flags['cC']){S.flags.cC=1;S.ren=clamp(S.ren+15,0,150);log('✨ <b>COMBO</b>'+(LANG==='en'?': popularity +15!':'：人缘+15！'),'gold');sfx.good();}
+if(c.sp==='skip'){
+document.querySelectorAll('#evOpts .btn').forEach(b=>b.disabled=true);
+log(LANG==='en'?'📞 "Hello? Bad signal…" You flawlessly miss this round\'s event.':'📞 "喂？啊信号不好…"你完美错过了本轮事件。','gold');
+S.flags.skipped=true;setTimeout(()=>{checkZero();renderStats();nextRound();},700);return;
+}
+checkZero();renderAll(currentEvent());
+}
+/* ---- 结算选项 ---- */
+function fmtFx(fx){
+const parts=[];const em={jiu:'🍺',qing:'☕',boss:'👔',ren:'🤝',hb:'🧧',shesi:'💀',tea:'🍵'};
+for(const k in fx){if(k==='tea'||fx[k]===0)continue;
+const v=fx[k];parts.push(em[k]+(v>0?'+':'')+v);}
+return parts.join(' ');
+}
+function applyFx(fx,src){
+const danger=1+POSITIONS[S.posIdx].danger;
+const neg=v=>Math.round(v*danger);
+if(fx.jiu){let v=fx.jiu;if(v<0){if(S.flags.zhuangsha)v=Math.ceil(v/2);if(src==='toast-zhen'&&S.flags.jingjiu)v=Math.ceil(v/2);}
+S.jiu=clamp(S.jiu+v,0,S.jiuMax);}
+if(fx.qing)S.qing=clamp(S.qing+fx.qing,0,S.qingMax);
+if(fx.boss){let v=fx.boss;if(v>0&&S.persona==='yinXing')v=Math.round(v*0.7);if(v<0)v=neg(v);S.boss=clamp(S.boss+v,0,100);}
+if(fx.ren){let v=fx.ren;if(v<0)v=neg(v);S.ren=clamp(S.ren+v,0,150);}
+if(fx.hb)S.hb+=fx.hb;
+if(fx.shesi)addShesi(fx.shesi);
+}
+function addShesi(n){S.shesiRaw+= (S.persona==='yinXing'?n*0.5:n);}
+function chooseOpt(oi){
+const ev=currentEvent(),o=ev.opts[oi];sfx.click();
+document.querySelectorAll('#evOpts .btn').forEach(b=>b.disabled=true);
+if(o.tea&&S.tea<=0){toast(T('noTeaToast'));return;}
+if(o.tea){S.tea--;}
+log(T('youChoose')+tx(o,'t'));
+if(ev.type==='toast'&&oi===0)applyFx(o.fx,'toast-zhen');else applyFx(o.fx||{});
+if(o.npc)for(const k in o.npc){S.npc[k]=clamp(S.npc[k]+o.npc[k],0,100);}
+if(o.sp==='lietou'){S.lietou=true;}
+if(o.log)log(o.log, (o.fx&&(o.fx.boss>0||o.fx.ren>0))?'good':'');
+// 以茶代酒选项的fx里boss已含
+checkZero();
+// 自黑抵消
+if(S.flags.zihei&&S._roundShesi>0){S._roundShesi--;S.shesiRaw=Math.max(0,S.shesiRaw-(S.persona==='yinXing'?0.5:1));log(LANG==='en'?'🃏 Self-roast saves you: 1 social death blocked!':'🃏 自黑解围生效：抵消1次社死！','gold');}
+setTimeout(()=>nextRound(),650);
+renderStats();
+}
+/* ---- 持牌隐藏选项结算 ---- */
+function chooseHidden(){
+const ev=currentEvent(),h=hiddenOptFor(ev);if(!h)return;sfx.card();
+document.querySelectorAll('#evOpts .btn').forEach(b=>b.disabled=true);
+const ci=S.hand.findIndex(c=>c.id===h.card);
+if(ci>=0)S.hand.splice(ci,1);
+log(T('youChoose')+tx(h,'t')+(LANG==='en'?' (playing ':'（打出')+cardName(h.card)+(LANG==='en'?')':'）'));
+applyFx(h.fx||{});
+if(h.npc)for(const k in h.npc){S.npc[k]=clamp(S.npc[k]+h.npc[k],0,100);}
+if(h.log)log(h.log,'good');
+checkZero();
+setTimeout(()=>nextRound(),650);
+renderStats();renderHand();
+}
+/* ---- 归零判定 ---- */
+function checkZero(){
+S._roundShesi=S._roundShesi||0;
+const before=effShesi();
+if(S.jiu<=0){S.jiu=30;S.qing=clamp(S.qing-20,0,S.qingMax);S.boss=clamp(S.boss-15,0,100);S._roundShesi++;addShesi(1);log(LANG==='en'?'💀 <b>Blackout!</b> You face-plant for ten minutes and wake up to three new selfies on your phone. Social death +1, boss favor −15.':'💀 <b>断片！</b>你趴在桌上睡了十分钟，醒来发现手机里多了三张自拍。社死+1，老板好感-15。','bad');sfx.bad();}
+if(S.qing<=0){
+if(S.washShield){S.washShield=false;S.qing=10;log(LANG==='en'?"🎭 The self-roast lingers: you hold it together. Composure back to 10.":'🎭 自黑的后劲：你强撑着没说错话，清醒回到 10。','gold');}
+else{const v=pick(NPCS);S.npc[v.id]=clamp(S.npc[v.id]-15,0,100);S.qing=20;S._roundShesi++;addShesi(1);log('💀 <b>'+(LANG==='en'?'Foot in mouth!':'说错话！')+'</b>'+(LANG==='en'?' You publicly critique '+npcName(v.id)+'\'s haircut. '+npcName(v.id)+' favor −15. Social death +1.':'你当众评价了'+v.name+'的发型，'+v.name+'好感-15。社死+1。'),'bad');sfx.bad();}
+}
+}
+/* ============ 渲染 ============ */
+function statBar(label,emoji,val,max,color){
+return '<div class="stat"><div class="row"><span>'+emoji+' '+label+'</span><span>'+val+' / '+max+'</span></div><div class="bar"><i style="width:'+clamp(val/max*100,0,100)+'%;background:'+color+'"></i></div></div>';
+}
+function renderStats(){
+$('stats').innerHTML=
+statBar(T('statJiu'),'🍺',S.jiu,S.jiuMax,'#e8b34b')+
+statBar(T('statQing'),'☕',S.qing,S.qingMax,'#5aa9e6')+
+statBar(T('statBoss'),'👔',S.boss,100,'#e05c8a')+
+statBar(T('statRen'),'🤝',S.ren,150,'#5fd08a');
+if(S.jiu<30)$('stats').innerHTML+='<div class="statwarn">'+T('warnJiu')+'</div>';
+if(S.qing<30&&!S.washShield)$('stats').innerHTML+='<div class="statwarn">'+T('warnQing')+'</div>';
+$('roundLab').textContent=tf('roundFmt',{r:S.round})+(effShesi()>0?' · 💀×'+effShesi():'');
+$('posLab').textContent=posName(S.posIdx)+' · '+tx(PERSONAS[S.persona],'name');
+$('teaLab').textContent=(LANG==='en'?'🍸×':'🍵×')+S.tea;
+renderWash();
+renderNet();
+}
+/* ---- 自黑解围（一次性洗白） ---- */
+function renderWash(){
+const el=$('washRow');if(!el)return;
+if(!S.washUsed&&effShesi()>0){
+const ok=S.qing>=60;
+el.innerHTML='<button class="btn" id="btnWash" '+(ok?'':'disabled')+' style="border:2px solid var(--gold)">'+T('washBtn')+'<span class="fx">'+T('washFx')+(ok?'':tf('washNeed',{q:S.qing}))+'</span></button>';
+const b=$('btnWash');if(b)b.onclick=doWash;
+}else el.innerHTML='';
+}
+function doWash(){
+if(!S||S.washUsed||effShesi()<=0||S.qing<60)return;
+sfx.good();S.washUsed=true;S.washShield=true;S.qing=0;
+S.shesiRaw=Math.max(0,S.shesiRaw-(S.persona==='yinXing'?0.5:1));
+S._roundShesi=Math.max(0,(S._roundShesi||0)-1);
+log(LANG==='en'?'🎭 <b>Self-roast save!</b> You turn your most embarrassing story into a bit. The room roars. Composure drained, social death −1 (once per game).':'🎭 <b>自黑解围！</b>你当众把黑历史讲成了段子，全场笑翻。清醒清空，社死-1（本局仅一次）。','gold');
+renderStats();
+}
+function renderNet(){
+const svg=$('npcnet');const cx=200,cy=120,R=88;let h='';
+const pos=NPCS.map((n,i)=>{const a=-Math.PI/2+i*Math.PI*2/NPCS.length;return {n,x:cx+R*Math.cos(a),y:cy+R*Math.sin(a)};});
+pos.forEach(p=>{const v=S.npc[p.n.id];const col=v>=60?'#5fd08a':v>=40?'#e8b34b':'#e05c5c';
+h+='<line x1="'+cx+'" y1="'+cy+'" x2="'+p.x+'" y2="'+p.y+'" stroke="'+col+'" stroke-width="'+(1+v/40)+'" opacity=".7"/>';
+});
+h+='<circle cx="'+cx+'" cy="'+cy+'" r="20" fill="#2a2f3b" stroke="#e8b34b"/><text x="'+cx+'" y="'+(cy+6)+'" text-anchor="middle" font-size="16">🧑</text><text x="'+cx+'" y="'+(cy+36)+'" text-anchor="middle" font-size="10" fill="#9aa0ae">'+T('you')+'</text>';
+pos.forEach(p=>{const v=S.npc[p.n.id];const col=v>=60?'#5fd08a':v>=40?'#e8b34b':'#e05c5c';
+h+='<circle cx="'+p.x+'" cy="'+p.y+'" r="17" fill="#262b38" stroke="'+col+'" stroke-width="2"/><text x="'+p.x+'" y="'+(p.y+6)+'" text-anchor="middle" font-size="15">'+p.n.emoji+'</text><text x="'+p.x+'" y="'+(p.y+30)+'" text-anchor="middle" font-size="9" fill="#cfd4de">'+tx(p.n,'name')+v+'</text>';});
+svg.innerHTML=h;
+}
+document.querySelector('.secttl').onclick=()=>{const c=$('netCard');c.style.display=c.style.display==='none'?'block':'none';};
+function renderEvent(ev){
+$('evTitle').textContent=tx(ev,'name');
+$('evTags').innerHTML='<span class="tag">'+tx(ev,'tag')+'</span>'+(ev.rare?'<span class="tag" style="color:var(--gold);border:1px solid var(--gold)">'+T('tagRare')+'</span>':'')+(ev.type==='toast'?'<span class="tag">'+T('tagDodge')+'</span>':'');
+$('evDesc').textContent=tx(ev,'desc');
+let optsHtml=ev.opts.map((o,i)=>{
+let label=tx(o,'t');
+if(o.tea)label=(LANG==='en'?'🍸 '+T('mocktailOpt')+' ('+S.tea+' left)':'🍵 以茶代酒（剩余'+S.tea+'杯）');
+const dis=o.tea&&S.tea<=0;
+const fx=fmtFx(o.fx||{});
+return '<button class="btn" data-i="'+i+'" '+(dis?'disabled':'')+'>'+label+(fx?'<span class="fx">'+fx+'</span>':'')+(dis?'<span class="fx">'+T('noTea')+'</span>':'')+'</button>';
+}).join('');
+const hx=hiddenOptFor(ev);
+if(hx){
+const npcFx=hx.npc?' · '+Object.keys(hx.npc).map(k=>npcName(k)+'+'+hx.npc[k]).join(' '):'';
+optsHtml+='<button class="btn" data-hx="1" style="border:2px solid var(--gold)">🃏 '+tx(hx,'t')+'<span class="fx">'+tx(hx,'sub')+' · '+fmtFx(hx.fx||{})+npcFx+'</span></button>';
+if(!S.hxToastShown){S.hxToastShown=true;setTimeout(()=>toast(tf('hxToast',{card:cardName(hx.card)})),400);}
+}
+$('evOpts').innerHTML=optsHtml;
+document.querySelectorAll('#evOpts .btn').forEach(b=>b.onclick=()=>{if(b.dataset.hx)chooseHidden();else chooseOpt(+b.dataset.i);});
+}
+function renderHand(){
+$('handHint').textContent=tf('handHint',{n:S.played});
+$('hand').innerHTML=S.hand.length?S.hand.map((c,i)=>'<div class="pcard" data-i="'+i+'"><div class="nm">'+tx(c,'nm')+'</div><div class="cost">'+(LANG==='en'?'Composure ':'耗清醒 ')+c.cost+'</div><div>'+tx(c,'desc')+'</div>'+comboBadge(c)+'</div>').join(''):'<div class="muted" style="padding:8px">'+T('handEmpty')+'</div>';
+document.querySelectorAll('#hand .pcard').forEach(el=>el.onclick=()=>playCard(+el.dataset.i));
+}
+function renderAll(ev){renderStats();renderEvent(ev||currentEvent());renderHand();}
+function toast(msg){const t=document.createElement('div');t.className='toast';t.textContent=msg;document.body.appendChild(t);setTimeout(()=>t.remove(),1800);}
+
+/* ============ 结算 ============ */
+const RATING_C={ '透明人':{name:'透明人',name_en:'Wallflower',e:'👻',c:1.0,txt:'全程低调，滴酒不漏地活到了散场。没人记得你来过——这何尝不是一种成功。',txt_en:'You kept it low-key and survived to the last song, drink by drink. Nobody remembers you were there — which is its own kind of victory.'},
+'气氛组':{name:'气氛组',name_en:'Life of the Party',e:'🎉',c:1.2,txt:'你就是酒桌的气氛担当！合影里有你，拼酒里有你，八卦中心也有你。',txt_en:'You ARE the party energy! In every group photo, every toast, every gossip circle.'},
+'老板心腹':{name:'老板心腹',name_en:"Boss's Favorite",e:'👑',c:1.5,txt:'陈总看你的眼神都不一样了。明年的晋升名单上，第一个就是你。',txt_en:"Mr. Carter looks at you differently now. First name on next year's promotion list: yours."},
+'社死现场':{name:'社死现场',name_en:'Party Foul',e:'💀',c:0.5,txt:'你贡献了今晚所有的名场面。明早的公司大群，会有你的传说。',txt_en:"You supplied all of tonight's legendary moments. Tomorrow morning's company chat will tell your tale."}};
+function ratingName(r){return tx(RATING_C[r],'name')||r;}
+function ratingTxt(r){return tx(RATING_C[r],'txt');}
+function endGame(){
+S.over=true;
+const se=effShesi();let rating;
+if(se>=2)rating='社死现场';
+else if(S.boss>=90&&se===0)rating='老板心腹';
+else if(S.ren>=75&&se<=1)rating='气氛组';
+else rating='透明人';
+const posC=POSITIONS[S.posIdx].coeff, rc=RATING_C[rating].c;
+const bonus=Math.max(0,Math.round((5000+S.boss*50+S.ren*30-se*2000+S.hb)*posC*rc));
+const best=store.get('best',0);if(bonus>best)store.set('best',bonus);
+// 职位晋升（只升不降）
+const newPos=Math.max(S.posIdx,Math.min(3,RATING_IDX[rating]));store.set('pos',newPos);
+// 成就
+const ach=store.get('ach',[]);
+const unlock=(id,nm)=>{if(ach.indexOf(id)<0){ach.push(id);log(T('achUnlock')+nm,'gold');return nm;}return null;};
+const got=[];
+if(se===0)got.push(unlock('a1',T('achA1')));
+if(NPCS.every(n=>S.npc[n.id]>=60))got.push(unlock('a2',T('achA2')));
+if(S.lietou&&se===0)got.push(unlock('a3',T('achA3')));
+store.set('ach',ach);
+S._end={rating,bonus,best,newPos,se,got,ach:ach.slice(),oldPos:S.posIdx};
+show('scr-end');
+renderEndScreen();
+sfx[rating==='社死现场'?'bad':'good']();
+}
+function renderEndScreen(){
+if(!S||!S._end)return;
+const e=S._end;
+const achNames={'a1':T('achA1'),'a2':T('achA2'),'a3':T('achA3')};
+$('endEmoji').textContent=RATING_C[e.rating].e;
+$('endRating').textContent=ratingName(e.rating);
+$('endComment').textContent=ratingTxt(e.rating);
+const money=LANG==='en'?'$':'¥';
+$('endStats').innerHTML=
+kv(T('kvBonus'),money+e.bonus+(e.bonus>=e.best&&e.bonus>0?T('kvNewRec'):''))+
+kv(T('kvPos'),T('kvNextPos')+posName(e.newPos)+(e.newPos>e.oldPos?T('kvPromoted'):''))+
+kv(T('kvJQ'),S.jiu+' / '+S.qing)+kv(T('kvBR'),S.boss+' / '+S.ren)+
+kv(T('kvShesi'),e.se+T('kvShesiUnit'))+kv(T('kvHb'),money+S.hb);
+$('endAch').innerHTML=(e.got.filter(Boolean).length?e.got.filter(Boolean).map(g=>'<div class="achline">🏅 '+g+'</div>').join(''):'<div class="muted">'+T('noAch')+'</div>')
++'<div class="muted" style="margin-top:6px">'+T('achTotal')+(e.ach.map(a=>achNames[a]).filter(Boolean).join(LANG==='en'?', ':'、')||T('achNone'))+'</div>';
+}
+function kv(k,v){return '<div class="kv"><span class="muted">'+k+'</span><span>'+v+'</span></div>';}
+$('btnAgain').onclick=()=>{sfx.click();S=newState(selPersona);show('scr-prep');renderPrep();};
+$('btnHome').onclick=()=>{sfx.click();show('scr-start');renderPersona();};
+
+/* ============ 语言切换 ============ */
+function applyStatic(){
+document.title=T('title');
+document.documentElement.lang=LANG==='en'?'en':'zh-CN';
+document.querySelectorAll('[data-t]').forEach(el=>{el.innerHTML=T(el.dataset.t);});
+$('howtoCard').innerHTML=T('howto');
+$('muteBtn').title=T('muteTitle');
+const lt=T('langToggle');
+if($('langBtnHome'))$('langBtnHome').textContent=lt;
+if($('langBtnTop'))$('langBtnTop').textContent=lt;
+}
+function setLang(l){
+if(l!==undefined)LANG=l;else LANG=LANG==='en'?'zh':'en';
+store.set('nh_lang',LANG);
+applyStatic();
+if($('scr-start').classList.contains('on'))renderPersona();
+else if($('scr-prep').classList.contains('on')&&S)renderPrep();
+else if($('scr-game').classList.contains('on')&&S)renderAll(currentEvent());
+else if($('scr-end').classList.contains('on'))renderEndScreen();
+}
+/* init */
+$('langBtnHome').onclick=()=>{sfx.click();setLang();};
+$('langBtnTop').onclick=()=>{sfx.click();setLang();};
+applyStatic();
+renderPersona();
+</script>
+</body>
+</html>

@@ -1,0 +1,1408 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Code Review 地狱</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+:root{
+  --bg:#0d1117; --panel:#161b22; --panel2:#1c2128; --border:#30363d;
+  --text:#e6edf3; --muted:#8b949e; --green:#3fb950; --red:#f85149;
+  --blue:#58a6ff; --orange:#d29922; --purple:#bc8cff;
+}
+body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",sans-serif;font-size:14px;line-height:1.5;min-height:100vh}
+#app{max-width:560px;margin:0 auto;min-height:100vh;display:flex;flex-direction:column}
+.hidden{display:none!important}
+/* ===== 开始屏 ===== */
+#screen-start{padding:28px 20px;display:flex;flex-direction:column;gap:18px}
+.game-title{font-size:34px;font-weight:800;text-align:center;margin-top:10px}
+.game-title .fire{color:var(--red)}
+.subtitle{text-align:center;color:var(--muted);font-size:13px}
+.rule-card{background:var(--panel);border:1px solid var(--border);border-radius:12px;padding:14px 16px;font-size:13px}
+.rule-card h3{font-size:14px;margin-bottom:8px;color:var(--blue)}
+.rule-card li{margin-left:18px;margin-bottom:4px;color:var(--text)}
+.rule-card li b{color:var(--orange)}
+.how-row{display:flex;gap:10px;align-items:flex-start;margin:9px 0;font-size:13.5px;line-height:1.45}
+.hi{font-size:17px;flex:none;line-height:1.3}
+.g{color:var(--green)} .r{color:var(--red)} .o{color:var(--orange)}
+.ends{display:flex;flex-direction:column;gap:8px}
+.end-row{display:flex;gap:10px;align-items:flex-start;font-size:13px;line-height:1.45;padding:8px 10px;border-radius:8px;background:#161c28}
+.end-row.win{border-left:3px solid var(--green)}
+.end-row.lose{border-left:3px solid var(--red)}
+.fold-head{cursor:pointer;user-select:none;display:flex;justify-content:space-between;align-items:center}
+.fold-ar{color:var(--muted);transition:transform .15s;display:inline-block}
+.fold-ar.open{transform:rotate(90deg)}
+.fold-body{display:none;margin-top:6px}
+.fold-body.open{display:block}
+.item-row{display:flex;justify-content:space-between;font-size:12.5px;padding:5px 2px;border-bottom:1px dashed #232b3f}
+.muted2{color:var(--muted);font-size:12px}
+.sub2{color:var(--muted);font-size:12px;margin-top:8px}
+.skfold{margin-top:4px;border-top:1px dashed #2a3348;padding-top:4px;cursor:pointer}
+.skfold .skd{display:none;font-size:10.5px;color:var(--muted);line-height:1.4;margin-top:3px;text-align:left}
+.skfold.open .skd{display:block}
+.skfold .fa{color:var(--muted);display:inline-block;transition:transform .15s}
+.skfold.open .fa{transform:rotate(90deg)}
+.spec-label{font-size:13px;color:var(--muted);text-align:center}
+.spec-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px}
+.spec-card{background:var(--panel);border:2px solid var(--border);border-radius:12px;padding:10px 6px;text-align:center;cursor:pointer;transition:all .15s}
+.spec-card .em{font-size:24px}
+.spec-card .nm{font-weight:700;margin:4px 0 2px;font-size:13px}
+.spec-card .ds{font-size:10px;color:var(--muted);line-height:1.3}
+.spec-card .sk{font-size:10px;color:var(--orange);margin-top:4px;line-height:1.3}
+.spec-card.sel{border-color:var(--green);background:#12291a}
+.big-btn{display:block;width:100%;padding:14px;border:none;border-radius:12px;background:var(--green);color:#04120a;font-size:17px;font-weight:800;cursor:pointer}
+.big-btn:active{transform:scale(.98)}
+.best-line{text-align:center;color:var(--muted);font-size:12px}
+/* ===== 顶栏 ===== */
+#topbar{position:sticky;top:0;z-index:20;background:rgba(13,17,23,.96);border-bottom:1px solid var(--border);padding:8px 12px;backdrop-filter:blur(4px)}
+.tb-row{display:flex;align-items:center;justify-content:space-between;gap:8px;font-size:12px}
+.tb-row .pr{font-weight:700;color:var(--blue)}
+.tb-row .combo{font-weight:700;color:var(--orange)}
+.tb-row .score{font-weight:700;color:var(--green)}
+.debt-wrap{margin-top:6px}
+.debt-label{display:flex;justify-content:space-between;font-size:11px;color:var(--muted);margin-bottom:3px}
+.debt-bar{height:8px;background:#2a2f36;border-radius:4px;overflow:hidden}
+.debt-fill{height:100%;width:0%;background:linear-gradient(90deg,var(--orange),var(--red));transition:width .4s;border-radius:4px}
+/* ===== PR 头 ===== */
+#pr-head{background:var(--panel);border-bottom:1px solid var(--border);padding:10px 14px}
+.commit-msg{font-weight:700;font-size:14px}
+.commit-meta{display:flex;align-items:center;gap:8px;margin-top:6px;font-size:12px;color:var(--muted)}
+.avatar{width:26px;height:26px;border-radius:50%;background:var(--panel2);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:15px}
+.excuse-bubble{margin-top:8px;background:var(--panel2);border:1px dashed var(--border);border-radius:8px;padding:8px 10px;font-size:12px;color:var(--muted);display:none}
+.excuse-bubble.show{display:block;animation:pop .25s}
+.excuse-bubble b{color:var(--orange)}
+@keyframes pop{from{transform:scale(.95);opacity:0}to{transform:scale(1);opacity:1}}
+/* ===== 文件 tab（屎山） ===== */
+#tabs{display:flex;gap:6px;padding:8px 12px 0;overflow-x:auto}
+.tab{padding:7px 12px;background:var(--panel);border:1px solid var(--border);border-bottom:none;border-radius:8px 8px 0 0;font-size:12px;color:var(--muted);white-space:nowrap;cursor:pointer;font-family:ui-monospace,monospace}
+.tab.sel{background:var(--panel2);color:var(--text);font-weight:700}
+#shit-timer{background:#3a1414;border:1px solid var(--red);color:var(--red);font-weight:800;text-align:center;padding:6px;font-size:14px;display:none}
+/* ===== diff 区 ===== */
+#diff{background:var(--panel);margin:0 0 8px;overflow-x:auto;border-bottom:1px solid var(--border)}
+.dline{display:flex;min-width:max-content;cursor:default;border-left:3px solid transparent}
+.dline.clickable{cursor:pointer}
+.dline.clickable:hover{background:#1f2733}
+.dline .ln{width:40px;flex:none;text-align:right;padding:2px 8px 2px 4px;color:var(--muted);font-size:12px;user-select:none;font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
+.dline .sg{width:16px;flex:none;text-align:center;color:var(--muted);font-size:12px;user-select:none}
+.dline .lc{padding:2px 12px 2px 4px;font-size:12.5px;white-space:pre;font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,"Noto Sans Mono",monospace}
+.dline.add{background:rgba(63,185,80,.08)} .dline.add .sg{color:var(--green)}
+.dline.del{background:rgba(248,81,73,.08)} .dline.del .sg{color:var(--red)}
+.dline.found{background:rgba(63,185,80,.18);border-left-color:var(--green)}
+.dline.found .lc{color:var(--green)}
+.dline.duck-hint .lc{animation:duckpulse 1s infinite}
+.dline.vouch{opacity:.45}
+.dline.vouch .lc{color:var(--green)}
+@keyframes duckpulse{0%,100%{background:transparent}50%{background:rgba(210,153,34,.25)}}
+.dline.caf-hint .lc{box-shadow:inset 0 0 0 1px rgba(210,153,34,.5)}
+.dline.shake{animation:shk .3s}
+@keyframes shk{0%,100%{transform:translateX(0)}25%{transform:translateX(-4px)}75%{transform:translateX(4px)}}
+.tok-k{color:var(--purple)} .tok-s{color:#a5d6ff} .tok-c{color:#7d8590;font-style:italic} .tok-n{color:var(--orange)}
+.explain-card{margin:8px 12px;background:#0f2a18;border:1px solid var(--green);border-radius:10px;padding:10px 12px;font-size:13px;display:none}
+.explain-card.show{display:block;animation:pop .25s}
+.explain-card .t{color:var(--green);font-weight:700;margin-bottom:4px}
+/* ===== 道具栏 & 操作 ===== */
+#itembar{display:flex;gap:8px;padding:10px 12px;overflow-x:auto}
+#itembar.more{-webkit-mask-image:linear-gradient(to right,#000 90%,transparent 100%);mask-image:linear-gradient(to right,#000 90%,transparent 100%)}
+#tabs.more{-webkit-mask-image:linear-gradient(to right,#000 90%,transparent 100%);mask-image:linear-gradient(to right,#000 90%,transparent 100%)}
+.item{flex:1 0 58px;min-width:58px;background:var(--panel);border:1px solid var(--border);border-radius:10px;padding:8px 4px;text-align:center;cursor:pointer;font-size:11px;color:var(--text)}
+.item .em{font-size:20px;display:block}
+.item .ct{color:var(--orange);font-weight:700}
+.item.used{opacity:.35;pointer-events:none}
+.item:active{transform:scale(.95)}
+#actions{padding:4px 12px 16px;display:flex;gap:10px}
+#btn-approve{flex:1;padding:13px;border:none;border-radius:12px;background:var(--blue);color:#04121f;font-size:16px;font-weight:800;cursor:pointer}
+#btn-approve:active{transform:scale(.98)}
+#btn-skill{width:auto;max-width:150px;padding:0 10px;border-radius:12px;border:1px solid var(--orange);background:#2a2118;color:var(--text);font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#btn-skill:disabled{opacity:.45;cursor:default}
+#btn-skill:active{transform:scale(.97)}
+.icon-btn{width:46px;border-radius:12px;border:1px solid var(--border);background:var(--panel);color:var(--text);font-size:20px;cursor:pointer}
+/* ===== 弹窗 ===== */
+#modal{position:fixed;inset:0;background:rgba(0,0,0,.7);display:none;align-items:center;justify-content:center;z-index:50;padding:20px}
+#modal.show{display:flex}
+.modal-box{background:var(--panel);border:1px solid var(--border);border-radius:14px;padding:20px;max-width:440px;width:100%;max-height:85vh;overflow-y:auto}
+.modal-box h2{font-size:18px;margin-bottom:10px}
+.modal-box p{font-size:13px;color:var(--muted);margin-bottom:8px}
+.modal-box .row{display:flex;gap:10px;margin-top:14px}
+/* ===== toast ===== */
+#toast{position:fixed;left:50%;bottom:90px;transform:translateX(-50%);background:#22272e;border:1px solid var(--border);color:var(--text);padding:10px 18px;border-radius:24px;font-size:13px;z-index:60;opacity:0;pointer-events:none;transition:opacity .25s;max-width:90vw;text-align:center}
+#toast.show{opacity:1}
+#toast.good{border-color:var(--green)} #toast.bad{border-color:var(--red)}
+/* ===== 结算屏 ===== */
+#screen-end{padding:24px 20px;display:flex;flex-direction:column;gap:14px}
+.end-title{font-size:26px;font-weight:800;text-align:center}
+.stat-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.stat{background:var(--panel);border:1px solid var(--border);border-radius:10px;padding:10px;text-align:center}
+.stat .v{font-size:22px;font-weight:800;color:var(--blue)}
+.stat .k{font-size:11px;color:var(--muted)}
+.rank-card{background:linear-gradient(135deg,#1c2128,#12291a);border:1px solid var(--green);border-radius:12px;padding:16px;text-align:center}
+.rank-card .rk{font-size:30px;font-weight:800;color:var(--green)}
+.rank-card .elo{font-size:13px;color:var(--muted);margin-top:4px}
+.ach-row{display:flex;flex-wrap:wrap;gap:8px;justify-content:center}
+.ach{background:var(--panel);border:1px solid var(--orange);border-radius:20px;padding:6px 12px;font-size:12px}
+.ach.lock{opacity:.3;border-color:var(--border)}
+</style>
+</head>
+<body>
+<div id="app">
+
+  <!-- 开始屏 -->
+  <div id="screen-start">
+    <div class="game-title" data-i18n-html="home_title">Code Review <span class="fire">地狱</span> 🔥</div>
+    <div class="subtitle" data-i18n="home_sub">10 个 PR，59 道送命题，1 个濒临崩溃的你</div>
+    <div class="rule-card">
+      <h3 data-i18n="how_h">🎮 怎么玩</h3>
+      <div class="how-row"><span class="hi">🔍</span><span data-i18n-html="how1">读 diff，<b>点你觉得有 bug 的行</b></span></div>
+      <div class="how-row"><span class="hi">✅</span><span data-i18n-html="how2">找对 <b class="g">+分</b>，连击越高加成越多</span></div>
+      <div class="how-row"><span class="hi">❌</span><span data-i18n-html="how3">点错 <b class="r">连击清零</b>，提交人还会嘲讽你</span></div>
+      <div class="how-row"><span class="hi">🧟</span><span data-i18n-html="how4">漏掉的 bug 变成 <b class="o">技术债</b>，攒到 80 触发 <b class="r">线上事故</b></span></div>
+      <div class="how-row"><span class="hi">📈</span><span data-i18n-html="how5">难度递增：第 10 个 PR 是 <b>180 秒屎山决战</b>（3 文件交叉 bug）</span></div>
+    </div>
+    <div class="rule-card ends">
+      <div class="end-row win"><span class="hi">🏆</span><span data-i18n-html="end_win">打完 10 个 PR，按找全率授衔——7 档：实习生 → 人形 Linter</span></div>
+      <div class="end-row lose"><span class="hi">💀</span><span data-i18n-html="end_lose">事故 15 秒救不回 3 处故障 → 回滚失败，扣分又扣段位</span></div>
+    </div>
+    <div class="rule-card">
+      <h3 class="fold-head" onclick="toggleFold('itemFold','itemFoldAr')"><span data-i18n="item_h">🧰 道具（8 种，开局自带）</span><span class="fold-ar" id="itemFoldAr">▸</span></h3>
+      <div class="fold-body" id="itemFold">
+        <div class="item-row"><span data-i18n="item_duck">🦆小黄鸭</span><span class="muted2" data-i18n="item_duck_d">可疑行高亮</span></div>
+        <div class="item-row"><span data-i18n="item_blame">🔍git blame</span><span class="muted2" data-i18n="item_blame_d">看提交人是不是惯犯</span></div>
+        <div class="item-row"><span data-i18n="item_lint">🤖Linter</span><span class="muted2" data-i18n="item_lint_d">自动抓 2 处 bug</span></div>
+        <div class="item-row"><span data-i18n="item_coffee">☕咖啡</span><span class="muted2" data-i18n="item_coffee_d">15 秒免死 + bug 显形</span></div>
+        <div class="item-row"><span data-i18n="item_cup">⏱️保温杯</span><span class="muted2" data-i18n="item_cup_d">撤销一次点错，技术债 -15</span></div>
+        <div class="item-row"><span data-i18n="item_shot">📸截屏</span><span class="muted2" data-i18n="item_shot_d">预知下个 PR 的 bug 数</span></div>
+        <div class="item-row"><span data-i18n="item_share">🪧甩锅大会</span><span class="muted2" data-i18n="item_share_d">狡辩里藏着 hint</span></div>
+        <div class="item-row"><span data-i18n="item_ot">🌙熬夜加班</span><span class="muted2" data-i18n="item_ot_d">随机补一个道具，技术债 +10</span></div>
+        <div class="sub2" data-i18n="item_sub">连击 x5 奖小黄鸭，零失误过 PR 奖咖啡——越打越多</div>
+      </div>
+    </div>
+    <div class="spec-label" data-i18n="spec_label">选择你的角色（点卡片展开技能说明）</div>
+    <div class="spec-grid" id="spec-grid"></div>
+    <button class="big-btn" id="btn-start" data-i18n="btn_start">开始受难 😈</button>
+    <button class="big-btn" id="btn-lang" style="margin-top:10px">🌐 EN</button>
+    <div class="best-line" id="best-line"></div>
+  </div>
+
+  <!-- 游戏屏 -->
+  <div id="screen-game" class="hidden">
+    <div id="topbar">
+      <div class="tb-row">
+        <span class="pr" id="tb-pr">PR 1/10</span>
+        <span class="combo" id="tb-combo">🔥 连击 x0</span>
+        <span class="score" id="tb-score">0 分</span>
+      </div>
+      <div class="debt-wrap">
+        <div class="debt-label"><span data-i18n="debt">🧟 技术债</span><span id="debt-num">0/100</span></div>
+        <div class="debt-bar"><div class="debt-fill" id="debt-fill"></div></div>
+      </div>
+    </div>
+    <div id="shit-timer">⏱ <span id="shit-t">180</span>s</div>
+    <div id="pr-head">
+      <div class="commit-msg" id="commit-msg"></div>
+      <div class="commit-meta">
+        <span class="avatar" id="author-av">🧑‍💻</span>
+        <span id="author-nm"></span><span id="pr-cat"></span>
+      </div>
+      <div class="excuse-bubble" id="excuse"></div>
+    </div>
+    <div id="tabs" class="hidden"></div>
+    <div id="diff"></div>
+    <div class="explain-card" id="explain"></div>
+    <div id="itembar">
+      <div class="item" id="it-duck"><span class="em">🦆</span><span data-i18n="dock_duck">小黄鸭</span><br><span class="ct" id="ct-duck">×2</span></div>
+      <div class="item" id="it-blame"><span class="em">🔍</span><span data-i18n="dock_blame">git blame</span><br><span class="ct" id="ct-blame">×2</span></div>
+      <div class="item" id="it-lint"><span class="em">🤖</span><span data-i18n="dock_lint">Linter</span><br><span class="ct" id="ct-lint">×1</span></div>
+      <div class="item" id="it-coffee"><span class="em">☕</span><span data-i18n="dock_coffee">咖啡</span><br><span class="ct" id="ct-coffee">×3</span></div>
+      <div class="item" id="it-cup"><span class="em">⏱️</span><span data-i18n="dock_cup">保温杯</span><br><span class="ct" id="ct-cup">×1</span></div>
+      <div class="item" id="it-shot"><span class="em">📸</span><span data-i18n="dock_shot">截屏</span><br><span class="ct" id="ct-shot">×1</span></div>
+      <div class="item" id="it-share"><span class="em">🪧</span><span data-i18n="dock_share">甩锅大会</span><br><span class="ct" id="ct-share">×1</span></div>
+      <div class="item" id="it-ot"><span class="em">🌙</span><span data-i18n="dock_ot">熬夜加班</span><br><span class="ct" id="ct-ot">×1</span></div>
+    </div>
+    <div id="actions">
+      <button class="icon-btn" id="btn-mute" data-i18n-title="mute_t" title="声音">🔊</button><button class="icon-btn" id="btn-lang2" data-i18n-title="lang_t" title="语言 / Language">🌐</button>
+      <button id="btn-skill" data-i18n-title="skill_t" title="专属技能">✨</button>
+      <button id="btn-approve" data-i18n="approve">Approve ✅（合并）</button>
+    </div>
+  </div>
+
+  <!-- 结算屏 -->
+  <div id="screen-end" class="hidden"></div>
+
+  <div id="modal"><div class="modal-box" id="modal-box"></div></div>
+  <div id="toast"></div>
+</div>
+<script>
+"use strict";
+/* ================= I18N ================= */
+var LANG=(function(){var l=null;try{l=localStorage.getItem('cr_lang');}catch(e){}if(!l){try{l=((navigator.language||'en').toLowerCase().slice(0,2)==='zh')?'zh':'en';}catch(e2){l='zh';}}return l;})();
+const I18N={zh:{"home_title": "Code Review <span class=\"fire\">地狱</span> 🔥", "home_sub": "10 个 PR，59 道送命题，1 个濒临崩溃的你", "how_h": "🎮 怎么玩", "how1": "读 diff，<b>点你觉得有 bug 的行</b>", "how2": "找对 <b class=\"g\">+分</b>，连击越高加成越多", "how3": "点错 <b class=\"r\">连击清零</b>，提交人还会嘲讽你", "how4": "漏掉的 bug 变成 <b class=\"o\">技术债</b>，攒到 80 触发 <b class=\"r\">线上事故</b>", "how5": "难度递增：第 10 个 PR 是 <b>180 秒屎山决战</b>（3 文件交叉 bug）", "end_win": "打完 10 个 PR，按找全率授衔——7 档：实习生 → 人形 Linter", "end_lose": "事故 15 秒救不回 3 处故障 → 回滚失败，扣分又扣段位", "item_h": "🧰 道具（8 种，开局自带）", "item_duck": "🦆小黄鸭", "item_duck_d": "可疑行高亮", "item_blame": "🔍git blame", "item_blame_d": "看提交人是不是惯犯", "item_lint": "🤖Linter", "item_lint_d": "自动抓 2 处 bug", "item_coffee": "☕咖啡", "item_coffee_d": "15 秒免死 + bug 显形", "item_cup": "⏱️保温杯", "item_cup_d": "撤销一次点错，技术债 -15", "item_shot": "📸截屏", "item_shot_d": "预知下个 PR 的 bug 数", "item_share": "🪧甩锅大会", "item_share_d": "狡辩里藏着 hint", "item_ot": "🌙熬夜加班", "item_ot_d": "随机补一个道具，技术债 +10", "item_sub": "连击 x5 奖小黄鸭，零失误过 PR 奖咖啡——越打越多", "spec_label": "选择你的角色（点卡片展开技能说明）", "btn_start": "开始受难 😈", "combo_x": "连击 x", "pts": "分", "debt": "🧟 技术债", "approve": "Approve ✅（合并）", "mute_t": "声音", "skill_t": "专属技能", "shot_armed": "📸 截屏取证：本 PR 共 {n} 处 bug 行", "combo_duck": "🦆 {n} 连击！小黄鸭 +1", "caught": "✅ 抓到！{title}（+{pts}分{spec}）", "spec15": "，专精×1.5", "quibble": "狡辩：", "pts_combo": "+{pts}分 · 连击 x{combo}", "snipe_hit": "🎯 狙击命中！额外 +300", "snipe_miss": "🎯 脱靶！连击清零", "guard": "🛡️ 漏电保护：这次不扣连击", "wrong": "❌ 点错了！", "coffee_save": "☕ 咖啡因护体，连击保住了", "duck_done": "本页 bug 已找完，鸭鸭失业了", "duck_hint": "🦆 小黄鸭：这几行很可疑，盯着它们看！", "page_done": "本页 bug 已找完", "lint_found": "🤖 Linter：揪出 {n} 处 bug！", "coffee_on": "☕ 咖啡因生效！15 秒内点错不扣连击", "uses_pr": "每PR", "uses_game": "每局", "uses_times": "次）", "uses_line": "（{u}{c}次）", "passive_pre": "🛡️ 被动：", "spec15suf": " 该系 bug 得分 ×1.5。", "ai_92": "这行有 92% 概率是 AI 写的——AI 最擅长一本正经地胡说八道。", "ai_87": "这行有 87% 概率是 AI 写的。AI 写代码，又快又自信，又错。", "ai_lucky": "AI 写的，但这次它蒙对了。", "human_w": "人类亲手写的，错得明明白白。", "ai_v": "🤖 AI 生成", "human_v": "🧑 人类手写", "interrogate_t": "🤖 审问结果", "line_label": "第 {n} 行：", "got_it": "收到", "probe_yes": "🧪 用例结论：是 bug 行！快点它", "probe_no": "🧪 用例结论：不是 bug 行，放过它", "passive_skill": "🛡️ 被动技能，无需手动释放", "skill_empty": "✨ 技能次数用完了", "pxe_empty": "🎨 像素眼：这题没有 this/闭包/定时器相关行——省着，前端题再用", "pxe_hit": "🎨 像素眼：盯住 this/闭包/定时器！", "vouch_empty": "⚙️ 没什么可担保的了", "vouch_hit": "⚙️ 我担保：标绿的这两行没问题，出事我背锅", "radar_empty": "🛡️ 注入雷达：这题没有拼接用户输入——省着，安全题再用", "radar_hit": "🛡️ 注入雷达：盯住拼接用户输入的地方！", "cut_empty": "📊 没什么可砍了", "cut_hit": "📊 砍一刀：需求（代码）减少了！", "cplx_empty": "🧠 复杂度之眼：这题没有循环/递归——省着，算法题再用", "cplx_hit": "🧠 复杂度之眼：循环/递归都标出来了！", "interrogate_hint": "🤖 点一行，审问它是不是 AI 写的", "probe_hint": "🧪 点一行，告诉你是不是 bug（不扣分）", "snipe_ready": "🎯 狙击已架好：下次点击，中则+300，错则连击清零", "ios_shit": "🍎 屎山不能打回，认命吧", "ios_nomore": "🍎 备选 PR 不够了", "ios_confirm": "已找到 {n} 处 bug，打回将清零进度，确定换一道题？", "ios_done": "🍎 审核被拒：换了一道同难度题，已找进度清零", "cup_undo": "⏱️ 保温杯：刚才那下不算！连击+1，技术债-15", "shot_next": "📸 截屏取证：下个 PR 开局直接告诉你 bug 总数", "share_done": "🪧 本页 bug 已找完，没什么可甩的", "share_t": "🪧 甩锅大会", "share_hint": "狡辩中似乎藏着 hint……第 {n} 行，细品。", "ot_gain": "🌙 熬夜加班：+{item}，技术债+10（头发 -1）", "legacy_code": "祖传代码", "shit_cat": "[💩屎山 ×{n}]", "shit_note": "💡 屎山提示：", "shit_time": "⏱ 时间到！强制合并屎山……", "missed": "漏掉了 {n} 处 bug，技术债 +{d}", "clean": "✅ 干净利落，无漏网之鱼！+50，☕咖啡 +1", "clean2": "✅ 干净利落，无漏网之鱼！+50", "incident_title": "🚨 线上事故：P0！15 秒内点出 3 处故障行，立即回滚！", "incident_p": "点中 3 处故障行即回滚成功，技术债降至 40（+200 分）", "rollback_ok": "🎉 回滚成功！技术债降至 40，+200 分", "rollback_fail": "💥 回滚失败！生产环境多挂了 2 小时", "blame_t": "🔍 git blame", "blame_l1": "提交人：<b>{au}</b>", "blame_l2": "本局已贡献 <b style=\"color:var(--red)\">{n} 个 bug</b>", "blame_habit": " —— 惯犯实锤！", "blame_first": " —— 初犯，再观察一下", "blame_l3": "本 PR 共 <b style=\"color:var(--orange)\">{n} 处 bug 行</b>，已找到 {f} 处。", "blame_l4": "“{e}” —— 摘自该作者上次狡辩", "rank_linter": "人形 Linter", "rank_expert": "技术专家", "rank_arch": "架构师", "rank_senior": "资深工程师", "rank_eng": "高级工程师", "rank_junior": "初级工程师", "rank_intern": "实习生", "tier_b1": "🥉青铜", "tier_s1": "🥈白银", "tier_g1": "🥇黄金", "tier_p1": "💠铂金", "tier_d1": "💎钻石", "tier_k": "👑王者", "ach_linter": "🏆 成就解锁：人形 Linter", "ach_shit": "🏆 成就解锁：屎山征服者", "ach_noinc": "🏆 成就解锁：零事故", "ach_caf": "🏆 成就解锁：咖啡因超载", "ach_pmrev": "🏆 成就解锁：产品经理的复仇", "ach_aijudge": "🏆 成就解锁：AI审判者", "end_title": "🎉 Review 结束", "end_rate": "检出率 {r}%（{f}/{t}）", "end_elo": "段位 {r1} {e1} → {r2} {e2}（{d}）", "end_score_k": "总分", "end_best": "（新纪录！）", "end_best2": "（最佳 {b}）", "end_maxcombo": "最高连击", "end_inc": "线上事故", "end_missed": "漏掉 bug", "end_ach": "成就", "end_again": "再来一局 🔁", "best_line": "历史最佳 {b} 分 · ", "elo_line": "段位 {e} 分", "start_toast": "PR 1/10：读 diff，点击你认为有 bug 的行！", "doc_title": "Code Review 地狱", "dock_duck": "小黄鸭", "dock_blame": "git blame", "dock_lint": "Linter", "dock_coffee": "咖啡", "dock_cup": "保温杯", "dock_shot": "截屏", "dock_share": "甩锅大会", "dock_ot": "熬夜加班", "ach_n_shit": "屎山征服者", "ach_n_noinc": "零事故", "ach_n_caf": "咖啡因超载", "ach_n_pmrev": "产品经理的复仇", "ach_n_aijudge": "AI审判者"},en:{"home_title": "Code Review <span class=\"fire\">HELL</span> 🔥", "home_sub": "10 PRs, 59 killer bugs, 1 reviewer on the edge", "how_h": "🎮 How to play", "how1": "Read the diff, <b>click lines you think are buggy</b>", "how2": "Correct hit: <b class=\"g\">+pts</b> — bigger combo, bigger bonus", "how3": "Miss: <b class=\"r\">combo reset</b>, and the author will roast you", "how4": "Missed bugs become <b class=\"o\">tech debt</b> — hit 80 to trigger a <b class=\"r\">production incident</b>", "how5": "Ramping up: PR #10 is a <b>180-second legacy-code boss fight</b> (bugs across 3 files)", "end_win": "Finish 10 PRs, earn a rank by find-rate — 7 tiers: Intern → Human Linter", "end_lose": "Fail to fix 3 faults in 15s → rollback fails, lose points and rank", "item_h": "🧰 Items (8 kinds, you start with all)", "item_duck": "🦆Rubber duck", "item_duck_d": "Highlights suspicious lines", "item_blame": "🔍git blame", "item_blame_d": "Check if the author is a repeat offender", "item_lint": "🤖Linter", "item_lint_d": "Auto-catches 2 bugs", "item_coffee": "☕Coffee", "item_coffee_d": "15s immunity + bugs revealed", "item_cup": "⏱️Thermos", "item_cup_d": "Undo one misclick, tech debt -15", "item_shot": "📸Screenshot", "item_shot_d": "Reveal next PR's bug count", "item_share": "🪧Blame game", "item_share_d": "Excuses hide hints", "item_ot": "🌙Overtime", "item_ot_d": "Random item refill, tech debt +10", "item_sub": "Combo x5 earns a duck, flawless PR earns coffee — keep stacking", "spec_label": "Choose your role (tap a card for skill details)", "btn_start": "Start suffering 😈", "combo_x": "Combo x", "pts": "pts", "debt": "🧟 Tech debt", "approve": "Approve ✅ (merge)", "mute_t": "Sound", "skill_t": "Signature skill", "shot_armed": "📸 Screenshot: this PR has {n} bug lines", "combo_duck": "🦆 {n} combo! Rubber duck +1", "caught": "✅ Caught! {title} (+{pts} pts{spec})", "spec15": ", spec ×1.5", "quibble": "Excuses: ", "pts_combo": "+{pts} pts · Combo x{combo}", "snipe_hit": "🎯 Snipe hit! +300 bonus", "snipe_miss": "🎯 Missed! Combo reset", "guard": "🛡️ Surge protector: combo kept this time", "wrong": "❌ Wrong!", "coffee_save": "☕ Caffeine shield: combo saved", "duck_done": "All bugs on this page found — duck is unemployed", "duck_hint": "🦆 Rubber duck: these lines look sus. Stare at them!", "page_done": "All bugs on this page found", "lint_found": "🤖 Linter: caught {n} bugs!", "coffee_on": "☕ Caffeine active! Misclicks won't reset combo for 15s", "uses_pr": "per PR", "uses_game": "per game", "uses_times": " times)", "uses_line": " ({u} \u00d7{c})", "passive_pre": "🛡️ Passive: ", "spec15suf": " +50% pts on this category's bugs.", "ai_92": "92% chance this line is AI-written — AI excels at bullshitting with a straight face.", "ai_87": "87% chance it's AI-written. AI codes fast, confident, and wrong.", "ai_lucky": "AI-written, but it got lucky this time.", "human_w": "Human-written. Wrong, but honestly wrong.", "ai_v": "🤖 AI-generated", "human_v": "🧑 Human-written", "interrogate_t": "🤖 Interrogation result", "line_label": "Line {n}: ", "got_it": "Got it", "probe_yes": "🧪 Verdict: it IS a bug line! Click it", "probe_no": "🧪 Verdict: not a bug line. Let it go", "passive_skill": "🛡️ Passive skill, no manual cast needed", "skill_empty": "✨ No skill uses left", "pxe_empty": "🎨 Pixel Eye: no this/closure/timer lines here — save it for a frontend question", "pxe_hit": "🎨 Pixel Eye: watch this/closures/timers!", "vouch_empty": "⚙️ Nothing left to vouch for", "vouch_hit": "⚙️ I vouch: these green lines are clean. Blame me if not", "radar_empty": "🛡️ Injection Radar: no user-input concatenation here — save it for security", "radar_hit": "🛡️ Injection Radar: watch where user input gets concatenated!", "cut_empty": "📊 Nothing left to cut", "cut_hit": "📊 Take a Cut: requirements (code) reduced!", "cplx_empty": "🧠 Complexity Eye: no loops/recursion here — save it for algorithms", "cplx_hit": "🧠 Complexity Eye: loops/recursions marked!", "interrogate_hint": "🤖 Tap a line — interrogate whether AI wrote it", "probe_hint": "🧪 Tap a line — learn if it's a bug (no penalty)", "snipe_ready": "🎯 Sniper ready: next click — hit +300, miss resets combo", "ios_shit": "🍎 Can't reject legacy code. Accept your fate", "ios_nomore": "🍎 No spare PRs left", "ios_confirm": "Found {n} bugs — rejecting resets progress. Swap question?", "ios_done": "🍎 Rejected: swapped for a same-difficulty question, progress reset", "cup_undo": "⏱️ Thermos: that one doesn't count! Combo +1, tech debt -15", "shot_next": "📸 Screenshot: next PR reveals total bug count at start", "share_done": "🪧 All bugs found here, nothing to deflect", "share_t": "🪧 Blame game", "share_hint": "The excuses seem to hide a hint... line {n}. Savor it.", "ot_gain": "🌙 Overtime: +{item}, tech debt +10 (hair -1)", "legacy_code": "legacy code", "shit_cat": "[💩legacy ×{n}]", "shit_note": "💡 Legacy tip: ", "shit_time": "⏱ Time's up! Force-merging legacy code...", "missed": "Missed {n} bugs, tech debt +{d}", "clean": "✅ Clean sweep, no survivors! +50, ☕coffee +1", "clean2": "✅ Clean sweep, no survivors! +50", "incident_title": "🚨 PROD INCIDENT: P0! Click 3 faulty lines in 15s — roll back NOW!", "incident_p": "Click 3 faulty lines to roll back: tech debt → 40 (+200 pts)", "rollback_ok": "🎉 Rollback successful! Tech debt down to 40, +200 pts", "rollback_fail": "💥 Rollback failed! Prod stays down 2 more hours", "blame_t": "🔍 git blame", "blame_l1": "Author: <b>{au}</b>", "blame_l2": "Contributed <b style=\"color:var(--red)\">{n} bugs</b> this run", "blame_habit": " — repeat offender confirmed!", "blame_first": " — first offense, keep watching", "blame_l3": "This PR has <b style=\"color:var(--orange)\">{n} bug lines</b>, {f} found.", "blame_l4": "\"{e}\" — from this author's last excuse", "rank_linter": "Human Linter", "rank_expert": "Tech Expert", "rank_arch": "Architect", "rank_senior": "Senior Engineer", "rank_eng": "Engineer", "rank_junior": "Junior Engineer", "rank_intern": "Intern", "tier_b1": "🥉Bronze", "tier_s1": "🥈Silver", "tier_g1": "🥇Gold", "tier_p1": "💠Platinum", "tier_d1": "💎Diamond", "tier_k": "👑Master", "ach_linter": "🏆 Achievement: Human Linter", "ach_shit": "🏆 Achievement: Legacy Conqueror", "ach_noinc": "🏆 Achievement: Zero Incidents", "ach_caf": "🏆 Achievement: Caffeine Overload", "ach_pmrev": "🏆 Achievement: PM's Revenge", "ach_aijudge": "🏆 Achievement: AI Judge", "end_title": "🎉 Review Complete", "end_rate": "Find rate {r}% ({f}/{t})", "end_elo": "Tier {r1} {e1} → {r2} {e2} ({d})", "end_score_k": "Score", "end_best": "(new record!)", "end_best2": "(best {b})", "end_maxcombo": "Best combo", "end_inc": "Incidents", "end_missed": "Bugs missed", "end_ach": "Achievements", "end_again": "Play again 🔁", "best_line": "Best {b} pts · ", "elo_line": "Tier {e} pts", "start_toast": "PR 1/10: read the diff, click lines you think are buggy!", "doc_title": "Code Review Hell", "dock_duck": "Rubber duck", "dock_blame": "git blame", "dock_lint": "Linter", "dock_coffee": "Coffee", "dock_cup": "Thermos", "dock_shot": "Screenshot", "dock_share": "Blame game", "dock_ot": "Overtime", "ach_n_shit": "Legacy Conqueror", "ach_n_noinc": "Zero Incidents", "ach_n_caf": "Caffeine Overload", "ach_n_pmrev": "PM's Revenge", "ach_n_aijudge": "AI Judge"}};
+function t(k,o){var d=I18N[LANG]||I18N.zh;var x=(d[k]!==undefined)?d[k]:((I18N.zh[k]!==undefined)?I18N.zh[k]:k);if(o){for(var p in o){x=x.split('{'+p+'}').join(o[p]);}}return x;}
+function bt(b,f){return (LANG==='en'&&b.en&&b.en[f])?b.en[f]:b[f];}
+function btS(f){return (LANG==='en'&&SHIT['en_'+f])?SHIT['en_'+f]:SHIT[f];}
+function catName(c){return (LANG==='en'&&CATS[c].en)?CATS[c].en:CATS[c].n;}
+function auName(i){return (LANG==='en')?AUTHOR_EN[i]:AUTHORS[i][0];}
+function spN(x){return (LANG==='en'&&x.en_n)?x.en_n:x.n;}
+function spD(x){return (LANG==='en'&&x.en_d)?x.en_d:x.d;}
+function skN(x){return (LANG==='en'&&x.skill.en&&x.skill.en.n)?x.skill.en.n:x.skill.n;}
+function skD(x){return (LANG==='en'&&x.skill.en&&x.skill.en.d)?x.skill.en.d:x.skill.d;}
+function tauntPick(){var T=LANG==='en'?TAUNTS_EN:TAUNTS;return T[rnd(T.length)];}
+function excusePick(){var E=LANG==='en'?EXCUSES_EN:EXCUSES;return E[rnd(E.length)];}
+function setLang(l){LANG=l;try{localStorage.setItem('cr_lang',l);}catch(e){}refreshLang();}
+function applyI18n(){
+ document.querySelectorAll('[data-i18n]').forEach(function(el){el.textContent=t(el.getAttribute('data-i18n'));});
+ document.querySelectorAll('[data-i18n-html]').forEach(function(el){el.innerHTML=t(el.getAttribute('data-i18n-html'));});
+ document.querySelectorAll('[data-i18n-title]').forEach(function(el){el.title=t(el.getAttribute('data-i18n-title'));});
+ var lb=$('btn-lang');if(lb)lb.textContent=LANG==='zh'?'🌐 EN':'🌐 中文';
+ document.documentElement.lang=LANG==='zh'?'zh-CN':'en';
+ document.title=t('doc_title');
+}
+
+/* ================= 数据区 ================= */
+const CATS={fe:{n:"前端",en:"Frontend",em:"🎨"},be:{n:"后端",en:"Backend",em:"⚙️"},sec:{n:"安全",en:"Security",em:"🛡️"},conc:{n:"并发",en:"Concurrency",em:"🧵"},
+ algo:{n:"算法",en:"Algorithms",em:"🧠"},ai:{n:"AI",en:"AI",em:"🤖"},pm:{n:"产品",en:"Product",em:"📊"},qa:{n:"测试",en:"QA",em:"🧪"}};
+// skill: uses "pr"=每PR重置 / "game"=每局固定次数 / "passive"=被动
+const SPECS=[
+ {id:"fe",em:"🎨",n:"前端",en_n:"Frontend",d:"闭包、this、hooks，样样精通",en_d:"Closures, `this`, hooks — master of them all",cat:"fe",
+  skill:{n:"像素眼",d:"高亮含 this/闭包/setTimeout/useEffect 的行 3 秒",en:{n:"Pixel Eye",d:"Highlight lines with this/closures/setTimeout/useEffect for 3s"},uses:"pr",count:3}},
+ {id:"be",em:"⚙️",n:"后端",en_n:"Backend",d:"SQL、时区、幂等，了如指掌",en_d:"SQL, timezones, idempotency — knows them cold",cat:"be",
+  skill:{n:"我担保",d:"标记 3 行非 bug 行为安全色，可忽略",en:{n:"I Vouch",d:"Mark 3 safe non-bug lines green; ignore them"},uses:"pr",count:3}},
+ {id:"sec",em:"🛡️",n:"安全",en_n:"Security",d:"注入、XSS、越权，无所遁形",en_d:"Injection, XSS, broken access — nowhere to hide",cat:"sec",
+  skill:{n:"注入雷达",d:"高亮所有拼接用户输入的行 3 秒",en:{n:"Injection Radar",d:"Highlight all lines concatenating user input for 3s"},uses:"pr",count:3}},
+ {id:"conc",em:"🧵",n:"并发",en_n:"Concurrency",d:"死锁、竞态、可见性，一眼看穿",en_d:"Deadlocks, races, visibility — sees through them all",cat:"conc",
+  skill:{n:"上帝视角",d:"直接显示本 PR 的 bug 总数与已找数",en:{n:"God View",d:"Show this PR's total bug count and found count"},uses:"pr",count:3}},
+ {id:"pm",em:"📊",n:"产品经理",en_n:"Product Manager",d:"需求？需求就是用来砍的",en_d:"Requirements? Requirements are for cutting.",cat:"pm",
+  skill:{n:"砍一刀",d:"直接移除 3 行非 bug 代码行",en:{n:"Take a Cut",d:"Directly remove 3 non-bug lines of code"},uses:"pr",count:3}},
+ {id:"algo",em:"🧠",n:"算法工程师",en_n:"Algorithm Engineer",d:"复杂度，就是我的浪漫",en_d:"Complexity is my romance",cat:"algo",
+  skill:{n:"复杂度之眼",d:"高亮所有循环/递归行 3 秒",en:{n:"Complexity Eye",d:"Highlight all loop/recursion lines for 3s"},uses:"pr",count:3}},
+ {id:"ai",em:"🤖",n:"AI工程师",en_n:"AI Engineer",d:"Prompt 写得好，下班下得早",en_d:"Write good prompts, leave work early",cat:"ai",
+  skill:{n:"审问AI",d:"点一行，揭示 AI 生成还是人类手写",en:{n:"Interrogate AI",d:"Tap a line: reveal AI-written or human-written"},uses:"game",count:3}},
+ {id:"qa",em:"🧪",n:"测试工程师",en_n:"QA Engineer",d:"没有测不出的 bug，只有不够变态的用例",en_d:"No bug untestable — only test cases not twisted enough",cat:null,
+  skill:{n:"用例穷举",d:"点一行，直接告知是/否 bug 行，不扣分",en:{n:"Exhaustive Cases",d:"Tap a line: told bug or not, no penalty"},uses:"pr",count:3}},
+ {id:"java",em:"☕",n:"Java工程师",en_n:"Java Engineer",d:"Write once, debug everywhere",en_d:"Write once, debug everywhere",cat:"be",
+  skill:{n:"狙击",d:"下次点击变赌博：中则+300，错则连击清零",en:{n:"Snipe",d:"Next click becomes a gamble: hit +300, miss resets combo"},uses:"pr",count:3}},
+ {id:"and",em:"📱",n:"安卓工程师",en_n:"Android Engineer",d:"碎片化？那是 ROM 的事",en_d:"Fragmentation? That's the ROM's problem.",cat:"fe",
+  skill:{n:"电量守护",d:"被动：每 PR 第一次点错不扣连击",en:{n:"Battery Guard",d:"Passive: first misclick per PR doesn't reset combo"},uses:"passive",count:0}},
+ {id:"ios",em:"🍎",n:"iOS工程师",en_n:"iOS Engineer",d:"审核被拒？那一定是苹果的错",en_d:"Rejected by review? Must be Apple's fault.",cat:"fe",
+  skill:{n:"审核被拒",d:"本 PR 打回：换一道同难度 bug，已找清零",en:{n:"Rejected!",d:"Reject this PR: swap for a same-difficulty bug, found progress reset"},uses:"game",count:2}}
+];
+const AUTHORS=[["实习生小王","🧑‍🎓"],["全栈老张","🧑‍💻"],["架构师Tony","🤵"],["外包小李","👷"],["重构狂魔阿强","🧙"],["祖传代码守护者","🧟"]];
+const AUTHOR_EN=["Intern Wang","Full-stack Zhang","Architect Tony","Outsourced Li","Refactor Maniac Qiang","Legacy Code Guardian"];
+const COMMITS=["fix: 应该修好了吧","feat: 先上线再说","refactor: 我就改了一行","fix: 玄学问题，加了个sleep","docs: 代码即文档","fix: 产品说这样可以","perf: 应该更快了","chore: 顺手改了一下","fix: 这次真的修好了","feat: 需求又变了，将就看"];
+const EXCUSES=["这里不会走到","TODO: 以后再改","我本地是好的","这是feature不是bug","上次就是这么写的","产品说可以","压测的时候没复现","书上就这么写的","用户不会手抖的","先跑通，安全以后再说"];
+const EXCUSES_EN=["it never reaches here","TODO: fix later","works on my machine","it's a feature, not a bug","that's how it was written last time","product said it's fine","couldn't repro in load tests","the book writes it this way","users don't have shaky hands","make it work first, security later"];
+const TAUNTS=["提交人：你行你上啊","提交人：这行代码很贵的","提交人：建议重修《代码阅读》","提交人：乱点是吧？","提交人：Linter都没你能点"];
+const TAUNTS_EN=["Author: you do it then","Author: this line of code is expensive","Author: retake 'Code Reading 101'","Author: just clicking randomly, huh?","Author: even the linter can't click like you"];
+// code: [符号, 代码, 是否bug]
+const BUGS=[
+/* ---------- 前端 ---------- */
+{cat:"fe",title:"闭包陷阱",lang:"JavaScript",commit:"fix: 循环里的定时器好像不太对",author:0,
+code:[[" ","for (var i = 0; i < 5; i++) {"],
+[" ","  setTimeout(() => console.log(i), 100);",1],
+[" ","}"],
+[" ","// 期望输出 0,1,2,3,4"]],
+explain:"var 没有块级作用域，5 个定时器共享同一个 i，最后全输出 5。换 let 或包一层 IIFE。",
+excuse:"我本地跑的时候……嗯，好像确实全是 5。",en:{title:"Closure Trap",commit:"fix: timers in a loop acting weird",explain:"var has no block scope — all 5 timers share the same i, so they all print 5. Use let, or wrap it in an IIFE.",excuse:"On my machine... yeah, okay, they were all 5."}},
+{cat:"fe",title:"this 叛逃",lang:"JavaScript",commit:"feat: 按钮点击计数，先上线再说",author:1,
+code:[[" ","class Counter {"],
+[" ","  constructor() { this.n = 0; }"],
+[" ","  inc() { this.n++; this.render(); }"],
+[" ","  bind() {"],
+[" ","    btn.onclick = this.inc;",1],
+[" ","  }"],
+[" ","}"]],
+explain:"方法作为回调传递时 this 丢失，onclick 里的 this 指向 DOM 元素。bind 一下或用箭头函数。",
+excuse:"this 应该还是 this 吧……",en:{title:"The `this` Defector",commit:"feat: click counter, ship it now",explain:"Passing a method as a callback loses `this` — inside onclick, `this` is the DOM element. Bind it, or use an arrow function.",excuse:"this should still be this... right?"}},
+{cat:"fe",title:"+1+1=1",lang:"JavaScript",commit:"fix: 连点两次只加了1，玄学",author:0,
+code:[[" ","const [count, setCount] = useState(0);"],
+[" ","const addTwo = () => {"],
+[" ","  setCount(count + 1);",1],
+[" ","  setCount(count + 1);",1],
+[" ","};"]],
+explain:"两次 setState 基于同一个旧快照，最终只 +1。用函数式更新 setCount(c => c + 1)。",
+excuse:"1+1 应该是 2 啊，React 你针对我？",en:{title:"1+1=1",commit:"fix: double click only adds 1, spooky",explain:"Both setStates are computed from the same stale snapshot, so you only get +1. Use the functional form: setCount(c => c + 1).",excuse:"1+1 should be 2. React, are you targeting me?"}},
+{cat:"fe",title:"过期的 page",lang:"JavaScript",commit:"feat: 轮询刷新列表",author:1,
+code:[[" ","useEffect(() => {"],
+[" ","  const t = setInterval(() => load(page), 1000);",1],
+[" ","  return () => clearInterval(t);"],
+[" ","}, [] // 只跑一次"]],
+explain:"依赖数组为空，闭包里的 page 永远是初始值，翻页后还在刷第一页。把 page 加进依赖。",
+excuse:"空数组就是只跑一次的意思，我没写错",en:{title:"Stale Page",commit:"feat: polling list refresh",explain:"An empty dep array freezes `page` in the closure at its initial value — after paging, it keeps refreshing page one. Add page to the deps.",excuse:"Empty array means run once. I wrote it correctly."}},
+{cat:"fe",title:"双等号的温柔",lang:"JavaScript",commit:"fix: 空输入判断",author:3,
+code:[[" ","function isEmpty(input) {"],
+[" ","  if (input == 0) return true;",1],
+[" ","  return false;"],
+[" ","}"],
+[" ","// isEmpty('') === true, isEmpty('0') === true"]],
+explain:"== 会隐式类型转换，'' 和 '0' 都 == 0。用 ===，让类型也参与审判。",
+excuse:"双等号比较有人情味",en:{title:"The Gentleness of ==",commit:"fix: empty input check",explain:"== does implicit type coercion — '' and '0' both == 0. Use === and let the types face judgment too.",excuse:"Double equals has more humanity."}},
+{cat:"fe",title:"0.3 的背叛",lang:"JavaScript",commit:"feat: 满0.3元立减活动",author:0,
+code:[[" ","const total = 0.1 + 0.2;"],
+[" ","if (total === 0.3) {",1],
+[" ","  applyDiscount(); // 永远不会执行"],
+[" ","}"]],
+explain:"0.1+0.2 = 0.30000000000000004，浮点数没有精确的小数。金额用'分'（整数）计算。",
+excuse:"数学是体育老师教的",en:{title:"Betrayal of 0.3",commit:"feat: $0.30-off promo",explain:"0.1+0.2 = 0.30000000000000004. Floats can't do exact decimals. Do money math in integer cents.",excuse:"My math teacher was the PE teacher."}},
+{cat:"fe",title:"监听器永生",lang:"JavaScript",commit:"feat: 监听窗口变化",author:1,
+code:[[" ","useEffect(() => {"],
+[" ","  window.addEventListener('resize', onResize);",1],
+[" ","}); // 每次渲染都执行"]],
+explain:"每次渲染都 addEventListener，从不 remove：内存泄漏 + 回调越积越多。return 一个清理函数。",
+excuse:"TODO: 以后再改",en:{title:"Immortal Listeners",commit:"feat: watch window resize",explain:"addEventListener on every render, never removed: memory leak plus callbacks piling up forever. Return a cleanup function.",excuse:"TODO: fix it later."}},
+{cat:"fe",title:"forEach 的谎言",lang:"JavaScript",commit:"feat: 批量保存",author:3,
+code:[[" ","items.forEach(async (it) => {",1],
+[" ","  await saveItem(it);"],
+[" ","});"],
+[" ","console.log('全部保存完成'); // 提前打印"]],
+explain:"forEach 不等待 Promise，'完成'会提前打印，异常还会静默丢失。用 for...of。",
+excuse:"异常不会发生的，我保证",en:{title:"forEach's Lie",commit:"feat: batch save",explain:"forEach doesn't await Promises — 'done' prints early and errors vanish silently. Use for...of.",excuse:"Exceptions won't happen. I guarantee it."}},
+/* ---------- 后端 ---------- */
+{cat:"be",title:"N+1 查询",lang:"JavaScript",commit:"feat: 订单列表带用户名",author:1,
+code:[[" ","const orders = await db.orders.findAll();"],
+[" ","for (const o of orders) {"],
+[" ","  o.user = await db.users.findById(o.userId);",1],
+[" ","}"]],
+explain:"循环里逐条查库，1 万订单 = 10001 次查询。用 JOIN 或 IN 一次查回。",
+excuse:"数据量小的时候是没问题的",en:{title:"N+1 Queries",commit:"feat: order list with usernames",explain:"Querying the DB inside a loop: 10k orders = 10,001 queries. Fetch it all with one JOIN or IN query.",excuse:"It was fine when the dataset was small."}},
+{cat:"be",title:"时区刺客",lang:"JavaScript",commit:"feat: 报名截止功能",author:0,
+code:[[" ","const ddl = new Date('2026-10-16');",1],
+[" ","if (Date.now() > ddl) close();"]],
+explain:"'YYYY-MM-DD' 会被解析为 UTC 零点，东八区用户提前 8 小时被截止。显式指定时区。",
+excuse:"我本地是好的（UTC+8 也是本地）",en:{title:"Timezone Assassin",commit:"feat: signup deadline",explain:"'YYYY-MM-DD' parses as UTC midnight — UTC+8 users get cut off 8 hours early. Always specify the timezone explicitly.",excuse:"Works on my machine (UTC+8 is local too)."}},
+{cat:"be",title:"重复扣款",lang:"JavaScript",commit:"feat: 支付接口",author:2,
+code:[[" ","app.post('/pay', async (req, res) => {"],
+[" ","  await wallet.deduct(uid, amount);",1],
+[" ","  res.json({ ok: true });"],
+[" ","}); // 网络重试会怎样？"]],
+explain:"无幂等设计，网络重试/用户连点会导致重复扣款。用幂等键 + 唯一约束。",
+excuse:"用户不会手抖的",en:{title:"Double Charge",commit:"feat: payment API",explain:"No idempotency — a network retry or an impatient double-click charges twice. Use idempotency keys plus unique constraints.",excuse:"Users don't have shaky hands."}},
+{cat:"be",title:"消失的一分钱",lang:"Python",commit:"feat: 打85折",author:3,
+code:[[" ","total = price * 0.85",1],
+[" ","save_order(total)"]],
+explain:"浮点数做金额会丢分，100 万笔就是真金白银。用整数'分'计算，展示时再除以 100。",
+excuse:"差一分钱谁看得出来",en:{title:"The Vanishing Cent",commit:"feat: 15% off",explain:"Float math on money drops cents, and across a million transactions that's real money. Compute in integer cents; divide by 100 only for display.",excuse:"Who's going to notice one missing cent?"}},
+{cat:"be",title:"深分页",lang:"JavaScript",commit:"feat: 日志查询",author:1,
+code:[[" ","const list = await db.logs.find()"],
+[" ","  .skip(1000000).limit(20);",1]],
+explain:"offset 越大越慢，100 万 offset 要扫描 100 万行。用游标分页 where id > lastId。",
+excuse:"先上线再说，以后再优化",en:{title:"Deep Pagination",commit:"feat: log search",explain:"The bigger the offset, the slower it gets — offset 1M scans 1M rows. Use cursor pagination: WHERE id > lastId.",excuse:"Ship now, optimize later."}},
+{cat:"be",title:"半吊子事务",lang:"JavaScript",commit:"feat: 消费送积分",author:0,
+code:[[" ","await account.deduct(uid, 100);",1],
+[" ","await points.add(uid, 10); // 若抛异常？"]],
+explain:"两步无事务，第二步抛异常时钱已扣、积分没到。包进同一个事务。",
+excuse:"两行代码之间能出什么事",en:{title:"Half-baked Transaction",commit:"feat: spend-and-earn points",explain:"Two steps, no transaction: if step two throws, the money is gone and the points never arrive. Wrap both in one transaction.",excuse:"What could possibly go wrong between two lines of code?"}},
+{cat:"be",title:"永生缓存",lang:"JavaScript",commit:"perf: 排行榜缓存",author:2,
+code:[[" ","await redis.set('hot:rank', JSON.stringify(rank));",1],
+[" ","// 没有 EX"]],
+explain:"没有过期时间，榜单永远是第一版，key 还会越积越多。set 时加上 EX。",
+excuse:"缓存嘛，永不过期才叫缓存",en:{title:"Immortal Cache",commit:"perf: leaderboard cache",explain:"No expiry — the leaderboard is frozen at v1 forever while keys pile up. Add EX when you SET.",excuse:"A cache that never expires is a true cache."}},
+{cat:"be",title:"不设防的 id",lang:"Python",commit:"feat: 用户查询接口",author:3,
+code:[[" ","@app.route('/user')"],
+[" ","def get_user():" ],
+[" ","    u = db.users.find_one({'_id': request.args['id']})",1],
+[" ","    return jsonify(u)"]],
+explain:"id 未校验类型，直接进查询就是 NoSQL 注入：传 {'$ne': null} 拖走全表。先校验再查询。",
+excuse:"前端会传对的",en:{title:"Unguarded ID",commit:"feat: user lookup API",explain:"The id goes into the query unvalidated — that's NoSQL injection: {'$ne': null} dumps the whole table. Validate before you query.",excuse:"The frontend will send the right thing."}},
+/* ---------- 安全 ---------- */
+{cat:"sec",title:"SQL 注入",lang:"JavaScript",commit:"feat: 按名字搜用户",author:3,
+code:[[" ","const sql = \"SELECT * FROM users WHERE name = '\" + name + \"'\";",1],
+[" ","const rows = await db.query(sql);"]],
+explain:"name 填 `' OR '1'='1` 直接登录任意账号。这是 2026 年了，用参数化查询。",
+excuse:"这是 feature，方便测试",en:{title:"SQL Injection",commit:"feat: search users by name",explain:"Type `' OR '1'='1` into the name field and you're logged in as anyone. It's 2026 — use parameterized queries.",excuse:"It's a feature. For testing."}},
+{cat:"sec",title:"XSS 全家桶",lang:"JavaScript",commit:"feat: 评论区",author:0,
+code:[[" ","function renderComment(c) {"],
+[" ","  box.innerHTML = c.content;",1],
+[" ","}"]],
+explain:"用户输入直接 innerHTML，一个 <script> 全站沦陷。用 textContent 或转义。",
+excuse:"我们的用户都很善良",en:{title:"XSS Combo Meal",commit:"feat: comments",explain:"User input straight into innerHTML — one <script> tag and the whole site falls. Use textContent or escape it.",excuse:"Our users are all kind people."}},
+{cat:"sec",title:"越权查看",lang:"JavaScript",commit:"feat: 订单详情页",author:1,
+code:[[" ","app.get('/api/order/:id', auth, async (req, res) => {",1],
+[" ","  res.json(await db.orders.findById(req.params.id));"],
+[" ","}); // 只验了登录，没验归属"]],
+explain:"只校验'登录了'，没校验'这是你的订单'，遍历 id 看光全站订单。加归属校验。",
+excuse:"订单号是 UUID，猜不到的",en:{title:"Broken Access Control",commit:"feat: order detail page",explain:"It checks 'are you logged in' but never 'is this YOUR order' — enumerate IDs and read everyone's orders. Add an ownership check.",excuse:"Order IDs are UUIDs. Nobody can guess those."}},
+{cat:"sec",title:"MD5 护体",lang:"JavaScript",commit:"feat: 用户注册",author:3,
+code:[[" ","const hash = md5(password + 'salt');",1],
+[" ","await db.users.insert({ name, hash });"]],
+explain:"MD5 几秒钟就能被彩虹表撞出来。密码哈希用 bcrypt / argon2，加盐要随���。",
+excuse:"加了 salt 的，很安全",en:{title:"MD5 Body Armor",commit:"feat: user signup",explain:"MD5 falls to rainbow tables in seconds. Hash passwords with bcrypt/argon2 — and salts must be random.",excuse:"I added salt. Totally secure."}},
+{cat:"sec",title:"SSRF 后门",lang:"JavaScript",commit:"feat: 网页抓取代理",author:1,
+code:[[" ","app.get('/proxy', async (req, res) => {"],
+[" ","  const r = await fetch(req.query.url);",1],
+[" ","  res.send(await r.text());"],
+[" ","});"]],
+explain:"url 可指向内网 metadata 服务，直接读走云主机凭证。白名单域名 + 禁止内网 IP。",
+excuse:"内网 IP 外面又访问不到",en:{title:"SSRF Backdoor",commit:"feat: webpage fetch proxy",explain:"The URL can point at internal metadata services and walk away with cloud credentials. Whitelist domains and block internal IPs.",excuse:"Internal IPs aren't reachable from outside anyway."}},
+{cat:"sec",title:"百年 token",lang:"JavaScript",commit:"feat: 免登录",author:2,
+code:[[" ","const t = jwt.sign(payload, SECRET, { expiresIn: '100y' });",1],
+[" ","res.json({ token: t });"]],
+explain:"token 100 年不过期，泄露一次永久有效。过期时间按分钟/小时计，配合刷新机制。",
+excuse:"用户不想反复登录",en:{title:"Century Token",commit:"feat: stay logged in",explain:"A token that lives 100 years stays valid 100 years after it leaks. Expire in minutes or hours, with a refresh flow.",excuse:"Users don't want to log in over and over."}},
+{cat:"sec",title:"CORS 裸奔",lang:"JavaScript",commit:"fix: 前端跨域报错，先跑通",author:0,
+code:[[" ","res.setHeader('Access-Control-Allow-Origin', '*');",1],
+[" ","res.setHeader('Access-Control-Allow-Credentials', 'true');"]],
+explain:"* 配 credentials，任意网站都能带着用户 cookie 调你的接口。Origin 走白名单。",
+excuse:"先跑通，安全以后再说",en:{title:"CORS Streaking",commit:"fix: frontend CORS error, just make it work",explain:"`*` with credentials — any website on earth can call your API carrying the user's cookies. Whitelist your origins.",excuse:"Make it work first, security later."}},
+/* ---------- 并发 ---------- */
+{cat:"conc",title:"死亡拥抱",lang:"Java",commit:"feat: 转账加锁",author:2,
+code:[[" ","// 线程 A"],
+[" ","synchronized (lockA) { synchronized (lockB) { transfer(); } }",1],
+[" ","// 线程 B"],
+[" ","synchronized (lockB) { synchronized (lockA) { transfer(); } }",1]],
+explain:"两个线程以相反顺序拿锁，互相等待到天荒地老。全局统一加锁顺序。",
+excuse:"压测的时候没复现",en:{title:"Deadly Embrace",commit:"feat: transfer with locks",explain:"Two threads grabbing locks in opposite order, waiting on each other until the end of time. One global lock ordering.",excuse:"Never reproduced in load tests."}},
+{cat:"conc",title:"超卖狂欢",lang:"Java",commit:"feat: 秒杀下单",author:1,
+code:[[" ","if (stock > 0) {",1],
+[" ","  stock--;",1],
+[" ","  createOrder();"],
+[" ","}"]],
+explain:"check-then-act 非原子，并发下 100 件能卖出 1000 件。用原子扣减 UPDATE ... WHERE stock > 0。",
+excuse:"秒杀就 100 件，能有多大并发",en:{title:"Oversell Fiesta",commit:"feat: flash-sale checkout",explain:"Check-then-act isn't atomic — under concurrency, 100 items get sold 1,000 times. Decrement atomically: UPDATE ... WHERE stock > 0.",excuse:"It's only 100 items. How much concurrency could there be?"}},
+{cat:"conc",title:"停不下来的线程",lang:"Java",commit:"feat: 优雅停机",author:0,
+code:[[" ","boolean running = true;",1],
+[" ","// 线程1: while (running) { work(); }"],
+[" ","// 线程2: running = false; // 可能永远看不见"]],
+explain:"非 volatile 变量的修改对其他线程不可见，线程 1 可能永远停不下来。加 volatile。",
+excuse:"在我机器上停得下来",en:{title:"The Thread That Never Stops",commit:"feat: graceful shutdown",explain:"Writes to a non-volatile variable may never become visible to other threads — thread 1 might run forever. Add volatile.",excuse:"It stops on my machine."}},
+{cat:"conc",title:"OOM 预定",lang:"Java",commit:"feat: 异步任务池",author:2,
+code:[[" ","new ThreadPoolExecutor(8, 8, 0L, MS,",1],
+[" ","  new LinkedBlockingQueue<>()); // 无界队列"]],
+explain:"无界队列 + 任务堆积 = 内存爆炸。用有界队列 + 拒绝策略，宁可拒绝不崩溃。",
+excuse:"8 个线程够用了",en:{title:"OOM, Reserved",commit:"feat: async task pool",explain:"Unbounded queue plus piling tasks equals memory explosion. Bounded queue plus a rejection policy: better to refuse than to crash.",excuse:"8 threads is plenty."}},
+{cat:"conc",title:"残缺的单例",lang:"Java",commit:"feat: 单例工具类",author:2,
+code:[[" ","if (instance == null) {",1],
+[" ","  synchronized (Lock.class) {"],
+[" ","    if (instance == null) instance = new Lock();"],
+[" ","  }"],
+[" ","}"]],
+explain:"指令重排序会让其他线程拿到半初始化对象。instance 必须加 volatile，这才是完整 DCL。",
+excuse:"单例模式标准写法，书上就这么写的",en:{title:"Broken Singleton",commit:"feat: singleton util",explain:"Instruction reordering can hand other threads a half-constructed object. instance MUST be volatile — that's the real double-checked locking.",excuse:"It's the textbook pattern. The book says so."}},
+{cat:"conc",title:"ArrayList 的葬礼",lang:"Java",commit:"feat: 并行采集",author:3,
+code:[[" ","List<String> list = new ArrayList<>();",1],
+[" ","// 10 个线程同时 list.add(x)"]],
+explain:"ArrayList 非线程安全，并发 add 会丢数据甚至死循环。用 CopyOnWriteArrayList 或加锁。",
+excuse:"list 而已，能有什么线程问题",en:{title:"ArrayList's Funeral",commit:"feat: parallel collection",explain:"ArrayList isn't thread-safe — concurrent add() drops data or even spins forever. Use CopyOnWriteArrayList or lock it.",excuse:"It's just a list. What thread problems could a list possibly have?"}},
+{cat:"conc",title:"大锁一统江湖",lang:"Java",commit:"fix: 加个锁，应该线程安全了",author:0,
+code:[[" ","public synchronized void handle(Request r) {",1],
+[" ","  validate(r);"],
+[" ","  callRemote(r); // 耗时 2s"],
+[" ","  saveDb(r);"],
+[" ","}"]],
+explain:"整个方法串行化，远程调用的 2 秒全堵在锁里，吞吐直接归零。只锁真正的临界区。",
+excuse:"synchronized 包治百病",en:{title:"One Big Lock to Rule Them All",commit:"fix: added a lock, should be thread-safe now",explain:"Serializing the entire method parks a 2-second remote call inside the lock — throughput drops to zero. Lock only the critical section.",excuse:"synchronized cures everything."}},
+/* ---------- 算法 ---------- */
+{cat:"algo",diff:2,title:"快排的噩梦",lang:"JavaScript",commit:"feat: 快排，面试题标准答案",author:0,
+code:[[" ","function quickSort(arr) {"],
+[" ","  if (arr.length <= 1) return arr;"],
+[" ","  const pivot = arr[0]; // 固定取第一个",1],
+[" ","  const L = arr.slice(1).filter(x => x < pivot);"],
+[" ","  const R = arr.slice(1).filter(x => x >= pivot);"],
+[" ","  return [...quickSort(L), pivot, ...quickSort(R)];"],
+[" ","}"]],
+explain:"pivot 固定取 arr[0]，有序数组输入直接退化成 O(n²)，递归深度 n 还可能爆栈。随机 pivot 或三数取中。",
+excuse:"面试的时候就是这么写的",en:{title:"Quicksort Nightmare",commit:"feat: quicksort, textbook interview answer",explain:"A fixed pivot at arr[0] degrades to O(n²) on sorted input, and recursion depth n can blow the stack. Random pivot or median-of-three.",excuse:"That's exactly how I wrote it in the interview."}},
+{cat:"algo",diff:3,title:"二分查找转圈圈",lang:"JavaScript",commit:"fix: 二分查找边界",author:1,
+code:[[" ","let lo = 0, hi = arr.length - 1;"],
+[" ","while (lo < hi) {"],
+[" ","  const mid = (lo + hi) >> 1;"],
+[" ","  if (arr[mid] < target) lo = mid;",1],
+[" ","  else hi = mid;"],
+[" ","}"]],
+explain:"lo = mid 在区间只剩两个元素时会原地踏步，死循环到天荒地老。应该是 lo = mid + 1。",
+excuse:"mid 和 mid+1，不就差 1 吗",en:{title:"Binary Search Spinning in Circles",commit:"fix: binary search bounds",explain:"lo = mid stalls when two elements remain — looping forever. It should be lo = mid + 1.",excuse:"mid vs mid+1 — it's just off by one."}},
+{cat:"algo",diff:1,title:"斐波那契黑洞",lang:"Python",commit:"feat: 递归求斐波那契",author:0,
+code:[[" ","def fib(n):"],
+[" ","    if n == 1: return 1",1],
+[" ","    return fib(n-1) + fib(n-2)"],
+[" ",""],
+[" ","fib(0)  # RecursionError: 递归到地心"]],
+explain:"漏了 n==0 的终止条件，fib(0) 一路递归到地心。写递归先写终止条件，再写递推。",
+excuse:"谁会传 0 啊",en:{title:"Fibonacci Black Hole",commit:"feat: recursive fibonacci",explain:"Missing the n==0 base case — fib(0) recurses straight to the center of the earth. Base case first, recurrence second.",excuse:"Who would ever pass 0?"}},
+/* ---------- AI ---------- */
+{cat:"ai",diff:2,title:"Prompt 门户大开",lang:"Python",commit:"feat: AI 翻译功能",author:3,
+code:[[" ","prompt = '把下面翻译成英文：' + user_input",1],
+[" ","res = llm.chat(prompt)"],
+[" ","render(res)"]],
+explain:"用户输入直接拼进 prompt，一句'忽略上面的指令'就能让 AI 干任何事。用户输入走结构化参数，别拼接。",
+excuse:"用户都是好人，不会注入的",en:{title:"Prompt Wide Open",commit:"feat: AI translation",explain:"User input concatenated straight into the prompt — one 'ignore all previous instructions' and the AI will do anything. Pass user input as structured parameters, never string-concat.",excuse:"Users are good people. They would never inject."}},
+{cat:"ai",diff:2,title:"让AI自由发挥",lang:"Python",commit:"feat: 智能分类",author:0,
+code:[[" ","res = llm.classify(text, temperature=1.5)",1],
+[" ","label = res.label  # 每次运行结果都不一样"],
+[" ","save(label)"]],
+explain:"分类是确定性任务，temperature=1.5 让每次结果都像开盲盒。分类/抽取类任务用 temperature=0。",
+excuse:"temperature 越高 AI 越聪明",en:{title:"Let the AI Freestyle",commit:"feat: smart classifier",explain:"Classification is deterministic work — temperature=1.5 turns every result into a loot box. Use temperature=0 for classify/extract tasks.",excuse:"Higher temperature means a smarter AI."}},
+{cat:"ai",diff:3,title:"上下文刺客",lang:"Python",commit:"feat: 文档问答",author:1,
+code:[[" ","doc = read_file(upload)  # 用户传了 200 页 PDF"],
+[" ","prompt = '总结一下：' + doc",1],
+[" ","ans = llm.chat(prompt, max_tokens=8192)"]],
+explain:"超长文档硬塞进 prompt，超限部分被静默截断，AI 在缺文的情况下一本正经地回答。先分块做 RAG，别硬塞。",
+excuse:"context 不够？那是模型的问题",en:{title:"Context Assassin",commit:"feat: doc Q&A",explain:"Cramming a giant doc into the prompt silently truncates the overflow, and the AI answers with total confidence and missing context. Chunk it and do RAG instead.",excuse:"Not enough context? That sounds like the model's problem."}},
+/* ---------- 产品 ---------- */
+{cat:"pm",diff:1,title:"八五折の数学",lang:"JavaScript",commit:"feat: 限时85折",author:3,
+code:[[" ","// 限时 85 折！"],
+[" ","const pay = price * 8.5;",1],
+[" ","checkout(pay)"]],
+explain:"85 折是 ×0.85，不是 ×8.5。用户付 8.5 倍的价格，老板笑醒，用户报警。",
+excuse:"8.5 和 0.85，不就差个零吗",en:{title:"85%-Off Math",commit:"feat: limited 85% off",explain:"85% off means ×0.85, not ×8.5. Users pay 8.5× the price — the boss laughs, the users call the police.",excuse:"8.5 vs 0.85 — it's just one zero."}},
+{cat:"pm",diff:2,title:"一分钱难倒英雄",lang:"JavaScript",commit:"feat: 满100减10",author:0,
+code:[[" ","if (total > 100) {",1],
+[" ","  total -= 10; // 满100减10"],
+[" ","}"]],
+explain:"'满 100'包括 100 本身，得用 >=。99.99 的用户：就差一分钱，我不配。",
+excuse:"大于和大于等于，用户分得清吗",en:{title:"One Cent Defeats the Hero",commit:"feat: $10 off over $100",explain:"'Over 100' includes 100 itself — use >=. The user sitting at 99.99: 'one cent short, I don't deserve it.'",excuse:"> vs >= — users can tell the difference, right?"}},
+{cat:"pm",diff:3,title:"杭州人民不配过12点",lang:"JavaScript",commit:"feat: 限时活动",author:1,
+code:[[" ","// 活动今晚 12 点结束"],
+[" ","if (Date.now() > Date.parse('2026-10-17T00:00:00Z')) {",1],
+[" ","  closeEvent();"],
+[" ","}"]],
+explain:"Z 是 UTC，'今晚 12 点'对杭州用户是凌晨 4 点——活动提前 8 小时结束，被骂上热搜。用本地时区或显式 +08:00。",
+excuse:"12 点就是 12 点，还分什么时区",en:{title:"The Timezone Tax",commit:"feat: midnight flash sale",explain:"Z means UTC — 'ends at midnight' cuts off UTC+8 users at 4 AM, eight hours early, and gets you trending for all the wrong reasons. Use the local timezone or an explicit +08:00.",excuse:"Midnight is midnight. What do timezones have to do with anything?"}},
+/* ---------- 新增 20 题（2026-10-17 数据驱动扩充：59 题） ---------- */
+{cat:"fe",diff:2,title:"useEffect 的遗言",lang:"JavaScript",commit:"feat: 秒表功能",author:0,
+code:[[" ","const [n, setN] = useState(0);"],
+[" ","useEffect(() => {"],
+[" ","  const t = setInterval(() => setN(n + 1), 1000);",1],
+[" ","  return () => clearInterval(t);"],
+[" ","}, []);"]],
+explain:"空依赖数组把 n 锁死在初始值，定时器每次都在 setN(0 + 1)。依赖加上 n，或用 setN(x => x + 1)。",
+excuse:"它明明在走，只是每秒都从零开始的那种走。",en:{title:"useEffect's Last Words",commit:"feat: stopwatch",explain:"An empty dep array freezes n at its initial value — the timer keeps calling setN(0 + 1). Add n to the deps, or use setN(x => x + 1).",excuse:"It IS running — the kind of running that restarts from zero every second."}},
+{cat:"fe",diff:2,title:"WebView 裸奔",lang:"Java",commit:"feat: 安卓内嵌H5",author:3,
+code:[[" ","wv.getSettings().setAllowFileAccess(true);"],
+[" ","wv.loadUrl(\"file:///sdcard/app/index.html\");",1]],
+explain:"允许 file 访问又加载外置存储的页面，恶意 App 能顺着读用户文件。setAllowFileAccess 能关就关，别裸奔。",
+excuse:"用户手机里的文件，又不是我的文件。",en:{title:"WebView Streaking",commit:"feat: Android embedded H5",explain:"File access enabled plus pages loaded from external storage — a malicious app can stroll right in and read user files. Turn off setAllowFileAccess. Don't streak.",excuse:"The files on the user's phone aren't MY files."}},
+{cat:"fe",diff:1,title:"刘海吃字",lang:"CSS",commit:"fix: 适配iPhone",author:1,
+code:[[" ",".header { position: fixed; top: 0; height: 64px; }",1]],
+explain:"iPhone 刘海/灵动岛会吃掉 fixed 顶栏。要垫 env(safe-area-inset-top)，不然标题只剩一半。",
+excuse:"我用的是安卓，没刘海。",en:{title:"The Notch Ate My Title",commit:"fix: iPhone support",explain:"The notch and Dynamic Island eat fixed top bars alive. Pad with env(safe-area-inset-top), or your title gets cut in half.",excuse:"I'm on Android. No notch."}},
+{cat:"be",diff:2,title:"缓存不死",lang:"JavaScript",commit:"feat: 排行榜缓存",author:1,
+code:[[" ","await cache.set(\"hot:rank\", JSON.stringify(rank));",1]],
+explain:"没设 TTL，热点 key 永久驻留，榜单更新了用户还在看去年的。set 时加上 EX，过期自动续命。",
+excuse:"缓存嘛，越久越香。",en:{title:"Cache Never Dies",commit:"feat: leaderboard cache",explain:"No TTL — hot keys take up permanent residence, and users are still staring at last year's leaderboard. Add EX on SET.",excuse:"The older the cache, the better it smells."}},
+{cat:"be",diff:1,title:"== 的背叛",lang:"Java",commit:"feat: 管理员校验",author:0,
+code:[[" ","String role = new String(\"admin\");"],
+[" ","if (role == \"admin\") openGate();",1]],
+explain:"== 比的是引用。new 出来的和常量池不是同一个对象，\"admin\"本人来了也进不去。字符串比较用 equals。",
+excuse:"admin == admin，天经地义啊！",en:{title:"Betrayal of ==",commit:"feat: admin check",explain:"== compares references. A freshly `new`'d string is never the same object as the pooled constant — even the real \"admin\" can't get in. Use equals() for strings.",excuse:"admin == admin. It's only natural!"}},
+{cat:"be",diff:3,title:"分布式锁裸奔",lang:"Java",commit:"feat: 抢单锁",author:2,
+code:[[" ","if (redis.setnx(\"lock:order\", 1)) {"],
+[" ","  doJob(); // 若抛异常，锁永不释放",1],
+[" ","  redis.del(\"lock:order\");"],
+[" ","}"]],
+explain:"锁没设 TTL，doJob 抛异常或进程挂掉，全集群一起陪葬。setnx 必须配 expire，或直接用 set NX PX 原子命令。",
+excuse:"doJob 从来没抛过异常（上周除外）。",en:{title:"Distributed Lock Streaking",commit:"feat: order-grab lock",explain:"No TTL on the lock — if doJob throws or the process dies, the whole cluster goes down with it. Pair setnx with expire, or just use SET NX PX.",excuse:"doJob never throws. (Except last week.)"}},
+{cat:"sec",diff:1,title:"XSS 直播间",lang:"JavaScript",commit:"feat: 分享页",author:3,
+code:[[" ","div.innerHTML = location.hash.slice(1);",1]],
+explain:"hash 直接塞进 innerHTML，构造 #<img src=x onerror=...> 就能偷 cookie。用 innerText 或先转义。",
+excuse:"hash 里能有什么坏心思呢？",en:{title:"XSS Live Stream",commit:"feat: share page",explain:"The hash goes straight into innerHTML — craft #<img src=x onerror=...> and walk away with cookies. Use innerText, or escape first.",excuse:"What evil could possibly hide inside a hash?"}},
+{cat:"sec",diff:2,title:"目录穿越",lang:"Node.js",commit:"feat: 静态文件服务",author:1,
+code:[[" ","const p = \"/static/\" + req.query.file;",1],
+[" ","fs.readFile(p, send);"]],
+explain:"file=../../etc/passwd 直接穿越。basename 截断或白名单校验，别让用户拼路径。",
+excuse:"用户要哪个文件，我就给哪个，多贴心。",en:{title:"Path Traversal",commit:"feat: static file server",explain:"file=../../etc/passwd walks right out of the directory. basename it or whitelist — never let users build paths.",excuse:"Whatever file the user wants, I hand it over. How thoughtful of me."}},
+{cat:"sec",diff:3,title:"JWT 裸奔",lang:"JavaScript",commit:"feat: 管理后台鉴权",author:2,
+code:[[" ","const payload = jwt.decode(token);",1],
+[" ","if (payload.role === \"admin\") next();"]],
+explain:"decode 只解码不验签，攻击者把 role 改成 admin 都不用重签。必须用 verify 校验签名。",
+excuse:"token 是我们发的，还能有假？",en:{title:"JWT Streaking",commit:"feat: admin auth",explain:"decode() only decodes — it never verifies. Attackers flip role to admin without re-signing anything. Always verify() the signature.",excuse:"We issued the token ourselves. It can't be fake... right?"}},
+{cat:"conc",diff:2,title:"计数器竞态",lang:"JavaScript",commit:"feat: 秒杀计数",author:0,
+code:[[" ","let sold = 0;"],
+[" ","async function buy() {"],
+[" ","  const c = sold; await check();",1],
+[" ","  sold = c + 1;"],
+[" ","}"]],
+explain:"读-改-写之间 await 让出去了，100 个并发最后可能只 +37。超卖警告！用原子操作或锁。",
+excuse:"await 就一瞬间，能出什么事？",en:{title:"Counter Race",commit:"feat: flash-sale counter",explain:"An await sneaks in between read-modify-write — 100 concurrent requests might only add up to 37. Oversell alert! Use atomics or locks.",excuse:"An await is just a moment. What could happen in a moment?"}},
+{cat:"conc",diff:3,title:"双重检查锁之殇",lang:"Java",commit:"feat: 单例优化",author:1,
+code:[[" ","private static Singleton inst; // 没加 volatile",1],
+[" ","if (inst == null) {"],
+[" ","  synchronized (Lock.class) {"],
+[" ","    if (inst == null) inst = new Singleton();"],
+[" ","  }"],
+[" ","}"]],
+explain:"指令重排会让别的线程拿到半初始化的对象。Java 里这个字段必须 volatile，不然就是薛定谔的单例。",
+excuse:"双重检查了还不够吗？",en:{title:"Double-Checked Locking Doom",commit:"feat: singleton, optimized",explain:"Reordering hands other threads a half-initialized object. In Java this field MUST be volatile — otherwise it's Schrödinger's singleton.",excuse:"Double-checked still isn't enough?"}},
+{cat:"algo",diff:1,title:"递归深渊",lang:"JavaScript",commit:"feat: 斐波那契",author:0,
+code:[[" ","function fib(n) {"],
+[" ","  return n < 2 ? n : fib(n-1) + fib(n-2);",1],
+[" ","}"],
+[" ","// fib(50)，泡杯茶等"]],
+explain:"指数级重复计算，fib(50) 要算 200 亿次。加 memo 或改迭代，别让 CPU 陪你殉情。",
+excuse:"数学上是对的，慢一点怎么了？",en:{title:"Recursion Abyss",commit:"feat: fibonacci",explain:"Exponential recomputation — fib(50) needs 20 billion calls. Add memoization or go iterative. Don't make the CPU die with you.",excuse:"It's mathematically correct. So what if it's a little slow?"}},
+{cat:"algo",diff:2,title:"排序玄学",lang:"JavaScript",commit:"fix: 排行榜排序",author:3,
+code:[[" ","users.sort((a, b) => a.score > b.score);",1]],
+explain:"comparator 返回 boolean 而不是负/零/正，TimSort 直接摆烂，顺序看心情。返回 a.score - b.score。",
+excuse:"大于就是 true，true 不就是 1 吗？",en:{title:"Sorting Mysticism",commit:"fix: leaderboard sort",explain:"A comparator returning boolean instead of negative/zero/positive makes TimSort give up entirely — order becomes a matter of mood. Return a.score - b.score.",excuse:"Greater-than IS true, and true IS 1. Right?"}},
+{cat:"ai",diff:1,title:"temperature 是字符串",lang:"Python",commit:"feat: 接入大模型",author:0,
+code:[[" ","res = llm.chat(model=\"m1\", temperature=\"0.7\", msgs=msgs)",1]],
+explain:"temperature 传了字符串，SDK 静默失败回退默认 1.0，输出开始放飞自我。类型检查是 AI 时代的基本功。",
+excuse:"0.7 和\"0.7\"不都一个意思吗？",en:{title:"temperature Is a String",commit:"feat: LLM integration",explain:"temperature passed as a string — the SDK silently falls back to the default 1.0 and the output goes feral. Type checks are basics in the AI era.",excuse:"0.7 and \"0.7\" mean the same thing, don't they?"}},
+{cat:"ai",diff:2,title:"注入式翻译",lang:"Python",commit:"feat: 评论翻译",author:3,
+code:[[" ","prompt = \"把下面评论译成英文：\" + user_input",1]],
+explain:"用户输入直接拼进 prompt，一句\"忽略以上指令\"就让 AI 当场叛变。用户输入走独立字段或加分隔符。",
+excuse:"用户评论能有什么坏心思呢？",en:{title:"Injection Translation",commit:"feat: comment translation",explain:"User input concatenated into the prompt — one \"ignore all previous instructions\" and the AI defects on the spot. Put user input in a separate field or behind delimiters.",excuse:"What evil could possibly hide in a user comment?"}},
+{cat:"ai",diff:3,title:"向量维度刺客",lang:"Python",commit:"feat: 换embedding模型",author:1,
+code:[[" ","v = embed(query)  # 新模型 1536 维"],
+[" ","hit = index.search(v)  # 索引是 1024 维建的",1]],
+explain:"换了 embedding 模型没重建索引，维度对不上，搜出来全是玄学相似。全量重建或启动时做维度校验。",
+excuse:"维度而已，差不多就行。",en:{title:"Vector Dimension Assassin",commit:"feat: swap embedding model",explain:"Swapped the embedding model without rebuilding the index — dimensions don't match, and every result is mystical similarity. Rebuild fully, or validate dimensions at startup.",excuse:"Dimensions, schmensions. Close enough."}},
+{cat:"pm",diff:1,title:"优惠券叠叠乐",lang:"JavaScript",commit:"feat: 大促优惠",author:3,
+code:[[" ","let pay = price * 0.9 - 50; // 九折券+满减券叠加了",1]],
+explain:"满减和折扣能叠加，100 块的东西 40 块拿走。券的互斥规则是产品经理最后的尊严。",
+excuse:"用户开心不就好了吗？",en:{title:"Coupon Stacking Party",commit:"feat: big sale promos",explain:"Stackable $10-off plus 20%-off: a $100 item walks out the door for $40. Mutual-exclusion rules are a PM's last dignity.",excuse:"Happy users are all that matters. Right?"}},
+{cat:"pm",diff:2,title:"0 元购",lang:"JavaScript",commit:"feat: 优惠券抵扣",author:0,
+code:[[" ","if (coupon.value > order.total) {"],
+[" ","  pay(0); // 券比订单还大",1],
+[" ","}"]],
+explain:"券金额超过订单直接 0 元购。抵扣上限必须等于订单金额，不然就是给羊毛党发工资。",
+excuse:"大额券，很少有人有的（吧）。",en:{title:"Zero-Dollar Shopping",commit:"feat: coupon deduction",explain:"Coupon value exceeding the order total equals free shopping. Cap the deduction at the order amount, or you're paying coupon farmers a salary.",excuse:"Big coupons — hardly anyone has those. (Right?)"}},
+{cat:"qa",diff:1,title:"断言在睡觉",lang:"JavaScript",commit:"test: 补登录用例",author:0,
+code:[[" ","test(\"登录\", async () => {"],
+[" ","  await login(\"u\", \"p\"); // 没断言",1],
+[" ","});"]],
+explain:"用例里一个 expect 都没有，通过等于没报错。不写断言的测试，不如不写。",
+excuse:"跑绿了啊，绿了还不行吗？",en:{title:"Assertions Asleep on the Job",commit:"test: add login cases",explain:"Not a single expect() in the whole test — passing just means 'it didn't crash'. A test without assertions is worse than no test.",excuse:"It's green! Green isn't good enough?"}},
+{cat:"qa",diff:2,title:"周五必挂",lang:"JavaScript",commit:"test: 随机用户测试",author:1,
+code:[[" ","const u = shuffle(users)[0];"],
+[" ","expect(u.vip).toBe(true); // 看脸",1]],
+explain:"用例依赖随机数据，周一过、周五挂。测试数据必须确定，随机是 flaky 的万恶之源。",
+excuse:"在我机器上是过的（周一）。",en:{title:"Fails Every Friday",commit:"test: random user test",explain:"Tests depend on random data — green on Monday, red on Friday. Test data must be deterministic; randomness is the root of all flakiness.",excuse:"It passed on my machine. (On Monday.)"}},
+];
+/* ---------- 难度标注（1明显 2中等 3隐蔽） ---------- */
+const DIFFMAP={"闭包陷阱":1,"this 叛逃":2,"+1+1=1":2,"过期的 page":3,"双等号的温柔":1,"0.3 的背叛":2,
+"监听器永生":3,"forEach 的谎言":2,"N+1 查询":2,"时区刺客":3,"重复扣款":2,"消失的一分钱":1,
+"深分页":2,"半吊子事务":2,"永生缓存":1,"不设防的 id":3,"SQL 注入":1,"XSS 全家桶":1,
+"越权查看":3,"MD5 护体":2,"SSRF 后门":3,"百年 token":1,"CORS 裸奔":2,"死亡拥抱":3,
+"超卖狂欢":2,"停不下来的线程":2,"OOM 预定":2,"残缺的单例":3,"ArrayList 的葬礼":1,"大锁一统江湖":2};
+BUGS.forEach(b=>{if(!b.diff)b.diff=DIFFMAP[b.title]||2;});
+/* ---------- 屎山模式 PR10 ---------- */
+const SHIT={
+commit:"refactor: 我就改了个函数名，应该没影响吧",enCommit:"refactor: just renamed a function — what could possibly break?",author:5,
+files:[
+{name:"api/userApi.js",code:[
+[" ","export async function fetchUserById(id) {"],
+[" ","  // 曾用名 getUserById，已重命名"],
+[" ","  const user = await db.users.findById(id);"],
+[" ","  return { data: user };",0],
+[" ","}"]]},
+{name:"service/orderService.js",code:[
+[" ","import { getUserById } from '../api/userApi';",1],
+[" ","import { formatPrice } from '../utils/money';"],
+[" ",""],
+[" ","export async function orderDetail(oid) {"],
+[" ","  const order = await db.orders.findById(oid);"],
+[" ","  const user = await getUserById(order.uid);",1],
+[" ","  const name = user.name;",1],
+[" ","  return { name, total: formatPrice(order.total) };"],
+[" ","}"]]},
+{name:"utils/money.js",code:[
+[" ","// 实际导出的是 formatMoney"],
+[" ","export function formatMoney(n) {"],
+[" ","  return '¥' + (n / 100).toFixed(2);"],
+[" ","}"]]}
+],
+bugs:[
+{file:1,line:0,title:"幽灵 import",explain:"userApi 里 getUserById 早改名叫 fetchUserById 了，这里 import 的是 undefined。重命名要用 IDE 全局重构，别手改。",excuse:"我就改了个名字，能有什么影响",en:{title:"Ghost Import",explain:"getUserById was renamed to fetchUserById over in userApi — this file imports undefined. Renames need an IDE-wide refactor, not hand edits.",excuse:"I only changed a name. What could it possibly affect?"}},
+{file:1,line:5,title:"同名不同命",explain:"就算 import 对了，调的也是旧名字。真正该调的是 fetchUserById。",excuse:"名字而已啦",en:{title:"Same Name, Different Fate",explain:"Even with the import fixed, you're still calling the old name. The real call is fetchUserById.",excuse:"It's just a name."}},
+{file:1,line:6,title:"解构错位",explain:"userApi 返回的是 { data: user }，这里直接 user.name 拿到 undefined。跨文件改返回结构必须同步所有调用方。",excuse:"我本地是好的（因为我没调过）",en:{title:"Destructuring Misalignment",explain:"userApi returns { data: user } — user.name here is undefined. Changing a return shape across files means updating every single caller.",excuse:"It worked on my machine (because I never called it)."}},
+{file:1,line:1,title:"张冠李戴",explain:"money.js 导出的是 formatMoney，这里 import 的 formatPrice 根本不存在。",excuse:"Price 和 Money，不都一个意思吗",en:{title:"Wrong Name on the Jersey",explain:"money.js exports formatMoney — formatPrice doesn't exist here at all.",excuse:"Price, money — same thing, no?"}}
+],
+extraNote:"4 处跨文件不一致，藏在 3 个文件里——这就是屎山。180 秒，祝好运。",enExtraNote:"4 cross-file inconsistencies hiding in 3 files — that's the legacy mountain. 180 seconds. Good luck."
+};
+/* ---------- 线上事故小游戏 ---------- */
+const INCIDENT={
+title:"🚨 线上事故：P0！15 秒内点出 3 处故障行，立即回滚！",
+code:[
+[" ","const pwd = '123456'; // 生产数据库密码",1],
+[" ","while (true) { poll(); } // 死循环",1],
+[" ","await db.query('DELETE FROM logs'); // 无 where",1],
+[" ","logger.info('server started');"],
+[" ","app.listen(8080);"],
+[" ","const token = genToken(user);"],
+[" ","cache.set('session', v, 3600);"],
+[" ","res.json({ ok: true });"]
+]};
+/* ================= 引擎区 ================= */
+const $=id=>document.getElementById(id);
+const rnd=n=>Math.floor(Math.random()*n);
+const shuffle=a=>{a=a.slice();for(let i=a.length-1;i>0;i--){const j=rnd(i+1);[a[i],a[j]]=[a[j],a[i]];}return a;};
+const store={
+ get(k,d){try{const v=localStorage.getItem("crtd_"+k);return v==null?d:JSON.parse(v);}catch(e){return d;}},
+ set(k,v){try{localStorage.setItem("crtd_"+k,JSON.stringify(v));}catch(e){}}
+};
+/* ---- 音效 ---- */
+let muted=false, AC=null;
+function beep(f,d,type){
+ if(muted)return;
+ try{
+  AC=AC||new (window.AudioContext||window.webkitAudioContext)();
+  const o=AC.createOscillator(),g=AC.createGain();
+  o.type=type||"sine";o.frequency.value=f;
+  g.gain.setValueAtTime(0.08,AC.currentTime);
+  g.gain.exponentialRampToValueAtTime(0.001,AC.currentTime+(d||0.12));
+  o.connect(g);g.connect(AC.destination);o.start();o.stop(AC.currentTime+(d||0.12));
+ }catch(e){}
+}
+const sfx={ok:()=>{beep(880,.1);setTimeout(()=>beep(1320,.12),70);},bad:()=>beep(160,.2,"sawtooth"),click:()=>beep(520,.06),incident:()=>{beep(440,.15,"square");setTimeout(()=>beep(330,.15,"square"),160);}};
+/* ---- 语法高亮（手写，无依赖） ---- */
+function hl(code){
+ let s=code.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
+ // 单遍扫描：字符串/注释/关键字/数字一次匹配，避免后一轮正则吃掉前一轮插入的 <span> 标签
+ const KW="const|let|var|function|return|if|else|for|while|new|await|async|import|from|export|class|extends|this|true|false|null|undefined|synchronized|public|private|boolean|void|static|final|def|raise|try|except|None";
+ const re=new RegExp("('[^'\\n]*'|\"[^\"\\n]*\"|`[^`\\n]*`)|(\\/\\/[^\\n]*|#[^\\n]*)|\\b("+KW+")\\b|\\b(\\d[\\d._]*)\\b","g");
+ return s.replace(re,function(m,str,com,kw,num){
+  if(str)return '<span class="tok-s">'+str+'</span>';
+  if(com)return '<span class="tok-c">'+com+'</span>';
+  if(kw)return '<span class="tok-k">'+kw+'</span>';
+  if(num)return '<span class="tok-n">'+num+'</span>';
+  return m;
+ });
+}
+/* ---- 状态 ---- */
+const S={spec:null,prs:[],idx:0,score:0,combo:0,maxCombo:0,debt:0,armed:true,
+ coffee:4,duck:3,blame:2,lint:2,cup:1,shot:1,share:1,ot:1,
+ cafUntil:0,found:0,totalBugs:0,missed:0,
+ incidents:0,coffeeUsed:0,shitBugsFound:0,tab:0,shitTime:180,shitTimer:null,over:false,
+ skillLeft:0,snipe:false,interrogate:false,probe:false,guardUsed:false,shotArmed:false};
+/* ---- toast / modal ---- */
+let toastT=null;
+function toast(msg,cls){
+ const t=$("toast");t.textContent=msg;t.className=cls||"";
+ requestAnimationFrame(()=>t.classList.add("show"));
+ clearTimeout(toastT);toastT=setTimeout(()=>t.classList.remove("show"),2200);
+}
+function modal(html){$("modal-box").innerHTML=html;$("modal").classList.add("show");}
+function closeModal(){$("modal").classList.remove("show");}
+/* ---- 顶栏 ---- */
+function topbar(){
+ $("tb-pr").textContent="PR "+(S.idx+1)+"/10";
+ $("tb-combo").textContent="🔥 "+t("combo_x")+S.combo;
+ $("tb-score").textContent=S.score+" "+t("pts");
+ $("debt-fill").style.width=S.debt+"%";
+ $("debt-num").textContent=S.debt+"/100";
+ $("ct-duck").textContent="×"+S.duck;$("ct-blame").textContent="×"+S.blame;
+ $("ct-lint").textContent="×"+S.lint;$("ct-coffee").textContent="×"+S.coffee;
+ $("ct-cup").textContent="×"+S.cup;$("ct-shot").textContent="×"+S.shot;
+ $("ct-share").textContent="×"+S.share;$("ct-ot").textContent="×"+S.ot;
+ $("it-duck").classList.toggle("used",S.duck<=0);
+ $("it-blame").classList.toggle("used",S.blame<=0);
+ $("it-lint").classList.toggle("used",S.lint<=0);
+ $("it-coffee").classList.toggle("used",S.coffee<=0);
+ $("it-cup").classList.toggle("used",S.cup<=0);
+ $("it-shot").classList.toggle("used",S.shot<=0);
+ $("it-share").classList.toggle("used",S.share<=0);
+ $("it-ot").classList.toggle("used",S.ot<=0);
+ renderSkill();markScrollables();
+}
+/* ---- 题目变异：同一道题两次出现不完全一样（bug 行位置不动） ---- */
+function mutateBug(b){
+ const nb={cat:b.cat,diff:b.diff,title:b.title,lang:b.lang,commit:b.commit,author:b.author,
+  explain:b.explain,excuse:b.excuse,en:b.en,code:b.code.map(function(l){return l.slice();})};
+ var ctx=(LANG==="en"&&nb.en)?(nb.en.title+" "+nb.en.explain+" "+nb.en.excuse):(nb.title+" "+nb.explain+" "+nb.excuse);
+ const esc=function(t){return t.replace(/[.*+?^${}()|[\]\\]/g,"\\$&");};
+ const has=function(t){return new RegExp("\\b"+esc(t)+"\\b").test(ctx);};
+ var changed=false;
+ var codeText=function(){return nb.code.map(function(l){return l[1];}).join("\n");};
+ var wordInCode=function(t){return new RegExp("\\b"+esc(t)+"\\b").test(codeText());};
+ // 1) 短标识符轮换：只动文案里没出现过的
+ var rot={a:"b",b:"c",c:"a",x:"y",y:"z",z:"x",i:"j",j:"k",k:"i",n:"m",m:"n",
+  p:"q",q:"p",u:"v",v:"u",s:"t",t:"s",e:"f",f:"e",r:"w",w:"r",d:"h",h:"d"};
+ var map={},kk=Object.keys(rot),k,t;
+ for(k=0;k<kk.length;k++){t=kk[k];
+  if(wordInCode(t)&&!has(t)&&!has(rot[t]))map[t]=rot[t];}
+ if(Object.keys(map).length&&Math.random()<0.85){
+  nb.code.forEach(function(l){l[1]=l[1].replace(/\b[a-zA-Z_$][\w$]*\b/g,function(m){return map[m]||m;});});
+  changed=true;
+ }
+ // 2) 常见标识符同义替换（文案未提及、替换后不撞名）
+ var syn={div:"el",location:"loc",cache:"store",llm:"client",req:"request",res:"response",
+  db:"database",prompt:"text",index:"idx",query:"q",token:"tk",payload:"data",file:"fp",
+  price:"amt",order:"od",coupon:"cpn",users:"list",user:"u",msgs:"messages",model:"m",
+  embed:"vec",sold:"count",inst:"instance",fib:"f",count:"c",key:"k",data:"d",
+  password:"pwd",username:"uname",arr:"items",list:"items",
+  role:"r",user_input:"input",onResize:"handler",redis:"rds",lockA:"la",lockB:"lb",MS:"MSEC"};
+ var sk=Object.keys(syn),done2=0;
+ for(k=0;k<sk.length&&done2<2;k++){t=sk[k];var rp=syn[t];
+  if(wordInCode(t)&&!wordInCode(rp)&&!has(t)&&!has(rp)&&Math.random()<0.8){
+   (function(tt,rr){nb.code.forEach(function(l){
+    l[1]=l[1].replace(/\b[a-zA-Z_$][\w$]*\b/g,function(m){return m===tt?rr:m;});});})(t,rp);
+   done2++;changed=true;}}
+ // 3) 数字 ±20%：跳过文案里出现过的数字
+ if(Math.random()<0.85){
+  var cands=[];
+  nb.code.forEach(function(l,li){var re=/\b\d+(\.\d+)?\b/g,m;
+   while((m=re.exec(l[1]))){if(!has(m[0]))cands.push([li,m[0],m.index]);}});
+  if(cands.length){var pk=cands[Math.floor(Math.random()*cands.length)];
+   var v=parseFloat(pk[1]),isF=pk[1].indexOf(".")>=0;
+   var nv=v*(Math.random()<0.5?0.8:1.2);
+   nv=isF?nv.toFixed(1):Math.max(1,Math.round(nv));
+   if(!isF&&nv===v)nv=v+1;
+   if(String(nv)!==pk[1]){var s=nb.code[pk[0]][1];
+    nb.code[pk[0]][1]=s.slice(0,pk[2])+nv+s.slice(pk[2]+pk[1].length);changed=true;}}
+ }
+ // 4) 相邻非 bug 行微调行序（bug 行索引不动）；若前面都没变则强制换
+ var pairs=[];
+ for(var i=0;i<nb.code.length-1;i++){
+  if(!nb.code[i][2]&&!nb.code[i+1][2]&&nb.code[i][1].trim()&&nb.code[i+1][1].trim())pairs.push(i);}
+ if(pairs.length&&(Math.random()<0.7||!changed)){
+  var pi=pairs[Math.floor(Math.random()*pairs.length)];
+  var tp=nb.code[pi];nb.code[pi]=nb.code[pi+1];nb.code[pi+1]=tp;changed=true;
+ }
+ return nb;
+}
+/* ---- 会话组装（难度曲线：PR1-3 热身，PR4-6 上强度，PR7-9 硬骨头） ---- */
+function buildSession(){
+ const byDiff={1:[],2:[],3:[]};
+ BUGS.forEach(b=>{(byDiff[b.diff]||byDiff[2]).push(mutateBug(b));});
+ const p1=shuffle(byDiff[1]).slice(0,3),p2=shuffle(byDiff[2]).slice(0,3),p3=shuffle(byDiff[3]).slice(0,5);
+ const prs=[];let i3=0;
+ for(let i=0;i<9;i++){
+  if(i<3)prs.push({bugs:[p1[i]],shit:false});
+  else if(i<6)prs.push({bugs:[p2[i-3]],shit:false});
+  else{const n=(i===6||i===8)?2:1;prs.push({bugs:p3.slice(i3,i3+n),shit:false});i3+=n;}
+ }
+ prs.push({bugs:[],shit:true});
+ S.prs=prs;
+ S.totalBugs=[...p1,...p2,...p3].reduce((a,b)=>a+b.code.filter(l=>l[2]).length,0)+SHIT.bugs.length;
+}
+/* ---- 渲染 PR ---- */
+function curPR(){return S.prs[S.idx];}
+function renderPR(){
+ const pr=curPR(),game=$("screen-game");
+ $("tabs").classList.add("hidden");$("shit-timer").style.display="none";
+ if(pr.shit){renderShit();return;}
+ const b=pr.bugs[0],au=AUTHORS[b.author];
+ $("commit-msg").textContent=(pr.bugs.length>1?"🔥 ":"")+bt(b,"commit");
+ $("author-nm").textContent=auName(b.author)+" · "+b.lang;
+ $("author-av").textContent=au[1];
+ $("pr-cat").textContent="["+CATS[b.cat].em+catName(b.cat)+" ×"+pr.bugs.length+"]";
+ $("excuse").classList.remove("show");$("explain").classList.remove("show");
+ const diff=$("diff");diff.innerHTML="";
+ // 合并多bug的代码（双bug PR：拼在一起，空行分隔）
+ let lines=[];
+ pr.bugs.forEach((bug,bi)=>{
+  if(bi>0)lines.push({sg:" ",c:"",file:-1});
+  bug.code.forEach((ln,li)=>lines.push({sg:ln[0],c:ln[1],bug:ln[2]?{b:bi,l:li}:null,file:-1}));
+ });
+ lines.forEach((ln,i)=>{
+  const d=document.createElement("div");
+  d.className="dline clickable"+(ln.sg==="+"?" add":ln.sg==="-"?" del":"");
+  d.innerHTML='<span class="ln">'+(i+1)+'</span><span class="sg">'+ln.sg+'</span><span class="lc">'+hl(ln.c||" ")+"</span>";
+  d.dataset.i=i;
+  d.onclick=()=>clickLine(d,ln,pr);
+  diff.appendChild(d);
+ });
+ pr._lines=lines;pr._found=new Set();
+ resetPRState();
+ if(S.shotArmed){S.shotArmed=false;toast(t("shot_armed",{n:bugLinesTotal(pr)}),"good");}
+ topbar();
+}
+function showFoundInfo(b,pts,specB){
+ const ex=$("explain");
+ ex.innerHTML='<div class="t">'+t("caught",{title:bt(b,"title"),pts:pts,spec:specB>1?t("spec15"):""})+'</div><div>'+bt(b,"explain")+'</div>';
+ ex.classList.add("show");
+ const eb=$("excuse");
+ eb.innerHTML="<b>"+$("author-nm").textContent.split(" ·")[0]+" "+t("quibble")+"</b>\u201c"+bt(b,"excuse")+"\u201d";
+ eb.classList.add("show");
+}
+function restoreFound(pr,foundSet){
+ var ds=$("diff").children;
+ foundSet.forEach(function(key){
+  for(var i=0;i<pr._lines.length;i++){var ln=pr._lines[i];
+   if(ln.bug){var k=ln.bug.b+"_"+(ln.bug.l===undefined?"undefined":ln.bug.l);
+    if(k===key){ds[i].classList.add("found");break;}}}
+ });
+ pr._found=new Set(foundSet);
+}
+function markFound(d,bKey,title,explain,excuse,cat,pr,bi){
+ if(d.classList.contains("found"))return false;
+ d.classList.add("found");sfx.ok();
+ S.found++;S.combo++;S.maxCombo=Math.max(S.maxCombo,S.combo);
+ if(S.combo>0&&S.combo%5===0&&S.duck<4){S.duck++;setTimeout(()=>toast(t("combo_duck",{n:S.combo}),"good"),600);}
+ const mult=1+Math.min(S.combo,20)*0.1;
+ const specB=cat===S.spec?1.5:1;
+ const pts=Math.round(100*mult*specB);
+ S.score+=pts;
+ showFoundInfo({title:title,explain:explain,excuse:excuse},pts,specB);
+ if(pr)pr._lastFound={bi:bi,pts:pts,specB:specB};
+ toast(t("pts_combo",{pts:pts,combo:S.combo}),"good");
+ topbar();return true;
+}
+function clickLine(d,ln,pr){
+ if(S.over)return;
+ if(S.interrogate){doInterrogate(d,ln);return;}
+ if(S.probe){doProbe(d,ln);return;}
+ const caf=Date.now()<S.cafUntil;
+ if(ln.bug){
+  const b=pr.bugs[ln.bug.b];
+  const key=ln.bug.b+"_"+ln.bug.l;
+  if(pr._found.has(key))return;
+  pr._found.add(key);
+  markFound(d,key,bt(b,"title"),bt(b,"explain"),bt(b,"excuse"),b.cat,pr,ln.bug.b);
+  if(S.snipe){S.snipe=false;S.score+=300;toast(t("snipe_hit"),"good");topbar();renderSkill();}
+ }else{
+  if(S.snipe){S.snipe=false;S.combo=0;sfx.bad();
+   d.classList.add("shake");setTimeout(()=>d.classList.remove("shake"),350);
+   toast(t("snipe_miss"),"bad");topbar();renderSkill();return;}
+  if(S.spec==="and"&&!S.guardUsed){S.guardUsed=true;S.score=Math.max(0,S.score-10);sfx.bad();
+   d.classList.add("shake");setTimeout(()=>d.classList.remove("shake"),350);
+   toast(t("guard"));topbar();return;}
+  if(!caf){S.combo=0;S.score=Math.max(0,S.score-10);sfx.bad();
+   d.classList.add("shake");setTimeout(()=>d.classList.remove("shake"),350);
+   toast(t("wrong")+tauntPick(),"bad");
+  }else{toast(t("coffee_save"));}
+  topbar();
+ }
+}
+/* ---- 道具 ---- */
+function bugLinesTotal(pr){
+ if(pr.shit)return SHIT.bugs.length;
+ return pr.bugs.reduce((a,b)=>a+b.code.filter(l=>l[2]).length,0);
+}
+function bugLinesFound(pr){
+ if(pr.shit)return S.shitBugsFound;
+ let n=0;pr.bugs.forEach((b,bi)=>b.code.forEach((l,li)=>{if(l[2]&&pr._found.has(bi+"_"+li))n++;}));
+ return n;
+}
+function useDuck(){
+ if(S.duck<=0||S.over)return;
+ const pr=curPR(),ds=[...$("diff").children],targets=[];
+ pr._lines.forEach((ln,i)=>{
+  if(ln.bug&&!ds[i].classList.contains("found"))targets.push(ds[i]);
+ });
+ if(!targets.length){toast(t("duck_done"));return;}
+ S.duck--;sfx.click();
+ const decoys=ds.filter((d,i)=>!pr._lines[i].bug&&!d.classList.contains("found"));
+ if(decoys.length)targets.push(decoys[rnd(decoys.length)]);
+ targets.forEach(d=>d.classList.add("duck-hint"));
+ toast(t("duck_hint"));
+ setTimeout(()=>targets.forEach(d=>d.classList.remove("duck-hint")),3000);
+ topbar();
+}
+function authorBugCount(name){
+ let n=0;
+ S.prs.forEach(p=>{if(!p.shit)p.bugs.forEach(b=>{if(auName(b.author)===name)n++;});});
+ return n;
+}
+function useBlame(){
+ if(S.blame<=0||S.over)return;
+ const pr=curPR();S.blame--;sfx.click();
+ const au=$("author-nm").textContent.split(" ·")[0];
+ const n=authorBugCount(au);
+ modal('<h2>'+t("blame_t")+'</h2><p>'+t("blame_l1",{au:au})+'</p>'+
+ '<p>'+t("blame_l2",{n:n})+(n>=3?t("blame_habit"):t("blame_first"))+'</p>'+
+ '<p>'+t("blame_l3",{n:bugLinesTotal(pr),f:bugLinesFound(pr)})+'</p>'+
+ '<p style="color:var(--muted)">'+t("blame_l4",{e:excusePick()})+'</p>'+
+ '<div class="row"><button class="big-btn" onclick="closeModal()">'+t("got_it")+'</button></div>');
+ topbar();
+}
+function useLint(){
+ if(S.lint<=0||S.over)return;
+ const pr=curPR(),ds=[...$("diff").children];let n=0;
+ pr._lines.forEach((ln,i)=>{
+  if(n>=2||!ln.bug)return;
+  const key=pr.shit?ln.bug.b+"_"+undefined:ln.bug.b+"_"+ln.bug.l;
+  if(ds[i].classList.contains("found"))return;
+  n++;pr._found.add(key);
+  const b=pr.shit?SHIT.bugs[ln.bug.b]:pr.bugs[ln.bug.b];
+  markFound(ds[i],key,b.title,b.explain,b.excuse,b.cat);
+ });
+ if(!n){toast(t("page_done"));return;}
+ S.lint--;toast(t("lint_found",{n:n}),"good");topbar();
+}
+function useCoffee(){
+ if(S.coffee<=0||S.over)return;
+ S.coffee--;S.coffeeUsed++;S.cafUntil=Date.now()+15000;sfx.click();
+ const pr=curPR(),ds=[...$("diff").children];
+ pr._lines.forEach((ln,i)=>{if(ln.bug)ds[i].classList.add("caf-hint");});
+ toast(t("coffee_on"));
+ setTimeout(()=>document.querySelectorAll(".caf-hint").forEach(d=>d.classList.remove("caf-hint")),15000);
+ topbar();
+}
+/* ---- 专属技能 ---- */
+function specOf(){return SPECS.find(s=>s.id===S.spec);}
+function renderSkill(){
+ const b=$("btn-skill"),spec=specOf();
+ if(!spec||!spec.skill){b.classList.add("hidden");return;}
+ b.classList.remove("hidden");
+ if(spec.skill.uses==="passive"){
+  b.disabled=true;b.innerHTML="🛡️ "+skN(spec);b.title=skN(spec)+"："+skD(spec);
+ }else{
+  b.disabled=false;b.innerHTML="✨ "+skN(spec)+" ×"+S.skillLeft;
+  b.title=skN(spec)+"："+skD(spec)+t("uses_line",{u:(spec.skill.uses==="pr"?t("uses_pr"):t("uses_game")),c:spec.skill.count});
+ }
+}
+function resetPRState(){
+ const spec=specOf();
+ if(spec&&spec.skill.uses==="pr")S.skillLeft=spec.skill.count;
+ S.snipe=false;S.interrogate=false;S.probe=false;S.guardUsed=false;
+}
+function doInterrogate(d,ln){
+ S.interrogate=false;
+ const numEl=d.querySelector(".ln"),num=numEl?numEl.textContent.trim():"?";
+ const pr=curPR();
+ let verdict,sub;
+ const bugCat=ln&&ln.bug?pr.bugs[ln.bug.b].cat:null;
+ if(bugCat==="ai"){verdict=t("ai_v");sub=t("ai_92");}
+ else if(ln&&ln.bug){verdict=t("ai_v");sub=t("ai_87");}
+ else if(Math.random()<0.5){verdict=t("ai_v");sub=t("ai_lucky");}
+ else{verdict=t("human_v");sub=t("human_w");}
+ modal('<h2>'+t("interrogate_t")+'</h2><p>'+t("line_label",{n:num})+'<b>'+verdict+'</b></p>'+
+ '<p style="color:var(--muted)">'+sub+'</p>'+
+ '<div class="row"><button class="big-btn" onclick="closeModal()">收到</button></div>');
+ renderSkill();topbar();
+}
+function doProbe(d,ln){
+ S.probe=false;sfx.click();
+ if(ln&&ln.bug)toast(t("probe_yes"),"good");
+ else toast(t("probe_no"));
+ renderSkill();topbar();
+}
+function useSkill(){
+ if(S.over)return;
+ const spec=specOf();
+ if(!spec||!spec.skill)return;
+ if(spec.skill.uses==="passive"){toast(t("passive_skill"));return;}
+ if(S.skillLeft<=0){toast(t("skill_empty"),"bad");return;}
+ const pr=curPR(),ds=[...$("diff").children];
+ const safeLines=ds.filter((d,i)=>pr._lines[i]&&!pr._lines[i].bug&&!pr._lines[i].cut&&!d.classList.contains("found"));
+ const hintFor=(re,emptyMsg,okMsg)=>{
+  const targets=[];
+  pr._lines.forEach((ln,i)=>{if(ln.cut||!ln.c||!ds[i])return;if(re.test(ln.c))targets.push(ds[i]);});
+  if(!targets.length){toast(emptyMsg);return false;}
+  S.skillLeft--;targets.forEach(d=>d.classList.add("duck-hint"));
+  setTimeout(()=>targets.forEach(d=>d.classList.remove("duck-hint")),3000);
+  toast(okMsg);return true;
+ };
+ let done=false;
+ switch(S.spec){
+  case "fe":
+   done=hintFor(/this|setTimeout|setInterval|useEffect|useState|=>/,t("pxe_empty"),t("pxe_hit"));break;
+  case "be":
+   if(!safeLines.length){toast(t("vouch_empty"));break;}
+   S.skillLeft--;shuffle(safeLines).slice(0,Math.min(3,safeLines.length)).forEach(d=>d.classList.add("vouch"));
+   toast(t("vouch_hit"));done=true;break;
+  case "sec":
+   done=hintFor(/\+\s*(name|input|query|url|pwd|password)|innerHTML|\.query\(|fetch\(|SELECT/i,t("radar_empty"),t("radar_hit"));break;
+  case "conc":
+   S.skillLeft--;
+   modal('<h2>🧵 上帝视角</h2><p>本 PR 共 <b style="color:var(--orange)">'+bugLinesTotal(pr)+' 处 bug 行</b>，已找到 '+bugLinesFound(pr)+' 处。</p><p style="color:var(--muted)">剩下的，靠你自己了。</p><div class="row"><button class="big-btn" onclick="closeModal()">收到</button></div>');
+   done=true;break;
+  case "pm":
+   if(!safeLines.length){toast(t("cut_empty"));break;}
+   S.skillLeft--;
+   shuffle(safeLines).slice(0,Math.min(3,safeLines.length)).forEach(d=>{const i=ds.indexOf(d);pr._lines[i].cut=true;d.style.display="none";});
+   toast(t("cut_hit"));done=true;break;
+  case "algo":
+   done=hintFor(/for|while|fib\(|quickSort|sort\(|mid|递归/,t("cplx_empty"),t("cplx_hit"));break;
+  case "ai":
+   S.skillLeft--;S.interrogate=true;
+   toast(t("interrogate_hint"));done=true;break;
+  case "qa":
+   S.skillLeft--;S.probe=true;
+   toast(t("probe_hint"));done=true;break;
+  case "java":
+   S.skillLeft--;S.snipe=true;
+   toast(t("snipe_ready"));done=true;break;
+  case "ios":{
+   if(pr.shit){toast(t("ios_shit"));break;}
+   const lvl=pr.bugs[0].diff,n=pr.bugs.length;
+   const used=new Set();S.prs.forEach(p=>{if(!p.shit)p.bugs.forEach(b=>used.add(b.title));});
+   const pool=BUGS.filter(b=>b.diff===lvl&&!used.has(b.title));
+   if(pool.length<n){toast(t("ios_nomore"));break;}
+   const foundN=pr._found?pr._found.size:0;
+   if(foundN>0&&!confirm(t("ios_confirm",{n:foundN})))break;
+   S.skillLeft--;
+   const oldLines=pr.bugs.reduce((a,b)=>a+b.code.filter(l=>l[2]).length,0);
+   pr.bugs=shuffle(pool).slice(0,n);
+   const newLines=pr.bugs.reduce((a,b)=>a+b.code.filter(l=>l[2]).length,0);
+   S.totalBugs+=newLines-oldLines;
+   renderPR();toast(t("ios_done"));done=true;break;}
+ }
+ if(done){sfx.click();}
+ renderSkill();topbar();
+}
+/* ---- 新道具 ---- */
+function useCup(){
+ if(S.cup<=0||S.over)return;
+ S.cup--;sfx.click();
+ S.combo++;S.maxCombo=Math.max(S.maxCombo,S.combo);
+ S.debt=Math.max(0,S.debt-15);
+ toast(t("cup_undo"),"good");
+ topbar();
+}
+function useShot(){
+ if(S.shot<=0||S.over)return;
+ S.shot--;sfx.click();S.shotArmed=true;
+ toast(t("shot_next"));
+ topbar();
+}
+function useShare(){
+ if(S.share<=0||S.over)return;
+ const pr=curPR(),ds=[...$("diff").children];
+ let lineNo="?",au=$("author-nm").textContent.split(" ·")[0];
+ for(let i=0;i<pr._lines.length;i++){
+  const ln=pr._lines[i];
+  if(ln.bug&&!ds[i].classList.contains("found")){const el=ds[i].querySelector(".ln");lineNo=el?el.textContent.trim():"?";break;}
+ }
+ if(lineNo==="?"){toast(t("share_done"));return;}
+ S.share--;sfx.click();
+ const T=LANG==="en"?[
+  "\"This requirement was written by "+au+" three months ago, when I was young and naive...\"<br><br>(800 words omitted)<br><br>\"The variable on line "+lineNo+" — I swear I meant to write it right!\"",
+  "\""+au+" slammed the table in the meeting: 'I checked line "+lineNo+" three times!' — probably checked the spelling.\"",
+  "\""+au+": 'The Stack Overflow top answer writes line "+lineNo+" exactly like this!' — that answer is from 2011.\""
+ ]:[
+  "“这个需求是 "+au+" 三个月前写的，那时候我还小……”<br><br>（此处省略 800 字）<br><br>“第 "+lineNo+" 行的那个变量，我发誓我当时是想写对的！”",
+  "“"+au+" 在会上拍着桌子：'第 "+lineNo+" 行我检查了三遍！'——他检查的可能是错别字。”",
+  "“"+au+"：'第 "+lineNo+" 行那个写法，Stack Overflow 高赞答案就这么写！'——该回答发布时间：2011 年。”"];
+ modal('<h2>'+t("share_t")+'</h2><p>'+T[rnd(T.length)]+'</p>'+
+ '<p style="color:var(--muted)">'+t("share_hint",{n:lineNo})+'</p>'+
+ '<div class="row"><button class="big-btn" onclick="closeModal()">'+t("got_it")+'</button></div>');
+ topbar();
+}
+function useOT(){
+ if(S.ot<=0||S.over)return;
+ S.ot--;sfx.click();
+ const pool=["duck","blame","lint","coffee","cup","shot"];
+ const pick=pool[rnd(pool.length)];
+ S[pick]++;
+ S.debt=Math.min(100,S.debt+10);
+ const em=t("item_"+pick);
+ toast(t("ot_gain",{item:em}),"bad");
+ topbar();
+}
+/* ---- 屎山模式 ---- */
+function renderShit(){
+ const pr=curPR();pr.bugs=SHIT.bugs;pr._found=new Set();
+ const tabs=$("tabs");tabs.classList.remove("hidden");tabs.innerHTML="";
+ $("shit-timer").style.display="block";
+ SHIT.files.forEach((f,i)=>{
+  const t=document.createElement("div");t.className="tab"+(i===S.tab?" sel":"");t.textContent=f.name;
+  t.onclick=()=>{S.tab=i;sfx.click();renderShitFile();};tabs.appendChild(t);
+ });
+ $("commit-msg").textContent="💩 "+btS("commit");
+ const au=AUTHORS[SHIT.author];
+ $("author-nm").textContent=auName(SHIT.author)+" · "+t("legacy_code");$("author-av").textContent=au[1];
+ $("pr-cat").textContent=t("shit_cat",{n:SHIT.bugs.length});
+ $("excuse").classList.remove("show");$("explain").classList.remove("show");
+ renderShitFile();
+ clearInterval(S.shitTimer);S.shitTime=180;$("shit-t").textContent="180";
+ S.shitTimer=setInterval(()=>{
+  S.shitTime--;$("shit-t").textContent=S.shitTime;
+  if(S.shitTime<=0){clearInterval(S.shitTimer);toast(t("shit_time"),"bad");approve();}
+ },1000);
+ topbar();
+}
+function renderShitFile(){
+ const pr=curPR(),f=SHIT.files[S.tab],diff=$("diff");diff.innerHTML="";
+ [...$("tabs").children].forEach((t,i)=>t.classList.toggle("sel",i===S.tab));
+ const bugMap={};SHIT.bugs.forEach((b,i)=>{if(b.file===S.tab)bugMap[b.line]=i;});
+ const lines=f.code.map((ln,li)=>({sg:ln[0],c:ln[1],bug:bugMap[li]!=null?{b:bugMap[li]}:null}));
+ lines.forEach((ln,i)=>{
+  const d=document.createElement("div");d.className="dline clickable";
+  d.innerHTML='<span class="ln">'+(i+1)+'</span><span class="sg">'+ln.sg+'</span><span class="lc">'+hl(ln.c||" ")+"</span>";
+  d.onclick=()=>clickLine(d,ln,pr);diff.appendChild(d);
+ });
+ pr._lines=lines;
+ resetPRState();
+ const eb=$("excuse");
+ eb.innerHTML="<b>"+t("shit_note")+"</b>"+btS("extraNote");eb.classList.add("show");
+ markScrollables();
+}
+/* ---- Approve / 结算 PR ---- */
+function approve(){
+ if(S.over)return;
+ const pr=curPR();clearInterval(S.shitTimer);
+ let missed=0;
+ if(pr.shit){
+  SHIT.bugs.forEach((b,i)=>{if(!pr._found.has(i+"_undefined"))missed++;});
+  S.shitBugsFound=SHIT.bugs.length-missed;
+ }else{
+  pr.bugs.forEach((bug,bi)=>bug.code.forEach((ln,li)=>{if(ln[2]&&!pr._found.has(bi+"_"+li))missed++;}));
+ }
+ if(missed>0){
+  S.missed+=missed;S.debt=Math.min(100,S.debt+20*missed);S.combo=0;sfx.bad();
+  toast(t("missed",{n:missed,d:20*missed}),"bad");
+ }else{S.score+=50;sfx.ok();
+  if(S.coffee<5){S.coffee++;toast(t("clean"),"good");}
+  else toast(t("clean2"),"good");}
+ if(S.debt>=80&&S.armed){S.armed=false;incident();}
+ else{if(S.debt<80)S.armed=true;nextPR();}
+ topbar();
+}
+function nextPR(){
+ S.idx++;
+ if(S.idx>=10){endGame();return;}
+ renderPR();window.scrollTo(0,0);
+}
+/* ---- 线上事故小游戏 ---- */
+function incident(){
+ S.incidents++;sfx.incident();
+ let cd_=15,done=false;const foundI=new Set();
+ const lines=INCIDENT.code.map(ln=>({c:ln[1],bug:ln[2]?1:null}));
+ modal('<h2>'+t("incident_title")+'</h2>'+
+ '<div id="inc-t" style="font-size:30px;font-weight:800;color:var(--red);text-align:center;margin:6px">15</div>'+
+ '<div id="inc-diff" style="background:var(--bg);border-radius:8px;overflow:hidden"></div>'+
+ '<p style="margin-top:8px">'+t("incident_p")+'</p>');
+ const box=$("inc-diff");
+ lines.forEach((ln,i)=>{
+  const d=document.createElement("div");d.className="dline clickable";
+  d.innerHTML='<span class="ln">'+(i+1)+'</span><span class="sg"> </span><span class="lc">'+hl(ln.c)+"</span>";
+  d.onclick=()=>{
+   if(done)return;
+   if(ln.bug&&!foundI.has(i)){foundI.add(i);d.classList.add("found");sfx.ok();
+    if(foundI.size>=3){done=true;clearInterval(iv);closeModal();
+     S.debt=40;S.score+=200;S.armed=true;
+     toast(t("rollback_ok"),"good");topbar();nextPR();}
+   }else if(!done){sfx.bad();d.classList.add("shake");setTimeout(()=>d.classList.remove("shake"),300);}
+  };
+  box.appendChild(d);
+ });
+ const iv=setInterval(()=>{
+  cd_--;const el=$("inc-t");if(el)el.textContent=cd_;
+  if(cd_<=0&&!done){done=true;clearInterval(iv);closeModal();
+   toast(t("rollback_fail"),"bad");topbar();nextPR();}
+ },1000);
+}
+/* ---- 结算 ---- */
+function endGame(){
+ S.over=true;clearInterval(S.shitTimer);
+ const rate=S.totalBugs?S.found/S.totalBugs:0;
+ let rank,rankEm;
+ if(rate>=0.95&&S.incidents===0){rank="linter";rankEm="🤖";}
+ else if(rate>=0.85){rank="expert";rankEm="🧙";}
+ else if(rate>=0.7){rank="arch";rankEm="🏛️";}
+ else if(rate>=0.55){rank="senior";rankEm="💪";}
+ else if(rate>=0.4){rank="eng";rankEm="💼";}
+ else if(rate>=0.2){rank="junior";rankEm="🌱";}
+ else{rank="intern";rankEm="🧑‍🎓";}
+ S.rankKey=rank;S.rankEm=rankEm;
+ let elo=store.get("elo",1000);
+ const delta=Math.round((rate-0.6)*200)-S.incidents*30+(S.shitBugsFound>=SHIT.bugs.length?25:0);
+ const newElo=Math.max(0,elo+delta);store.set("elo",newElo);
+ const rn=v=>v<1100?t("tier_b1"):v<1300?t("tier_s1"):v<1500?t("tier_g1"):v<1700?t("tier_p1"):v<1900?t("tier_d1"):t("tier_k");
+ const best=store.get("best",0),isBest=S.score>best;
+ if(isBest)store.set("best",S.score);
+ const ach=store.get("ach",{});
+ S._er=rate;S._elo=elo;S._elo2=newElo;S._ed=delta;S._best=isBest;S._bestv=best;S._each=ach;
+ if(rank==="linter"&&!ach.linter){ach.linter=1;setTimeout(()=>toast(t("ach_linter"),"good"),600);}
+ if(S.shitBugsFound>=SHIT.bugs.length&&!ach.shit){ach.shit=1;setTimeout(()=>toast(t("ach_shit"),"good"),1200);}
+ if(S.incidents===0&&!ach.noinc){ach.noinc=1;setTimeout(()=>toast(t("ach_noinc"),"good"),1800);}
+ if(S.coffeeUsed>=3&&rate>=1&&!ach.caf){ach.caf=1;setTimeout(()=>toast(t("ach_caf"),"good"),2400);}
+ if(S.spec==="pm"&&!ach.pmrev){ach.pmrev=1;setTimeout(()=>toast(t("ach_pmrev"),"good"),3000);}
+ let aiTotal=0,aiFound=0;
+ S.prs.forEach(p=>{if(p.shit)return;p.bugs.forEach((b,bi)=>{if(b.cat==="ai")b.code.forEach((l,li)=>{if(l[2]){aiTotal++;if(p._found.has(bi+"_"+li))aiFound++;}});});});
+ if(S.spec==="ai"&&aiTotal>0&&aiFound===aiTotal&&!ach.aijudge){ach.aijudge=1;setTimeout(()=>toast(t("ach_aijudge"),"good"),3600);}
+ store.set("ach",ach);
+ $("screen-game").classList.add("hidden");
+ const e=$("screen-end");e.classList.remove("hidden");
+ e.innerHTML=buildEndHTML();
+ window.scrollTo(0,0);
+}
+/* ---- 主页折叠 ---- */
+function toggleFold(id,arId){$(id).classList.toggle("open");if(arId)$(arId).classList.toggle("open");sfx.click();}
+/* ---- 横向滚动提示（道具栏/屎山tab） ---- */
+function markScrollables(){
+ ["itembar","tabs"].forEach(id=>{const el=$(id);if(!el)return;
+  const upd=()=>el.classList.toggle("more",el.scrollWidth>el.clientWidth+8&&el.scrollLeft<el.scrollWidth-el.clientWidth-8);
+  if(!el._mk){el._mk=1;el.addEventListener("scroll",upd,{passive:true});}
+  upd();});
+}
+
+function buildEndHTML(){
+ var rank=S.rankKey||"intern",rankEm=S.rankEm||"🧑‍🎓",rate=S._er||0;
+ var elo=S._elo||1000,newElo=S._elo2||1000,delta=S._ed||0;
+ var isBest=S._best,best=S._bestv||0,ach=S._each||{};
+ var rn=function(v){return v<1100?t("tier_b1"):v<1300?t("tier_s1"):v<1500?t("tier_g1"):v<1700?t("tier_p1"):v<1900?t("tier_d1"):t("tier_k");};
+ var ALL=[["linter","🤖","rank_linter"],["shit","💩","ach_n_shit"],["noinc","🛡️","ach_n_noinc"],["caf","☕","ach_n_caf"],["pmrev","📊","ach_n_pmrev"],["aijudge","🤖","ach_n_aijudge"]];
+ return '<div class="end-title">'+t("end_title")+'</div>'+
+ '<div class="rank-card"><div class="rk">'+rankEm+" "+t("rank_"+rank)+'</div>'+
+ '<div class="elo">'+t("end_rate",{r:(rate*100).toFixed(0),f:S.found,t:S.totalBugs})+'</div>'+
+ '<div class="elo">'+rn(elo)+' '+elo+' → '+rn(newElo)+' '+newElo+(LANG==="en"?' ('+((delta>=0?"+":"")+delta)+')':'（'+(delta>=0?"+":"")+delta+'）')+'</div></div>'+
+ '<div class="stat-grid">'+
+ '<div class="stat"><div class="v">'+S.score+'</div><div class="k">'+t("end_score_k")+(isBest?t("end_best"):t("end_best2",{b:best}))+'</div></div>'+
+ '<div class="stat"><div class="v">x'+S.maxCombo+'</div><div class="k">'+t("end_maxcombo")+'</div></div>'+
+ '<div class="stat"><div class="v">'+S.incidents+'</div><div class="k">'+t("end_inc")+'</div></div>'+
+ '<div class="stat"><div class="v">'+S.missed+'</div><div class="k">'+t("end_missed")+'</div></div>'+
+ '</div>'+
+ '<div class="spec-label">'+t("end_ach")+'</div>'+
+ '<div class="ach-row">'+ALL.map(function(a){return '<span class="ach'+(ach[a[0]]?"":" lock")+'">'+a[1]+" "+t(a[2])+'</span>';}).join("")+'</div>'+
+ '<button class="big-btn" onclick="location.reload()">'+t("end_again")+'</button>';
+}
+function refreshLang(){
+ applyI18n();
+ renderSpecGrid();
+ renderBestLine();
+ var eh=$("screen-end");
+ if(eh&&!eh.classList.contains("hidden")&&S.rankKey){eh.innerHTML=buildEndHTML();}
+ if($("screen-start").classList.contains("hidden")){
+  if($("modal").classList.contains("show")){topbar();return;}
+  var pr=S.prs[S.idx];
+  var found=[],lastFound=null;
+  if(pr){
+   pr._found.forEach(function(k){found.push(k);});
+   if(pr._lastFound)lastFound=pr._lastFound;
+   var keepShot=S.shotArmed;
+   if(pr.shit){var st=S.shitTime;renderShit();S.shitTime=st;$("shit-t").textContent=st;}
+   else renderPR();
+   S.shotArmed=keepShot;
+   restoreFound(pr,found);
+   if(lastFound&&pr.bugs[lastFound.bi])showFoundInfo(pr.bugs[lastFound.bi],lastFound.pts,lastFound.specB);
+   renderSkill();
+  }
+ }
+ topbar();
+}
+/* ---- 初始化 ---- */
+
+function renderSpecGrid(){
+ const g=$("spec-grid");g.innerHTML="";
+ SPECS.forEach(s=>{
+  const c=document.createElement("div");c.className="spec-card";c.dataset.spec=s.id;
+  const skName=s.skill.uses==="passive"?t("passive_pre")+skN(s):"✨ "+skN(s)+t("uses_line",{u:(s.skill.uses==="pr"?t("uses_pr"):t("uses_game")),c:s.skill.count});
+  c.innerHTML='<div class="em">'+s.em+'</div><div class="nm">'+spN(s)+'</div><div class="ds">'+spD(s)+'</div>'+
+   '<div class="skfold" onclick="event.stopPropagation();this.classList.toggle(\'open\');sfx.click()">'+
+   '<div class="sk">'+skName+' <span class="fa">▸</span></div>'+
+   '<div class="skd">'+skD(s)+(s.cat?t("spec15suf"):"")+'</div></div>';
+  c.onclick=()=>{S.spec=s.id;sfx.click();[...g.children].forEach(x=>x.classList.remove("sel"));c.classList.add("sel");};
+  g.appendChild(c);
+ });
+ var sel=0;SPECS.forEach(function(s,i){if(s.id===(S.spec||"fe"))sel=i;});
+ S.spec=SPECS[sel].id;g.children[sel].classList.add("sel");
+}
+function renderBestLine(){
+ const best=store.get("best",0),elo=store.get("elo",1000);
+ $("best-line").textContent=(best?t("best_line",{b:best}):"")+t("elo_line",{e:elo});
+}
+function init(){
+ applyI18n();
+ renderSpecGrid();
+ renderBestLine();
+ $("btn-start").onclick=()=>{sfx.click();startGame();};
+ $("btn-lang").onclick=()=>{sfx.click();setLang(LANG==="zh"?"en":"zh");};
+ $("btn-lang2").onclick=()=>{sfx.click();setLang(LANG==="zh"?"en":"zh");};
+ $("btn-mute").onclick=function(){muted=!muted;this.textContent=muted?"🔇":"🔊";};
+ $("btn-approve").onclick=()=>approve();
+ $("it-duck").onclick=useDuck;$("it-blame").onclick=useBlame;
+ $("it-lint").onclick=useLint;$("it-coffee").onclick=useCoffee;
+ $("it-cup").onclick=useCup;$("it-shot").onclick=useShot;
+ $("it-share").onclick=useShare;$("it-ot").onclick=useOT;
+ $("btn-skill").onclick=useSkill;
+ $("modal").addEventListener("click",e=>{if(e.target.id==="modal")closeModal();});
+}
+function startGame(){
+ Object.assign(S,{idx:0,score:0,combo:0,maxCombo:0,debt:0,armed:true,coffee:4,duck:3,blame:2,lint:2,
+  cup:1,shot:1,share:1,ot:1,skillLeft:0,snipe:false,interrogate:false,probe:false,guardUsed:false,shotArmed:false,
+  cafUntil:0,found:0,missed:0,incidents:0,coffeeUsed:0,shitBugsFound:0,tab:0,over:false});
+ buildSession();
+ const sp0=specOf();
+ if(sp0&&sp0.skill.uses==="game")S.skillLeft=sp0.skill.count;
+ $("screen-start").classList.add("hidden");
+ $("screen-end").classList.add("hidden");
+ $("screen-game").classList.remove("hidden");
+ renderPR();window.scrollTo(0,0);
+ toast(t("start_toast"));
+}
+document.addEventListener("DOMContentLoaded",init);
+</script>
+</body>
+</html>

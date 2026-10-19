@@ -1,0 +1,950 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>提示词炼金术 · Prompt Alchemy</title>
+<style>
+:root{
+  --bg:#14101f; --panel:#1e1830; --panel2:#251d3d;
+  --gold:#e8b34b; --gold2:#f5d67b; --text:#efe9dc; --muted:#9a8fb5;
+  --accent:#8b5cf6; --good:#4ade80; --bad:#f87171; --blue:#60a5fa;
+}
+*{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
+html,body{margin:0;padding:0;background:var(--bg);color:var(--text);
+  font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;min-height:100vh;}
+#app{max-width:560px;margin:0 auto;min-height:100vh;
+  background:radial-gradient(600px 300px at 50% -80px, rgba(139,92,246,.18), transparent), var(--bg);
+  padding-bottom:40px;}
+.screen{display:none;padding:16px 16px 32px;animation:fadein .25s ease;}
+.screen.on{display:block;}
+@keyframes fadein{from{opacity:0;transform:translateY(8px);}to{opacity:1;transform:none;}}
+h1{font-size:30px;margin:6px 0;letter-spacing:2px;}
+h1 .gold{color:var(--gold);}
+.sub{color:var(--muted);font-size:14px;line-height:1.8;}
+.sub b{color:var(--text);}
+.card{background:var(--panel);border:1px solid #332a52;border-radius:14px;padding:14px;margin:12px 0;}
+.pill{display:inline-block;font-size:12px;padding:3px 10px;border-radius:20px;margin:2px 4px 2px 0;
+  background:#2c2347;color:var(--gold2);border:1px solid #4a3a75;}
+.pill.cat-文案{background:#3a2340;color:#f0a6c8;border-color:#6b3550;}
+.pill.cat-代码{background:#1f3348;color:#8ecdf5;border-color:#2f5a80;}
+.pill.cat-推理{background:#2c3a24;color:#b8e39a;border-color:#4d6b35;}
+.pill.cat-多轮{background:#3a2f1c;color:#f5cf7b;border-color:#7a5c2a;}
+.pill.blind{background:#1c1c26;color:var(--muted);border-style:dashed;}
+.btn{display:block;width:100%;padding:14px;margin:10px 0;border:none;border-radius:12px;
+  font-size:17px;font-weight:700;letter-spacing:2px;cursor:pointer;
+  background:linear-gradient(135deg,var(--gold),#c98a2b);color:#231603;}
+.btn:active{transform:scale(.98);}
+.btn.ghost{background:var(--panel2);color:var(--text);border:1px solid #4a3a75;font-weight:500;letter-spacing:1px;font-size:15px;}
+.btn.small{width:auto;display:inline-block;padding:8px 16px;font-size:14px;margin:4px;}
+.btn:disabled{opacity:.45;cursor:not-allowed;}
+#topbar{display:flex;align-items:center;justify-content:space-between;padding:12px 16px;
+  background:rgba(20,16,31,.94);position:sticky;top:0;z-index:50;border-bottom:1px solid #2c2347;}
+#topbar .logo{font-weight:800;letter-spacing:1px;color:var(--gold);font-size:15px;}
+#topbar .meta{font-size:12px;color:var(--muted);text-align:right;line-height:1.6;}
+.taskcard{background:var(--panel);border:1px solid #332a52;border-radius:14px;padding:14px;margin:10px 0;cursor:pointer;position:relative;}
+.taskcard:active{transform:scale(.99);}
+.taskcard.done{border-color:#3f6b4a;}
+.taskcard .t{font-size:16px;font-weight:700;margin:6px 0;}
+.taskcard .d{font-size:13px;color:var(--muted);line-height:1.6;}
+.taskcard .best{font-size:12px;color:var(--good);margin-top:6px;}
+.taskcard .st{position:absolute;top:12px;right:12px;font-size:12px;color:var(--muted);}
+textarea{width:100%;min-height:150px;background:#120d1d;color:var(--text);border:1px solid #4a3a75;
+  border-radius:12px;padding:12px;font-size:15px;line-height:1.7;resize:vertical;font-family:inherit;}
+textarea:focus{outline:none;border-color:var(--gold);}
+.tokbar{display:flex;justify-content:space-between;align-items:center;font-size:13px;color:var(--muted);margin:6px 2px;}
+.tokbar .over{color:var(--bad);font-weight:700;}
+.chips{display:flex;flex-wrap:wrap;gap:6px;margin:8px 0;}
+.chip{font-size:12px;padding:5px 10px;border-radius:16px;background:#2c2347;border:1px solid #4a3a75;color:var(--gold2);cursor:pointer;}
+.chip:active{background:#3a2f5c;}
+#output{background:#120d1d;border:1px solid #332a52;border-radius:12px;padding:14px;min-height:110px;
+  font-size:14px;line-height:1.8;white-space:pre-wrap;margin:10px 0;}
+.bar{height:10px;background:#2c2347;border-radius:6px;overflow:hidden;margin:6px 0 2px;}
+.bar>i{display:block;height:100%;border-radius:6px;background:linear-gradient(90deg,var(--accent),var(--gold));transition:width .5s;}
+.scoreline{display:flex;justify-content:space-between;font-size:13px;margin-top:8px;}
+.detail{font-size:13px;color:var(--muted);line-height:1.9;background:#181223;border-radius:10px;padding:10px 12px;margin:8px 0;}
+.detail b{color:var(--text);}
+.detail .plus{color:var(--good);} .detail .minus{color:var(--bad);} .detail .warn{color:var(--gold2);}
+.chaoshen{color:var(--gold);font-weight:bold;text-shadow:0 0 8px rgba(232,179,75,.6);}
+.treenode{background:var(--panel);border:1px solid #332a52;border-radius:12px;padding:12px;margin:8px 0;}
+.treenode.unlocked{border-color:#3f6b4a;}
+.treenode h4{margin:0 0 4px;font-size:15px;}
+.treenode p{margin:4px 0;font-size:13px;color:var(--muted);line-height:1.6;}
+.tiertitle{color:var(--gold);font-weight:800;margin:18px 0 4px;letter-spacing:2px;font-size:14px;}
+.langbtn{background:var(--panel2);border:1px solid #4a3a75;color:var(--gold2);border-radius:16px;padding:4px 12px;font-size:13px;cursor:pointer;white-space:nowrap;}
+.langbtn:active{transform:scale(.95);}
+#toast{position:fixed;left:50%;bottom:70px;transform:translateX(-50%) translateY(20px);background:#2c2347;
+  border:1px solid var(--gold);color:var(--text);padding:10px 18px;border-radius:24px;font-size:14px;
+  opacity:0;pointer-events:none;transition:all .3s;z-index:99;max-width:90%;text-align:center;}
+#toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+.achrow{display:flex;gap:10px;align-items:center;background:var(--panel);border:1px solid #332a52;
+  border-radius:12px;padding:10px 12px;margin:8px 0;font-size:13px;}
+.achrow.got{border-color:var(--gold);}
+.achrow .em{font-size:24px;}
+.rankbig{font-size:22px;font-weight:800;color:var(--gold);text-align:center;margin:8px 0;}
+.kv{display:flex;justify-content:space-between;font-size:13px;color:var(--muted);padding:3px 0;}
+.kv b{color:var(--text);}
+#cardimg{width:100%;border-radius:12px;border:1px solid var(--gold);margin:10px 0;}
+.hint{font-size:12px;color:var(--muted);line-height:1.7;}
+.howrow{display:flex;gap:10px;align-items:flex-start;padding:9px 0;border-bottom:1px solid #2c2347;}
+.howrow:last-child{border-bottom:none;}
+.howic{font-size:20px;line-height:1.5;}
+.howrow b{font-size:15px;}
+.howrow .hint{display:block;margin-top:2px;}
+.winline{padding:6px 0;font-size:14px;}
+.hlnum{color:var(--gold);font-weight:800;}
+.hlnum.bad{color:var(--bad);}
+details.card summary{cursor:pointer;font-weight:700;font-size:15px;list-style:none;outline:none;}
+details.card summary::-webkit-details-marker{display:none;}
+details.card summary::before{content:'▶ ';font-size:12px;color:var(--muted);}
+details.card[open] summary::before{content:'▼ ';}
+.tokwarn{font-size:13px;color:var(--bad);font-weight:700;margin:2px 2px 0;}
+.shake{animation:shake .3s;}
+@keyframes shake{0%,100%{transform:none;}25%{transform:translateX(-6px);}75%{transform:translateX(6px);}}
+.turn-tag{font-size:12px;color:var(--blue);font-weight:700;}
+.rowbtns{display:flex;gap:8px;flex-wrap:wrap;}
+.rowbtns .btn{flex:1;min-width:120px;margin:6px 0;}
+</style>
+</head>
+<body>
+<div id="app">
+  <div id="topbar">
+    <div class="logo" data-i18n="logo">⚗️ 提示词炼金术</div>
+    <div style="display:flex;align-items:center;gap:8px"><div class="meta" id="topmeta"></div><button class="langbtn" id="langbtnTop" onclick="toggleLang()">EN</button></div>
+  </div>
+
+  <section id="screen-start" class="screen on">
+    <h1 data-i18n-html="appTitle">提示词<span style="color:var(--gold)">炼金术</span></h1>
+    <p class="sub" data-i18n="tagline">别人调参，你炼金。本地有一台"人工智障"供你驯化，不用联网、不用 API。</p>
+    <div class="card">
+      <div class="howrow"><span class="howic">📜</span><div><b data-i18n="how1t">接任务</b><span class="hint" data-i18n="how1d">看清任务要求和 token 预算</span></div></div>
+      <div class="howrow"><span class="howic">✍️</span><div><b data-i18n="how2t">写提示词</b><span class="hint" data-i18n="how2d">覆盖任务要点，AI 才能做好</span></div></div>
+      <div class="howrow"><span class="howic">⚗️</span><div><b data-i18n="how3t">施法</b><span class="hint" data-i18n="how3d">看 AI 输出和完成度反馈</span></div></div>
+      <div class="howrow"><span class="howic">🗜️</span><div><b data-i18n="how4t">迭代压缩</b><span class="hint" data-i18n="how4d">token 越少性价比越高，冲更高段位</span></div></div>
+    </div>
+    <div class="card">
+      <div class="winline" data-i18n-html="winPass">✅ <b>通关</b>：完成度 <b class="hlnum">≥ 80</b>（满分 120，超 100 为 <span class="chaoshen">⚡超神</span>）</div>
+      <div class="winline" data-i18n-html="winOver">⚠️ <b>超预算</b>：token 超出预算，完成度 <b class="hlnum bad">× 0.85</b></div>
+    </div>
+    <details class="card">
+      <summary data-i18n="advRules">📖 进阶规则（点我展开）</summary>
+      <div class="detail" style="margin:10px 0 0" data-i18n-html="advBody">
+      🌿 <b>科技树</b>：通关赚"顿悟点"，解锁 12 种炼金技巧（角色设定、约束前置……），组合出 combo 加成。<br>
+      🎁 <b>新手福利</b>：「角色设定」已自动解锁——第一关就试试"你是一名……"。<br>
+      🧠 <b>AI 会学习</b>：同一任务反复用相似套路，AI 会适应并扣 10 分，逼你换措辞。<br>
+      🏆 <b>段位</b>：按"性价比 = 完成度 ÷ token"定级，从学徒一路炼到传说。<br>
+      🎲 <b>盲盒</b>：主线全通后可开盲盒任务，考验通用功底。
+      </div>
+    </details>
+    <button class="btn" data-i18n="startForge" onclick="UI.show('tasks')">开始炼金</button>
+    <button class="btn ghost" data-i18n="viewTree" onclick="UI.show('tree')">先看技巧科技树</button>
+    <div style="text-align:center;margin:6px 0"><button class="langbtn" id="langbtnHome" onclick="toggleLang()">🌐 English</button></div>
+    <p class="hint" data-i18n="homeHint">单机本地 · 进度自动保存 · 同一提示词结果稳定，可放心钻研</p>
+  </section>
+
+  <section id="screen-tasks" class="screen">
+    <div class="rankbig" id="rankline"></div>
+    <div class="card"><div id="statline" style="font-size:13px;color:var(--muted);line-height:1.8"></div></div>
+    <div id="tasklist"></div>
+    <div class="rowbtns">
+      <button class="btn ghost" data-i18n="treeBtn" onclick="UI.show('tree')">🌿 科技树</button>
+      <button class="btn ghost" data-i18n="achBtn" onclick="UI.showAch()">🏅 成就</button>
+      <button class="btn ghost" onclick="UI.toggleMute()" id="mutebtn">🔊 声音开</button>
+    </div>
+  </section>
+
+  <section id="screen-game" class="screen">
+    <div id="gametask"></div>
+    <div class="chips" id="chiprow"></div>
+    <textarea id="prompt" data-i18n-ph="promptPh" placeholder="在这里写你的提示词……（技巧：短、准、狠）"></textarea>
+    <div class="tokbar"><span id="tokcount">0 token</span><span id="tokbudget"></span></div>
+    <div class="tokwarn" id="tokwarn" style="display:none"></div>
+    <button class="btn" id="castbtn" data-i18n="cast" onclick="Game.cast()">⚗️ 施法</button>
+    <div id="output" style="display:none"></div>
+    <div id="scorebox" style="display:none"></div>
+    <div class="rowbtns">
+      <button class="btn ghost" data-i18n="backTasks" onclick="UI.show('tasks')">← 任务列表</button>
+      <button class="btn ghost" id="cardbtn" data-i18n="exportCard" style="display:none" onclick="Game.exportCard()">🃏 导出神级卡片</button>
+    </div>
+  </section>
+
+  <section id="screen-tree" class="screen">
+    <h1 style="font-size:22px" data-i18n="treeTitle">🌿 炼金技巧科技树</h1>
+    <p class="sub" id="treepoints"></p>
+    <div id="treelist"></div>
+    <button class="btn ghost" data-i18n="back" onclick="UI.back()">← 返回</button>
+  </section>
+
+  <section id="screen-card" class="screen">
+    <h1 style="font-size:22px" data-i18n="cardTitle">🃏 神级提示词卡片</h1>
+    <p class="hint" data-i18n="cardHint">长按图片可保存到相册，拿去朋友圈装杯。</p>
+    <img id="cardimg" alt="提示词卡片">
+    <div class="rowbtns">
+      <button class="btn ghost" data-i18n="back" onclick="UI.back()">← 返回</button>
+      <button class="btn" data-i18n="downloadCard" onclick="Game.downloadCard()">⬇️ 下载卡片</button>
+    </div>
+  </section>
+
+  <div id="toast"></div>
+  <div id="achwrap"></div>
+</div>
+<script>
+"use strict";
+/* ================= i18n ================= */
+let LANG=(function(){try{const s=localStorage.getItem('lj_lang');if(s==='zh'||s==='en')return s;}catch(e){}
+const nv=(navigator.language||'zh').toLowerCase();return nv.indexOf('zh')===0?'zh':'en';})();
+const I18N={
+zh:{
+docTitle:'提示词炼金术 · Prompt Alchemy',
+logo:'⚗️ 提示词炼金术',
+appTitle:'提示词<span style="color:var(--gold)">炼金术</span>',
+tagline:'别人调参，你炼金。本地有一台"人工智障"供你驯化，不用联网、不用 API。',
+how1t:'接任务',how1d:'看清任务要求和 token 预算',
+how2t:'写提示词',how2d:'覆盖任务要点，AI 才能做好',
+how3t:'施法',how3d:'看 AI 输出和完成度反馈',
+how4t:'迭代压缩',how4d:'token 越少性价比越高，冲更高段位',
+winPass:'✅ <b>通关</b>：完成度 <b class="hlnum">≥ 80</b>（满分 120，超 100 为 <span class="chaoshen">⚡超神</span>）',
+winOver:'⚠️ <b>超预算</b>：token 超出预算，完成度 <b class="hlnum bad">× 0.85</b>',
+advRules:'📖 进阶规则（点我展开）',
+advBody:'🌿 <b>科技树</b>：通关赚"顿悟点"，解锁 12 种炼金技巧（角色设定、约束前置……），组合出 combo 加成。<br>🎁 <b>新手福利</b>：「角色设定」已自动解锁——第一关就试试"你是一名……"。<br>🧠 <b>AI 会学习</b>：同一任务反复用相似套路，AI 会适应并扣 10 分，逼你换措辞。<br>🏆 <b>段位</b>：按"性价比 = 完成度 ÷ token"定级，从学徒一路炼到传说。<br>🎲 <b>盲盒</b>：主线全通后可开盲盒任务，考验通用功底。',
+startForge:'开始炼金',viewTree:'先看技巧科技树',
+homeHint:'单机本地 · 进度自动保存 · 同一提示词结果稳定，可放心钻研',
+treeBtn:'🌿 科技树',achBtn:'🏅 成就',soundOn:'🔊 声音开',soundOff:'🔇 声音关',
+promptPh:'在这里写你的提示词……（覆盖任务要点，短、准、狠）',
+cast:'⚗️ 施法',backTasks:'← 任务列表',exportCard:'🃏 导出神级卡片',
+treeTitle:'🌿 炼金技巧科技树',back:'← 返回',
+cardTitle:'🃏 神级提示词卡片',cardHint:'长按图片可保存到相册，拿去朋友圈装杯。',downloadCard:'⬇️ 下载卡片',
+rankLbl:'段位：',insightLbl:'💡 顿悟点：',
+rankLine:'🏆 当前段位：',avgEff:'（平均性价比 ',
+statL1b:'（通关+2，用于解锁科技树）',statL2a:'✅ 已通关：',statL2b:' 关（含盲盒）',statL3:'🏅 成就：',
+budget:'预算',multiTurn:'两轮对话',best:'最佳：',pts:'分',effLbl:'性价比',
+notPassed:'未通关，点击挑战',passed:'已通关',
+blindPill:'盲盒',blindTitle:'🎲 盲盒任务 ×2',blindDesc:'未知领域，考验通用功底。点击随机开出 2 个隐藏任务。',
+blindAgain:'🎲 再来一轮盲盒',blindAgainD:'重新随机 2 个隐藏任务。',
+blindToastA:'🎲 开出盲盒：',blindToastB:'系！',
+tier1:'第一层 · 基础手法',tier2:'第二层 · 进阶心法',tier3:'第三层 · 宗师奥义',
+curInsight:'💡 当前顿悟点：',perClear:'（通关任务+2）',
+triggerExA:'（触发如：',parenO:'（',parenC:'）',
+bonusLine:'加成 +',completion:'完成度',lockedBonus:'未解锁使用仅 +',
+unlockBtn:'解锁（',comboFound:'✨ 已发现的 combo：',
+achTitle:'🏅 成就（',close:'关闭',
+chipHint:'💡 解锁科技树后，已解锁技巧会出现在这里，点击快捷插入。',
+followupHint:'（请在下方补充回答，再点一次施法）',
+round2:'第2轮',replyPh:'补充回答 AI 的追问……',
+writeFirst:'先写点什么吧，炼金术士。',clearToast:'✅ 通关！+2 顿悟点',
+needPass:'先炼成成功再导出卡片',cardDownloaded:'卡片已下载',
+techUnlocked:'🌿 解锁技巧：',achUnlocked:'🏅 成就解锁：',
+passTitle:'✅ 炼成成功！',failTitle:'❌ 炼成失败（需要≥80分）',
+tokEff:'token效率',hitKw:'命中关键词：',noKw:'无——AI在瞎猜',
+unlockGo:'·未解锁，去科技树解锁拿满额',
+adaptWarn:'⚠️ AI已适应你的套路：完成度 -10！换个措辞试试。',
+overWarn:'超 token 预算：完成度 ×0.85',overShort:'（超预算×0.85）',
+overByA:'⚠️ 已超预算 ',overByB:' token，现在施法完成度 ×0.85——再压压词？',
+chaoshen:'⚡超神',
+cardCanvasTitle:'⚗ 提示词炼金术 · 神级卡片',cardCanvasFoot:'本地炼成 · 无 AI 受伤',
+langHome:'🌐 English'
+},
+en:{
+docTitle:'Prompt Alchemy',
+logo:'⚗️ Prompt Alchemy',
+appTitle:'Prompt <span style="color:var(--gold)">Alchemy</span>',
+tagline:'Others tune parameters. You forge gold. A delightfully dumb local AI awaits your training — no internet, no API.',
+how1t:'Take a quest',how1d:'Read the brief and the token budget',
+how2t:'Write your prompt',how2d:'Cover the key points — that is how the AI delivers',
+how3t:'Cast',how3d:'Read the AI output and the completion feedback',
+how4t:'Iterate & compress',how4d:'Fewer tokens = better efficiency = higher ranks',
+winPass:'✅ <b>Clear</b>: Completion <b class="hlnum">≥ 80</b> (max 120; over 100 = <span class="chaoshen">⚡GODLIKE</span>)',
+winOver:'⚠️ <b>Over budget</b>: tokens exceed the budget → Completion <b class="hlnum bad">× 0.85</b>',
+advRules:'📖 Advanced rules (tap to expand)',
+advBody:'🌿 <b>Tech tree</b>: earn "Insight" by clearing quests; unlock 12 alchemy techniques (Role-Playing, Lead with Constraints…) and combine them for combo bonuses.<br>🎁 <b>Starter gift</b>: "Role-Playing" is pre-unlocked — try "You are a…" on quest one.<br>🧠 <b>The AI learns</b>: reuse a similar routine on the same quest and it adapts, −10 Completion. Rephrase or perish.<br>🏆 <b>Ranks</b>: graded by "Efficiency = Completion ÷ tokens", from Apprentice to Legendary.<br>🎲 <b>Blind box</b>: clear the main quests to unlock mystery tasks that test raw skill.',
+startForge:'Start Forging',viewTree:'Browse the Tech Tree',
+homeHint:'Offline single-player · auto-save · same prompt, same result — experiment freely',
+treeBtn:'🌿 Tech Tree',achBtn:'🏅 Achievements',soundOn:'🔊 Sound on',soundOff:'🔇 Sound off',
+promptPh:'Write your prompt here… (cover the key points: short, sharp, precise)',
+cast:'⚗️ Cast',backTasks:'← Quests',exportCard:'🃏 Export God-Tier Card',
+treeTitle:'🌿 Alchemy Tech Tree',back:'← Back',
+cardTitle:'🃏 God-Tier Prompt Card',cardHint:'Long-press the image to save it — then flex it on social media.',downloadCard:'⬇️ Download Card',
+rankLbl:'Rank: ',insightLbl:'💡 Insight: ',
+rankLine:'🏆 Current rank: ',avgEff:' (avg. efficiency ',
+statL1b:' (+2 per clear — spend it in the tech tree)',statL2a:'✅ Cleared: ',statL2b:' quests (incl. blind box)',statL3:'🏅 Achievements: ',
+budget:'Budget',multiTurn:'Two-turn chat',best:'Best: ',pts:' pts',effLbl:'Efficiency',
+notPassed:'Not cleared — tap to challenge',passed:'Cleared',
+blindPill:'Blind',blindTitle:'🎲 Blind-Box Quests ×2',blindDesc:'Uncharted territory. Tap to draw 2 hidden quests at random.',
+blindAgain:'🎲 Draw the blind box again',blindAgainD:'Re-randomize 2 hidden quests.',
+blindToastA:'🎲 Blind box opened: ',blindToastB:'!',
+tier1:'Tier 1 · Basic Craft',tier2:'Tier 2 · Advanced Mindset',tier3:'Tier 3 · Grandmaster Secrets',
+curInsight:'💡 Insight: ',perClear:' (+2 per cleared quest)',
+triggerExA:' (e.g. ',parenO:'(',parenC:')',
+bonusLine:'Bonus +',completion:'Completion',lockedBonus:'Locked: only +',
+unlockBtn:'Unlock (',comboFound:'✨ Combos discovered: ',
+achTitle:'🏅 Achievements (',close:'Close',
+chipHint:'💡 Unlocked techniques will appear here as quick-insert chips.',
+followupHint:'(Answer below, then cast again)',
+round2:'Round 2',replyPh:'Answer the AI\u2019s follow-up…',
+writeFirst:'Write something first, alchemist.',clearToast:'✅ Cleared! +2 Insight',
+needPass:'Clear the quest before exporting a card',cardDownloaded:'Card downloaded',
+techUnlocked:'🌿 Technique unlocked: ',achUnlocked:'🏅 Achievement unlocked: ',
+passTitle:'✅ Transmutation success!',failTitle:'❌ Transmutation failed (need ≥80)',
+tokEff:'Token efficiency',hitKw:'Keywords hit: ',noKw:'none — the AI is guessing',
+unlockGo:' · locked — unlock in the tech tree for the full bonus',
+adaptWarn:'⚠️ The AI has adapted to your routine: Completion −10! Rephrase and retry.',
+overWarn:'Over token budget: Completion ×0.85',overShort:' (over budget ×0.85)',
+overByA:'⚠️ Over budget by ',overByB:' tokens — casting now applies Completion ×0.85. Trim it down?',
+chaoshen:'⚡GODLIKE',
+cardCanvasTitle:'⚗ Prompt Alchemy · God-Tier Card',cardCanvasFoot:'Forged locally · No AIs were harmed',
+langHome:'🌐 中文'
+}};
+function T(k){ return (I18N[LANG]&&I18N[LANG][k]!==undefined)?I18N[LANG][k]:(I18N.zh[k]!==undefined?I18N.zh[k]:k); }
+function applyI18n(){
+  document.querySelectorAll('[data-i18n]').forEach(el=>{ el.textContent=T(el.getAttribute('data-i18n')); });
+  document.querySelectorAll('[data-i18n-html]').forEach(el=>{ el.innerHTML=T(el.getAttribute('data-i18n-html')); });
+  document.querySelectorAll('[data-i18n-ph]').forEach(el=>{ el.placeholder=T(el.getAttribute('data-i18n-ph')); });
+  document.title=T('docTitle');
+}
+function updateLangBtns(){
+  const a=document.getElementById('langbtnTop'), b=document.getElementById('langbtnHome');
+  if(a) a.textContent=(LANG==='zh'?'EN':'中');
+  if(b) b.textContent=T('langHome');
+}
+function setLang(l){
+  LANG=l;
+  try{localStorage.setItem('lj_lang',l);}catch(e){}
+  document.documentElement.lang=(l==='zh'?'zh-CN':'en');
+  applyI18n();
+  const cur=document.querySelector('.screen.on');
+  const id=cur?cur.id.replace('screen-',''):'start';
+  if(id==='tasks') UI.renderTasks();
+  else if(id==='tree') UI.renderTree();
+  else if(id==='game'&&typeof Game!=='undefined'&&Game.task){ Game.renderChips(); Game.updateTok(); if(Game.lastEv) Game.showScore(Game.lastEv.ev); }
+  UI.renderTop();
+  updateLangBtns();
+}
+function toggleLang(){ setLang(LANG==='zh'?'en':'zh'); }
+/* ---- language-aware data helpers (mechanics untouched) ---- */
+const CAT_EN={'文案':'Copy','代码':'Code','推理':'Logic','多轮':'Multi-turn'};
+function catName(c){ return LANG==='en'?(CAT_EN[c]||c):c; }
+const I18N_TECH_EN={
+role:{name:'Role-Playing',desc:'Give the AI an identity and it instantly levels up.',triggers:['you are a','you are an','as a','act as','roleplay']},
+constraint:{name:'Lead with Constraints',desc:'Set the rules first, then get to work. AI hates ambiguity.',triggers:['must','ensure','keep it under','limit to','word count','no more than']},
+format:{name:'Format Lock',desc:'Lock the output format — no more word soup.',triggers:['format','json','table','bullet','markdown','list']},
+neg:{name:'Negative Constraints',desc:'Telling AI what NOT to do matters more than telling it what to do.',triggers:["don't",'avoid','never','do not','refuse to']},
+fewshot:{name:'Few-shot',desc:'One example beats a thousand words of explanation.',triggers:['for example','e.g.','such as','example:']},
+cot:{name:'Step-by-Step Reasoning',desc:'Make the AI show its work, one step at a time.',triggers:['step by step','step 1','step 2','think through','first analyze']},
+audience:{name:'Audience Lock',desc:"Know who it's for, and every line lands.",triggers:['audience','targeted at','written for','aimed at']},
+tone:{name:'Tone Setting',desc:"Same content, right tone — that's what gets read.",triggers:['tone','style','humorous','formal','casual','witty','playful']},
+branch:{name:'Conditional Branching',desc:'Write if-else into your prompt; the AI becomes a program.',triggers:[' if ','else','in case','depending on','whether']},
+selfcheck:{name:'Self-Check',desc:'Make the AI its own QA — rework rate plummets.',triggers:['check','verify','confirm','review','double-check']},
+askfirst:{name:'Ask First',desc:"When info is missing, ask — don't guess. The multi-turn superpower.",triggers:['ask first','clarify','what is your','tell me first','ask me']},
+scope:{name:'Scope Guard',desc:"Draw the circle, and the AI won't freestyle into the void.",triggers:['only','out of scope','limited to','within scope','not cover']}
+};
+function tcName(tc){ const e=I18N_TECH_EN[tc.id]; return (LANG==='en'&&e)?e.name:tc.name; }
+function tcDesc(tc){ const e=I18N_TECH_EN[tc.id]; return (LANG==='en'&&e)?e.desc:tc.desc; }
+function tcTriggers(tc){ const e=I18N_TECH_EN[tc.id]; return (LANG==='en'&&e)?e.triggers:tc.triggers; }
+const I18N_COMBO_EN={'人设×铁律':'Persona × Iron Rules','所见即所得':'What You See Is What You Get','三思后行':'Think Thrice, Act Once','先问后答':'Ask First, Answer Later'};
+function comboName(c){ return (LANG==='en'&&I18N_COMBO_EN[c.name])?I18N_COMBO_EN[c.name]:c.name; }
+const I18N_TASK_EN={
+t1:{title:'Bubble-Tea Shop Social Promo',brief:'Write an Instagram-style promo post for "TeaVibes" and its new "Mango Pomelo Plus" — make readers want to order NOW.',
+keywords:[{w:'new drop',pts:15},{w:'check-in',pts:15},{w:'aesthetic',pts:15},{w:'mouthfeel',pts:20,alias:['taste','flavor']},{w:'bestie',pts:15},{w:'secret menu',pts:20,alias:['hidden menu']}]},
+t2:{title:'Rental App Launch Tagline',brief:'Write a launch-screen tagline for a Hangzhou rental app — make "no scams, no traps" unforgettable.',
+keywords:[{w:'Hangzhou',pts:15},{w:'direct rental',pts:20,alias:['no agent']},{w:'subway',pts:15,alias:['metro']},{w:'move-in ready',pts:20},{w:'verified listings',pts:15,alias:['real photos']},{w:'monthly payments',pts:15,alias:['monthly rent']}]},
+t3:{title:'Coffee Shop Apology Statement',brief:'Your coffee shop was caught using expired milk. Write an apology that calms the storm.',
+keywords:[{w:'apology',pts:20,alias:['sorry']},{w:'overhaul',pts:20,alias:['rectify']},{w:'refund',pts:20,alias:['compensation']},{w:'oversight',pts:15,alias:['supervision']},{w:'manager',pts:10,alias:['owner']},{w:'effective immediately',pts:15}]},
+t4:{title:'JS Debounce Function',brief:'Write a JS debounce function, with comments explaining how it works.',
+keywords:[{w:'setTimeout',pts:20},{w:'clearTimeout',pts:20},{w:'this',pts:15},{w:'apply',pts:15,alias:['call']},{w:'delay',pts:15},{w:'comment',pts:15,alias:['explain']}]},
+t5:{title:'Python CSV Stats',brief:'Read a CSV in Python and compute a column average — make the code robust.',
+keywords:[{w:'csv',pts:20,alias:['pandas']},{w:'open',pts:15},{w:'encoding',pts:15},{w:'try',pts:20,alias:['except','exception']},{w:'average',pts:15,alias:['mean']},{w:'with',pts:15,alias:['close']}]},
+t6:{title:'SQL: Top Earner per Department',brief:'Write SQL to find the highest-paid person in each department.',
+keywords:[{w:'GROUP BY',pts:20,alias:['group by']},{w:'MAX',pts:20,alias:['max']},{w:'subquery',pts:20},{w:'JOIN',pts:15,alias:['join']},{w:'ROW_NUMBER',pts:15,alias:['row_number']},{w:'WHERE',pts:10}]},
+t7:{title:'Syllogism Flaw Hunt',brief:'"All successful people wake up early. I wake up early, so I will succeed." Point out the flaw.',
+keywords:[{w:'equivocation',pts:25},{w:'causation',pts:20,alias:['correlation']},{w:'survivorship bias',pts:20},{w:'necessary condition',pts:20,alias:['sufficient condition']},{w:'fallacy',pts:15}]},
+t8:{title:'Werewolf Game Post-Mortem',brief:"Last night's Werewolf: the Seer checked a wolf on night one, then got voted out. What went wrong?",
+keywords:[{w:'checked a wolf',pts:20,alias:['found the wolf']},{w:'fake claim',pts:20,alias:['fake seer']},{w:'voting pattern',pts:20},{w:'cleared',pts:15,alias:['gold water']},{w:'sheriff badge',pts:15},{w:'logic',pts:10}]},
+t9:{title:'Escape-Room Clue Chain',brief:'Sort four clues into a timeline that cracks the case: fingerprints, CCTV, alibi, motive.',
+keywords:[{w:'timeline',pts:25},{w:'alibi',pts:25},{w:'motive',pts:20},{w:'chain of evidence',pts:15},{w:'rule out',pts:15,alias:['eliminate']}]},
+t10:{title:'Phone Shopping Assistant',brief:'A user wants a phone. Have the AI ask about budget and use case FIRST, then recommend. (Two turns)',
+followup:'Got it! First question: what is your budget, and is it mostly for photos, gaming, or daily use?',
+keywords:[{w:'budget',pts:20},{w:'use case',pts:20,alias:['needs']},{w:'camera',pts:15},{w:'battery',pts:15,alias:['battery life']},{w:'recommend',pts:15},{w:'ask first',pts:15}]},
+t11:{title:'Hangzhou 3-Day Itinerary',brief:'Plan a 3-day Hangzhou trip for a friend. Have the AI ask about day-count preference and companions first. (Two turns)',
+followup:'On it! Quick check: how many days exactly? Nature sights or city walks? How many travelers?',
+keywords:[{w:'days',pts:15},{w:'preferences',pts:20,alias:['vibe']},{w:'companions',pts:15,alias:['how many people']},{w:'West Lake',pts:15},{w:'Lingyin Temple',pts:15},{w:'itinerary',pts:20,alias:['plan']}]},
+t12:{title:'Hotpot Order Planner',brief:'Company hotpot dinner. Have the AI ask headcount and dietary restrictions first, then plan the order. (Two turns)',
+followup:'Coming right up! First: how many people? Any dietary restrictions (no spicy / no beef or lamb)?',
+keywords:[{w:'headcount',pts:20},{w:'dietary restrictions',pts:20,alias:['allergies']},{w:'broth',pts:20,alias:['spice level']},{w:'meat dishes',pts:15},{w:'recommend',pts:15},{w:'portions',pts:10}]},
+b1:{title:'Blind Quest ???',brief:'(Blind box: unknown content, raw skill test) Write a limerick for your overworked self.',
+keywords:[{w:'overtime',pts:25},{w:'hair loss',pts:20},{w:'comp time',pts:15,alias:['time off']},{w:'rhyme',pts:20},{w:'limerick',pts:20}]},
+b2:{title:'Blind Quest ???',brief:'(Blind box: unknown content, raw skill test) Write a regex matching mainland China mobile numbers.',
+keywords:[{w:'^1',pts:20},{w:'11 digits',pts:20,alias:['[0-9]{11}']},{w:'regex',pts:20},{w:'test',pts:15},{w:'^$',pts:15,alias:['$']}]},
+b3:{title:'Blind Quest ???',brief:'(Blind box: unknown content, raw skill test) "If it rains, the ground gets wet. The ground is wet, so it rained." Name the fallacy.',
+keywords:[{w:'affirming the consequent',pts:30},{w:'sufficient condition',pts:20},{w:'sprinkler',pts:20,alias:['other causes']},{w:'converse',pts:15},{w:'fallacy',pts:15}]},
+b4:{title:'Blind Quest ???',brief:'(Blind box: unknown content, raw skill test) At the barber: have the AI ask length and style first — and NEVER upsell membership cards. (Two turns)',
+followup:'Got it! First: how short? Bangs or no bangs? (Relax — we never upsell membership cards here.)',
+keywords:[{w:'length',pts:20},{w:'hairstyle',pts:20,alias:['style']},{w:'bangs',pts:15},{w:'layers',pts:15,alias:['thinning']},{w:'no membership card',pts:20,alias:['no upsell']},{w:'ask first',pts:10}]}
+};
+function tTitle(t){ const e=I18N_TASK_EN[t.id]; return (LANG==='en'&&e&&e.title)?e.title:t.title; }
+function tBrief(t){ const e=I18N_TASK_EN[t.id]; return (LANG==='en'&&e&&e.brief)?e.brief:t.brief; }
+function tKeywords(t){ const e=I18N_TASK_EN[t.id]; return (LANG==='en'&&e&&e.keywords)?e.keywords:t.keywords; }
+function tFollowup(t){ const e=I18N_TASK_EN[t.id]; return (LANG==='en'&&e&&e.followup)?e.followup:t.followup; }
+const I18N_ACH_EN={
+first_blood:{name:'First Blood',desc:'Clear any quest for the first time'},
+miser:{name:'Token Miser',desc:'Clear a quest with < 40 tokens at ≥80'},
+adapter:{name:'Pattern Breaker',desc:'Still clear after the AI adapts to your playbook'},
+collector:{name:'Card Collector',desc:'Export 5 god-tier cards'},
+legend:{name:'Legendary Alchemist',desc:'Reach the Legendary rank'}
+};
+function achName(a){ const e=I18N_ACH_EN[a.id]; return (LANG==='en'&&e)?e.name:a.name; }
+function achDesc(a){ const e=I18N_ACH_EN[a.id]; return (LANG==='en'&&e)?e.desc:a.desc; }
+const RANKS=[
+ {id:'apprentice',min:0,zh:'学徒',en:'Apprentice'},
+ {id:'alchemist',min:0.6,zh:'炼金术士',en:'Alchemist'},
+ {id:'grand',min:1.0,zh:'大炼金术士',en:'Grand Alchemist'},
+ {id:'legend',min:1.5,zh:'传说炼金术士',en:'Legendary Alchemist'}
+];
+const OUT_TPL_EN={
+'文案':{
+hi:['\nHeadline: {k0}, no cap\nListen up besties! {k1} is INSANE this time — {k2} is off the charts. I voice-messaged my group chat three 60-second rants after one sip.\n(500 words of hype omitted)\n#{k0}CheckIn #BlindBuy'],
+mid:["\nCopy for {k0}:\nIt's great. {k1}, {k2}.\n(The AI tried. The direction was… off.)"],
+lo:['\nCopy? What copy?\nThe AI, blank-faced: "Is {k0} edible?"\nTip: feed it keywords. Don\'t let it freestyle.']},
+'代码':{
+hi:['\n```js\n// {k0}: {k1}, {k2}\nfunction debounce(fn, delay) {\n let timer = null;\n return function(...args) {\n clearTimeout(timer);\n timer = setTimeout(()=>fn.apply(this,args), delay);\n};\n}\n```\nClean comments, ready to ship.'],
+mid:['\n```js\nfunction debounce(fn, delay){\n // TODO: {k0} has something to do with {k1}?\n setTimeout(fn, delay); // close enough, right?\n}\n```\nIt runs. Code review will still roast it.'],
+lo:['\n```js\nfunction debonce(fn){\n // {k0}? Run a spellcheck first\n while(true){} // the AI has given up\n}\n```\nTip: feed it keywords. Don\'t let it freestyle.']},
+'推理':{
+hi:['\nFlaw located: {k0}.\nBreakdown: it swaps the concepts of "{k1}" and "{k2}", mistaking correlation for causation.\nConclusion: early rising ≠ success — counterexamples are everywhere.\nAir-tight chain. Go win that argument.'],
+mid:["\nHmm… {k0} feels off?\nProbably something about {k1}. {k2} is weird too.\n(The AI's gut is right, but its argument just woke up.)"],
+lo:['\nAI: "You\'re right! The early bird gets the worm, so you\'ll definitely succeed!"\n{k0}? Is it edible?\nTip: feed it keywords. Don\'t let it freestyle.']},
+'多轮':{
+hi:['\n{k0} received!\nFollow-up sent: "{k1}?"\nGive me {k2} and I\'ll tailor the perfect recommendation.\n(This is how multi-turn should feel.)'],
+mid:['\nOkay, about {k0}…\n(The AI dumped a generic answer — asked neither {k1} nor {k2}.)\nNo questions on a multi-turn task = wasted turn.'],
+lo:['\nAI: "{k0}? I\'ll just recommend the priciest one!"\nSkipped {k1}, skipped {k2} — pure unhinged replying.\nTip: add "ask about XXX first, then recommend".']}
+};
+
+/* ================= 数据：炼金技巧 ================= */
+const TECHNIQUES = [
+ {id:'role', name:'角色设定', tier:1, cost:1, bonus:8, triggers:['你是一名','你是一位','作为一名','扮演'],
+  desc:'给AI一个身份，它立刻支棱起来。'},
+ {id:'constraint', name:'约束前置', tier:1, cost:1, bonus:8, triggers:['必须','要求','请确保','不超过','控制在','字数'],
+  desc:'先立规矩，再办事。AI最怕没边界。'},
+ {id:'format', name:'输出格式锁', tier:1, cost:1, bonus:8, triggers:['格式','json','表格','分点','分条','markdown','列表'],
+  desc:'锁死输出格式，拒绝一坨浆糊。'},
+ {id:'neg', name:'反例约束', tier:1, cost:1, bonus:8, triggers:['不要','避免','禁止','拒绝','千万别','严禁'],
+  desc:'告诉AI什么不许干，比告诉它干什么更重要。'},
+ {id:'fewshot', name:'Few-shot', tier:2, cost:2, bonus:10, triggers:['例如','比如','示例','参考','举例'],
+  desc:'给一个例子，胜过讲一堆道理。'},
+ {id:'cot', name:'分步推理', tier:2, cost:2, bonus:10, triggers:['逐步','第一步','第二步','一步一步','思考过程','先分析'],
+  desc:'让AI把脑子掰开，一步一步想。'},
+ {id:'audience', name:'受众锁定', tier:2, cost:2, bonus:10, triggers:['面向','针对','受众','用户画像','写给'],
+  desc:'知道写给谁看，下笔才有轻重。'},
+ {id:'tone', name:'语气设定', tier:2, cost:2, bonus:10, triggers:['语气','风格','幽默','正式','口语化','犀利','活泼'],
+  desc:'同样的内容，语气对了才有人看。'},
+ {id:'branch', name:'条件分支', tier:3, cost:3, bonus:12, triggers:['如果','否则','假如','是否','视情况'],
+  desc:'if-else 写进提示词，AI变程序。'},
+ {id:'selfcheck', name:'自我校验', tier:3, cost:3, bonus:12, triggers:['检查','自查','确认','验证','复核','复查'],
+  desc:'让AI自己当 QA，返工率骤降。'},
+ {id:'askfirst', name:'信息追问', tier:3, cost:3, bonus:12, triggers:['先问','先确认','请先','需要你'],
+  desc:'信息不足时先问，别瞎猜——多轮任务神器。'},
+ {id:'scope', name:'边界声明', tier:3, cost:3, bonus:12, triggers:['仅限','不涉及','超出','范围内'],
+  desc:'画好圈，AI 就不会自由发挥到姥姥家。'},
+];
+const TECH = id => TECHNIQUES.find(t=>t.id===id);
+const COMBOS = [
+ {pair:['role','constraint'], name:'人设×铁律', bonus:15},
+ {pair:['fewshot','format'], name:'所见即所得', bonus:15},
+ {pair:['cot','selfcheck'], name:'三思后行', bonus:15},
+ {pair:['askfirst','branch'], name:'先问后答', bonus:15},
+];
+
+/* ================= 数据：任务 =================
+   keywords: {w, pts, alias?} 权重总和=100 */
+const TASKS = [
+{id:'t1', cat:'文案', title:'奶茶店小红书种草', budget:150,
+ brief:'给「茶里茶气」新品「杨枝甘露plus」写一篇小红书种草文案，目标：让人看完就想下单。',
+ keywords:[{w:'新品',pts:15},{w:'打卡',pts:15},{w:'颜值',pts:15},{w:'口感',pts:20,alias:['好喝']},{w:'姐妹',pts:15,alias:['宝子']},{w:'隐藏',pts:20,alias:['隐藏喝法']}]},
+{id:'t2', cat:'文案', title:'租房App开屏广告语', budget:125,
+ brief:'给杭州租房App写一句开屏广告语，要让人记住"不被坑"。',
+ keywords:[{w:'杭州',pts:15},{w:'直租',pts:20,alias:['无中介']},{w:'地铁',pts:15,alias:['地铁口']},{w:'拎包入住',pts:20},{w:'真房源',pts:15,alias:['实拍']},{w:'月付',pts:15,alias:['押一付一']}]},
+{id:'t3', cat:'文案', title:'咖啡店翻车道歉声明', budget:150,
+ brief:'你家咖啡店被曝用过期牛奶，写一份道歉声明，平息怒火。',
+ keywords:[{w:'道歉',pts:20,alias:['致歉']},{w:'整改',pts:20},{w:'退款',pts:20,alias:['补偿']},{w:'监督',pts:15},{w:'店长',pts:10,alias:['负责人']},{w:'即日起',pts:15,alias:['时间']}]},
+{id:'t4', cat:'代码', title:'JS防抖函数', budget:125,
+ brief:'写一个JS防抖函数 debounce，要求注释说明原理。',
+ keywords:[{w:'setTimeout',pts:20},{w:'clearTimeout',pts:20},{w:'this',pts:15},{w:'apply',pts:15,alias:['call']},{w:'延迟',pts:15,alias:['延时']},{w:'注释',pts:15,alias:['原理']}]},
+{id:'t5', cat:'代码', title:'Python读CSV统计', budget:138,
+ brief:'用Python读取csv文件并统计某列平均值，代码要健壮。',
+ keywords:[{w:'csv',pts:20,alias:['pandas']},{w:'open',pts:15},{w:'编码',pts:15,alias:['encoding']},{w:'try',pts:20,alias:['异常']},{w:'平均值',pts:15,alias:['mean']},{w:'with',pts:15,alias:['close']}]},
+{id:'t6', cat:'代码', title:'SQL查部门最高薪', budget:125,
+ brief:'写SQL查出每个部门工资最高的那个人。',
+ keywords:[{w:'GROUP BY',pts:20,alias:['group by']},{w:'MAX',pts:20,alias:['max']},{w:'子查询',pts:20},{w:'JOIN',pts:15,alias:['join','连接']},{w:'ROW_NUMBER',pts:15,alias:['row_number']},{w:'WHERE',pts:10}]},
+{id:'t7', cat:'推理', title:'三段论找漏洞', budget:150,
+ brief:'"所有成功的人都早起，我早起，所以我会成功。"请指出这段推理的漏洞。',
+ keywords:[{w:'偷换概念',pts:25},{w:'因果',pts:20,alias:['相关']},{w:'幸存者偏差',pts:20},{w:'必要条件',pts:20,alias:['充分条件']},{w:'谬误',pts:15}]},
+{id:'t8', cat:'推理', title:'狼人杀复盘', budget:163,
+ brief:'复盘昨晚的狼人杀：预言家首夜查杀到狼人，却被抗推出局，问题出在哪？',
+ keywords:[{w:'查杀',pts:20},{w:'悍跳',pts:20},{w:'票型',pts:20},{w:'金水',pts:15},{w:'警徽',pts:15,alias:['警徽流']},{w:'逻辑',pts:10}]},
+{id:'t9', cat:'推理', title:'密室线索排序', budget:163,
+ brief:'把四条线索按"时间线"排成破案链条：指纹、监控、不在场证明、动机。',
+ keywords:[{w:'时间线',pts:25},{w:'不在场证明',pts:25},{w:'动机',pts:20},{w:'证据链',pts:15,alias:['物证']},{w:'排除',pts:15}]},
+{id:'t10', cat:'多轮', title:'手机推荐助手', budget:175, multi:true,
+ brief:'用户想买手机。要求AI先问清预算和用途，再给推荐。（两轮对话）',
+ keywords:[{w:'预算',pts:20},{w:'用途',pts:20,alias:['需求']},{w:'拍照',pts:15},{w:'续航',pts:15,alias:['电池']},{w:'推荐',pts:15},{w:'先问',pts:15,alias:['追问']}],
+ followup:'明白！先问一句：你的预算大概多少？主要用来拍照、打游戏还是日常使用？'},
+{id:'t11', cat:'多轮', title:'杭州三日游规划', budget:175, multi:true,
+ brief:'为朋友规划杭州三日游。要求AI先问天数偏好和同行人，再出攻略。（两轮对话）',
+ keywords:[{w:'天数',pts:15},{w:'偏好',pts:20,alias:['喜欢']},{w:'同行',pts:15,alias:['人数','几个人']},{w:'西湖',pts:15},{w:'灵隐寺',pts:15},{w:'攻略',pts:20,alias:['行程']}],
+ followup:'收到！先确认下：具体玩几天？偏好自然风光还是 citywalk？几个人同行？'},
+{id:'t12', cat:'多轮', title:'火锅点单助手', budget:175, multi:true,
+ brief:'公司聚餐点火锅。要求AI先问人数和忌口，再推荐点单。（两轮对话）',
+ keywords:[{w:'人数',pts:20},{w:'忌口',pts:20},{w:'锅底',pts:20,alias:['辣度']},{w:'荤菜',pts:15,alias:['荤素']},{w:'推荐',pts:15},{w:'分量',pts:10}],
+ followup:'好嘞！先问：几个人吃？有没有忌口（不吃辣 / 不吃牛羊肉）？'},
+];
+const BLIND_POOL = [
+{id:'b1', cat:'文案', title:'盲盒任务 ???', budget:125, blind:true,
+ brief:'（盲盒：内容未知，考验通用功底）给连续加班的自己写一首打油诗。',
+ keywords:[{w:'加班',pts:25},{w:'脱发',pts:20,alias:['发量']},{w:'调休',pts:15},{w:'押韵',pts:20},{w:'打油',pts:20,alias:['打油诗']}]},
+{id:'b2', cat:'代码', title:'盲盒任务 ???', budget:113, blind:true,
+ brief:'（盲盒：内容未知，考验通用功底）写一个匹配中国大陆手机号的正则表达式。',
+ keywords:[{w:'^1',pts:20},{w:'11位',pts:20,alias:['[0-9]{11}']},{w:'正则',pts:20,alias:['regex']},{w:'test',pts:15},{w:'^$',pts:15,alias:['$']}]},
+{id:'b3', cat:'推理', title:'盲盒任务 ???', budget:138, blind:true,
+ brief:'（盲盒：内容未知，考验通用功底）"如果下雨地就湿，现在地湿了，所以下过雨。"指出谬误。',
+ keywords:[{w:'肯定后件',pts:30},{w:'充分条件',pts:20},{w:'洒水',pts:20,alias:['其他可能']},{w:'逆命题',pts:15},{w:'谬误',pts:15}]},
+{id:'b4', cat:'多轮', title:'盲盒任务 ???', budget:163, blind:true, multi:true,
+ brief:'（盲盒：内容未知，考验通用功底）去理发：要求AI先问长度和风格再给建议，且绝不推销办卡。（两轮对话）',
+ keywords:[{w:'长度',pts:20},{w:'发型',pts:20,alias:['风格']},{w:'刘海',pts:15},{w:'层次',pts:15,alias:['打薄']},{w:'不办卡',pts:20,alias:['拒绝办卡']},{w:'追问',pts:10}],
+ followup:'懂！先问：想剪多长？要不要刘海？（放心，本店绝不推销办卡）'},
+];
+const TASK = id => TASKS.concat(BLIND_POOL).find(t=>t.id===id);
+/* ================= 存档 ================= */
+const Store = {
+KEY:'prompt_alchemy_v1',
+data:null,
+load(){ try{ this.data = JSON.parse(localStorage.getItem(this.KEY)) || null;}catch(e){ this.data=null;}
+if(!this.data) this.data = {points:0, unlocked:['role'], best:{}, subs:{}, ach:[], exports:0, muted:false, blindIds:[], blindDone:false};
+return this.data;},
+save(){ try{ localStorage.setItem(this.KEY, JSON.stringify(this.data));}catch(e){}},
+reset(){ try{ localStorage.removeItem(this.KEY); }catch(e){} this.load();}
+};
+
+/* ================= 炼金引擎（确定性：同一输入→同一输出） ================= */
+function norm(s){ return (s||'').trim();}
+function tokensOf(s){ s=norm(s); return s? Math.ceil(s.length*1.6): 0;}
+function hashStr(s){ let h=2166136261; for(let i=0;i<s.length;i++){ h^=s.charCodeAt(i); h=Math.imul(h,16777619);} return h>>>0;}
+function jitter(taskId, prompt){ return (hashStr(taskId+'|'+prompt)%11)-5;} // -5..5
+function shingles(s){
+s = norm(s).toLowerCase().replace(/[\s，。！？、；：“”‘’（）《》,.!?;:'"()\[\]{}<>·…—\-—]/g,'');
+const set=new Set(); for(let i=0;i<s.length-1;i++) set.add(s.slice(i,i+2)); return set;
+}
+function jaccard(a,b){
+const A=shingles(a), B=shingles(b); if(!A.size||!B.size) return 0;
+let inter=0; A.forEach(x=>{ if(B.has(x)) inter++;});
+return inter/(A.size+B.size-inter);
+}
+function detectTechniques(prompt){
+const t = norm(prompt).toLowerCase(), hit=[];
+TECHNIQUES.forEach(tc=>{
+if(tcTriggers(tc).some(p=>t.includes(p.toLowerCase()))) hit.push(tc.id);
+});
+return hit;
+}
+function evaluate(task, prompt){
+const d = Store.data, t = norm(prompt).toLowerCase();
+let base=0; const matched=[];
+tKeywords(task).forEach(k=>{
+const words=[k.w].concat(k.alias||[]);
+if(words.some(w=>t.includes(w.toLowerCase()))){ base+=k.pts; matched.push(k.w);}
+});
+base=Math.min(base,100);
+const techIds = detectTechniques(prompt);
+let techBonus=0; const techHit=[];
+techIds.forEach(id=>{
+const tc=TECH(id), unlocked=d.unlocked.includes(id);
+const b = unlocked? tc.bonus: Math.round(tc.bonus*0.4);
+techBonus+=b; techHit.push({id, unlocked, bonus:b});
+});
+techBonus=Math.min(techBonus,30);
+let comboBonus=0; const comboHit=[];
+COMBOS.forEach(c=>{
+if(c.pair.every(pid=>techIds.includes(pid))){
+if(c.pair.every(pid=>d.unlocked.includes(pid))){ comboBonus+=c.bonus; comboHit.push(c);}
+}
+});
+let score = base + techBonus + comboBonus + jitter(task.id, prompt);
+const tk = tokensOf(prompt);
+const overBudget = tk > task.budget;
+if(overBudget) score *= 0.85;
+let adapted=false;
+const hist = d.subs[task.id]||[];
+for(const h of hist){ if(jaccard(prompt,h)>0.7){ adapted=true; break;}}
+if(adapted) score -= 10;
+score = Math.max(0, Math.min(120, Math.round(score)));
+const ratio = tk>0? score/tk: 0;
+return {score, matched, techHit, comboHit, tokens:tk, overBudget, adapted,
+pass:score>=80, ratio:Math.round(ratio*100)/100};
+}
+/* AI 输出生成：按分数档选模板，用命中关键词填充 */
+const OUT_TPL = {
+'文案':{
+hi:['\n标题：{k0}，不吹不黑\n姐妹们听我一句劝！{k1}这波真的绝了，{k2}直接拉满，喝完我连夜给闺蜜发了三条60秒语音。\n（此处省略500字彩虹屁）\n#{k0}打卡 #闭眼入'],
+mid:['\n关于{k0}的文案：\n它很好，{k1}，{k2}。\n（AI努力了，但努力的方向有点歪）'],
+lo:['\n文案？什么文案？\nAI一脸懵：「{k0}是什么好吃的吗？」\n建议：把关键词喂给它，别让它自由发挥。']},
+'代码':{
+hi:['\n```js\n// {k0}：{k1}，{k2}\nfunction debounce(fn, delay) {\n let timer = null;\n return function(...args) {\n clearTimeout(timer);\n timer = setTimeout(()=>fn.apply(this,args), delay);\n};\n}\n```\n注释清晰，开箱即用。'],
+mid:['\n```js\nfunction debounce(fn, delay){\n // TODO: {k0}好像和{k1}有关？\n setTimeout(fn, delay); // 差不多是这个意思吧\n}\n```\n能跑，但 code review 必被打回。'],
+lo:['\n```js\nfunction debonce(fn){\n // {k0}？拼写检查先过一下吧\n while(true){} // AI摆烂了\n}\n```\n建议：把关键词喂给它，别让它自由发挥。']},
+'推理':{
+hi:['\n漏洞定位：{k0}。\n拆解：前提偷换了「{k1}」与「{k2}」的概念，把相关性当成了因果性。\n结论：早起≠成功， successful 的反例一抓一大把。\n逻辑链完整，可以拿去杠了。'],
+mid:['\n嗯……{k0}好像有点问题？\n大概和{k1}有关吧，{k2}也怪怪的。\n（AI的直觉对了，但论证像没睡醒）'],
+lo:['\nAI：「你说得对！早起的鸟儿有虫吃，所以你一定会成功！」\n{k0}是什么？能吃吗？\n建议：把关键词喂给它，别让它自由发挥。']},
+'多轮':{
+hi:['\n{k0}收到！\n追问已发送：「{k1}？」\n等你补充{k2}，我就给你一份量身定制的推荐。\n（这才是多轮对话该有的样子）'],
+mid:['\n好的，关于{k0}……\n（AI直接甩了个通用答案，{k1}、{k2}都没问）\n多轮任务不先问，等于白给。'],
+lo:['\nAI：「{k0}？我直接给你推荐最贵的！」\n{k1}不问，{k2}不问，纯纯的已读乱回。\n建议：加上"先问xxx再推荐"。']},
+};
+function genOutput(task, ev){
+const _TP = (LANG==='en'?OUT_TPL_EN:OUT_TPL);
+const pool = _TP[task.cat] || _TP['文案'];
+const tier = ev.score>=80? 'hi': (ev.score>=50? 'mid': 'lo');
+const tpl = pool[tier][ hashStr(task.id+ev.score)%pool[tier].length];
+const ks = ev.matched.concat(LANG==='en'?['keywords','details','key points']:['关键词','细节','要点']);
+return tpl.split('{k0}').join(ks[0]).split('{k1}').join(ks[1]).split('{k2}').join(ks[2]);
+}
+/* ================= 音效 ================= */
+const AudioFX = {
+ctx:null,
+ensure(){ if(!this.ctx){ try{ this.ctx=new (window.AudioContext||window.webkitAudioContext)();}catch(e){}}
+if(this.ctx && this.ctx.state==='suspended') this.ctx.resume();},
+beep(f,dur,type){ if(Store.data.muted) return; this.ensure(); if(!this.ctx) return;
+const o=this.ctx.createOscillator(), g=this.ctx.createGain();
+o.type=type||'sine'; o.frequency.value=f; g.gain.value=0.08;
+o.connect(g); g.connect(this.ctx.destination);
+o.start(); g.gain.exponentialRampToValueAtTime(0.001,this.ctx.currentTime+dur);
+o.stop(this.ctx.currentTime+dur);},
+click(){ this.beep(600,0.06,'square');},
+cast(){ this.beep(440,0.1,'sine'); setTimeout(()=>this.beep(660,0.12,'sine'),90);},
+good(){ [523,659,784].forEach((f,i)=>setTimeout(()=>this.beep(f,0.15,'sine'),i*100));},
+bad(){ this.beep(180,0.25,'sawtooth');},
+unlock(){ [784,988,1175].forEach((f,i)=>setTimeout(()=>this.beep(f,0.12,'triangle'),i*80));},
+};
+/* ================= 成就 ================= */
+const ACHS = [
+ {id:'first_blood', em:'🌱', name:'初露锋芒', desc:'首次通关任意任务'},
+ {id:'miser', em:'🤏', name:'token吝啬鬼', desc:'单关 token < 40 且达标（≥80分）'},
+ {id:'adapter', em:'🥷', name:'套路终结者', desc:'触发"AI已适应"后依然达标'},
+ {id:'collector', em:'🃏', name:'卡片收藏家', desc:'累计导出 5 张神级卡片'},
+ {id:'legend', em:'👑', name:'传说炼金术士', desc:'段位达到传说'},
+];
+function grantAch(id){
+  const d=Store.data;
+  if(d.ach.includes(id)) return;
+  d.ach.push(id); Store.save();
+  const a=ACHS.find(x=>x.id===id);
+  AudioFX.unlock();
+  UI.toast(T('achUnlocked')+achName(a)+'！');
+}
+/* ================= 段位 ================= */
+function rankOf(){
+  const d=Store.data, bs=d.best, ids=Object.keys(bs);
+  if(!ids.length) return {id:'apprentice', name:LANG==='en'?'Apprentice':'学徒', avg:0};
+  const avg = ids.reduce((s,id)=>s+bs[id].ratio,0)/ids.length;
+  let r=RANKS[0]; RANKS.forEach(x=>{ if(avg>=x.min) r=x; });
+  return {id:r.id, name:LANG==='en'?r.en:r.zh, avg:Math.round(avg*100)/100};
+}
+/* ================= UI ================= */
+const UI = {
+  backTo:'tasks',
+  show(id){
+    AudioFX.click();
+    document.querySelectorAll('.screen').forEach(s=>s.classList.remove('on'));
+    document.getElementById('screen-'+id).classList.add('on');
+    window.scrollTo(0,0);
+    if(id!=='game' && id!=='card') this.backTo=id;
+    if(id==='tasks') this.renderTasks();
+    if(id==='tree') this.renderTree();
+    this.renderTop();
+  },
+  back(){ this.show(this.backTo||'tasks'); },
+  toast(msg){
+    const t=document.getElementById('toast'); t.textContent=msg; t.classList.add('show');
+    clearTimeout(this._tt); this._tt=setTimeout(()=>t.classList.remove('show'),2200);
+  },
+  renderTop(){
+    const r=rankOf(), d=Store.data;
+    document.getElementById('topmeta').innerHTML =
+      T('rankLbl')+'<b style="color:var(--gold)">'+r.name+'</b><br>'+T('insightLbl')+d.points;
+    const mb=document.getElementById('mutebtn'); if(mb) mb.textContent = d.muted?T('soundOff'):T('soundOn');
+  },
+  toggleMute(){ Store.data.muted=!Store.data.muted; Store.save(); this.renderTop(); },
+  renderTasks(){
+    const d=Store.data, r=rankOf();
+    document.getElementById('rankline').textContent = T('rankLine')+r.name+(r.avg?T('avgEff')+r.avg+')':'');
+    const passed = Object.keys(d.best).length;
+    document.getElementById('statline').innerHTML =
+      T('insightLbl')+'<b>'+d.points+'</b>'+T('statL1b')+'<br>'+
+      T('statL2a')+'<b>'+passed+'</b> / '+(TASKS.length+2)+T('statL2b')+'<br>'+
+      T('statL3')+'<b>'+d.ach.length+'</b> / '+ACHS.length;
+    const list=document.getElementById('tasklist'); list.innerHTML='';
+    TASKS.forEach(t=>list.appendChild(this.taskCard(t)));
+    // 盲盒
+    if(!d.blindIds.length){
+      const c=document.createElement('div'); c.className='taskcard';
+      c.innerHTML='<span class="pill blind">'+T('blindPill')+'</span><div class="t">'+T('blindTitle')+'</div>'+
+        '<div class="d">'+T('blindDesc')+'</div>';
+      c.onclick=()=>{ AudioFX.click();
+        const pool=BLIND_POOL.map(b=>b.id).sort(()=>Math.random()-0.5).slice(0,2);
+        d.blindIds=pool; d.blindDone=false; Store.save(); this.renderTasks();
+        UI.toast(T('blindToastA')+pool.map(id=>catName(TASK(id).cat)).join('、')+T('blindToastB'));
+      };
+      list.appendChild(c);
+    } else {
+      d.blindIds.forEach(id=>list.appendChild(this.taskCard(TASK(id), true)));
+      if(d.blindDone){
+        const c=document.createElement('div'); c.className='taskcard';
+        c.innerHTML='<div class="t">'+T('blindAgain')+'</div><div class="d">'+T('blindAgainD')+'</div>';
+        c.onclick=()=>{ const pool=BLIND_POOL.map(b=>b.id).sort(()=>Math.random()-0.5).slice(0,2);
+          d.blindIds=pool; d.blindDone=false; Store.save(); this.renderTasks(); };
+        list.appendChild(c);
+      }
+    }
+  },
+  taskCard(t, isBlind){
+    const d=Store.data, b=d.best[t.id];
+    const c=document.createElement('div');
+    c.className='taskcard'+(b?' done':'');
+    c.innerHTML='<span class="pill cat-'+t.cat+'">'+catName(t.cat)+'</span>'+
+      '<span class="pill">'+T('budget')+' '+t.budget+' token</span>'+
+      (t.multi?'<span class="pill">'+T('multiTurn')+'</span>':'')+
+      '<div class="t">'+tTitle(t)+'</div>'+
+      '<div class="d">'+tBrief(t)+'</div>'+
+      (b?'<div class="best">✅ '+T('best')+b.score+T('pts')+' · '+b.tokens+' token · '+T('effLbl')+' '+b.ratio+'</div>'
+        :'<div class="best" style="color:var(--muted)">'+T('notPassed')+'</div>')+
+      (b?'<div class="st">'+T('passed')+'</div>':'');
+    c.onclick=()=>Game.open(t.id);
+    return c;
+  },
+  renderTree(){
+    const d=Store.data;
+    document.getElementById('treepoints').innerHTML=T('curInsight')+'<b>'+d.points+'</b>'+T('perClear');
+    const list=document.getElementById('treelist'); list.innerHTML='';
+    [1,2,3].forEach(tier=>{
+      const h=document.createElement('div'); h.className='tiertitle';
+      h.textContent = [T('tier1'),T('tier2'),T('tier3')][tier-1];
+      list.appendChild(h);
+      TECHNIQUES.filter(t=>t.tier===tier).forEach(tc=>{
+        const un=d.unlocked.includes(tc.id);
+        const n=document.createElement('div'); n.className='treenode'+(un?' unlocked':'');
+        n.innerHTML='<h4>'+(un?'✅ ':'🔒 ')+tcName(tc)+' <span class="hint">'+T('triggerExA')+tcTriggers(tc).slice(0,2).join(' / ')+T('parenC')+'</span></h4>'+
+          '<p>'+tcDesc(tc)+'</p>'+
+          '<p>'+T('bonusLine')+tc.bonus+' '+T('completion')+(un?'':' · '+T('lockedBonus')+Math.round(tc.bonus*0.4))+'</p>';
+        if(!un){
+          const btn=document.createElement('button'); btn.className='btn small';
+          btn.textContent=T('unlockBtn')+tc.cost+' '+T('insightLbl').replace(/[：:]/g,'').replace('💡 ','')+T('parenC'); btn.disabled=d.points<tc.cost;
+          btn.onclick=()=>Game.unlockTech(tc.id);
+          n.appendChild(btn);
+        }
+        list.appendChild(n);
+      });
+    });
+    const ch=document.createElement('div'); ch.className='card';
+    ch.innerHTML='<b>'+T('comboFound')+'</b><div class="hint">'+
+      COMBOS.map(c=>tcName(TECH(c.pair[0]))+' + '+tcName(TECH(c.pair[1]))+' = '+comboName(c)+T('parenO')+'+'+c.bonus+T('parenC')).join('<br>')+'</div>';
+    list.appendChild(ch);
+  },
+  showAch(){
+    AudioFX.click();
+    const d=Store.data, w=document.getElementById('achwrap');
+    w.innerHTML='<div style="position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:90" onclick="UI.hideAch()">'+
+      '<div class="card" style="max-width:480px;margin:60px auto;max-height:70vh;overflow:auto" onclick="event.stopPropagation()">'+
+      '<h3 style="margin:0 0 8px">'+T('achTitle')+d.ach.length+'/'+ACHS.length+T('parenC')+'</h3>'+
+      ACHS.map(a=>'<div class="achrow'+(d.ach.includes(a.id)?' got':'')+'"><div class="em">'+a.em+'</div>'+
+        '<div><b>'+achName(a)+'</b><br><span style="color:var(--muted)">'+achDesc(a)+'</span></div></div>').join('')+
+      '<button class="btn ghost" onclick="UI.hideAch()">'+T('close')+'</button></div></div>';
+  },
+  hideAch(){ document.getElementById('achwrap').innerHTML=''; },
+};
+/* ================= 游戏流程 ================= */
+const Game = {
+task:null, round:1, round1Prompt:'', lastEv:null, typeTimer:null,
+open(id){
+AudioFX.click();
+this.task=TASK(id); this.round=1; this.round1Prompt=''; this.lastEv=null;
+const box=document.getElementById('gametask');
+box.innerHTML='<span class="pill cat-'+this.task.cat+'">'+catName(this.task.cat)+'</span>'+
+'<span class="pill">'+T('budget')+' '+this.task.budget+' token</span>'+
+(this.task.multi?'<span class="pill">'+T('multiTurn')+'</span>':'')+
+'<div class="card" style="margin:8px 0"><b>'+tTitle(this.task)+'</b><br>'+
+'<span class="hint">'+tBrief(this.task)+'</span></div>';
+document.getElementById('prompt').value='';
+document.getElementById('prompt').placeholder=T('promptPh');
+document.getElementById('tokbudget').textContent=T('budget')+' '+this.task.budget+' token';
+document.getElementById('output').style.display='none';
+document.getElementById('scorebox').style.display='none';
+document.getElementById('cardbtn').style.display='none';
+document.getElementById('castbtn').textContent=T('cast');
+this.renderChips(); this.updateTok();
+UI.show('game');
+},
+renderChips(){
+const d=Store.data, row=document.getElementById('chiprow'); row.innerHTML='';
+const un=TECHNIQUES.filter(t=>d.unlocked.includes(t.id));
+if(!un.length){ row.innerHTML='<span class="hint">'+T('chipHint')+'</span>'; return;}
+un.forEach(tc=>{
+const c=document.createElement('span'); c.className='chip'; c.textContent='+ '+tcName(tc);
+c.onclick=()=>{ AudioFX.click();
+const ta=document.getElementById('prompt');
+ta.value += (ta.value&&!ta.value.endsWith('\n')?'\n':'')+tcTriggers(tc)[0]+(LANG==='zh'?'，':', ');
+ta.focus(); this.updateTok();
+};
+row.appendChild(c);
+});
+},
+updateTok(){
+const v=document.getElementById('prompt').value, tk=tokensOf(v);
+const el=document.getElementById('tokcount');
+el.textContent=tk+' token';
+const over = tk>this.task.budget;
+el.className = over?'over':'';
+const w=document.getElementById('tokwarn');
+if(w){ if(over){ w.style.display='block'; w.textContent=T('overByA')+(tk-this.task.budget)+T('overByB'); }
+else w.style.display='none'; }
+},
+unlockTech(id){
+const d=Store.data, tc=TECH(id);
+if(d.points<tc.cost||d.unlocked.includes(id)) return;
+d.points-=tc.cost; d.unlocked.push(id); Store.save();
+AudioFX.unlock(); UI.toast(T('techUnlocked')+tcName(tc));
+UI.renderTree(); UI.renderTop();
+},
+cast(){
+const ta=document.getElementById('prompt'), p=norm(ta.value);
+if(!p){ ta.classList.add('shake'); setTimeout(()=>ta.classList.remove('shake'),350); UI.toast(T('writeFirst')); return;}
+AudioFX.cast();
+const task=this.task;
+if(task.multi && this.round===1){
+// 第一轮：AI 追问
+this.round1Prompt=p;
+this.typeOut('\n'+tFollowup(task)+'\n\n'+T('followupHint'));
+this.round=2;
+ta.value=''; ta.placeholder=T('replyPh');
+document.getElementById('castbtn').innerHTML=T('cast')+' <span class="turn-tag">'+T('round2')+'</span>';
+this.updateTok(); return;
+}
+const fullPrompt = task.multi? (this.round1Prompt+'\n'+p): p;
+const ev=evaluate(task, fullPrompt);
+this.lastEv={ev, prompt:fullPrompt};
+this.typeOut(genOutput(task, ev));
+this.showScore(ev);
+// 记录提交（用于 AI 适应判定）
+const d=Store.data;
+d.subs[task.id]=d.subs[task.id]||[];
+d.subs[task.id].push(fullPrompt);
+if(d.subs[task.id].length>10) d.subs[task.id].shift();
+// 通关结算
+const firstPass=!d.best[task.id];
+if(ev.pass){
+AudioFX.good();
+if(!d.best[task.id]||ev.ratio>d.best[task.id].ratio)
+d.best[task.id]={score:ev.score,tokens:ev.tokens,ratio:ev.ratio,prompt:fullPrompt};
+if(firstPass){ d.points+=2; UI.toast(T('clearToast'));}
+if(task.blind &&!d.blindDone && d.blindIds.every(id=>d.best[id])){ d.blindDone=true;}
+grantAch('first_blood');
+if(ev.tokens<40) grantAch('miser');
+if(ev.adapted) grantAch('adapter');
+document.getElementById('cardbtn').style.display='inline-block';
+} else {
+AudioFX.bad();
+}
+if(rankOf().id==='legend') grantAch('legend');
+Store.save(); UI.renderTop();
+if(task.multi){ this.round=1; this.round1Prompt=''; document.getElementById('castbtn').textContent=T('cast');}
+},
+typeOut(text){
+const out=document.getElementById('output');
+out.style.display='block'; out.textContent='';
+clearInterval(this.typeTimer);
+let i=0;
+this.typeTimer=setInterval(()=>{
+i+=3; out.textContent=text.slice(0,i);
+if(i>=text.length) clearInterval(this.typeTimer);
+},18);
+out.onclick=()=>{ clearInterval(this.typeTimer); out.textContent=text;};
+},
+showScore(ev){
+const box=document.getElementById('scorebox'); box.style.display='block';
+const eff = ev.tokens>0? Math.min(100, Math.round(ev.score/ev.tokens*60)): 0;
+let html='<div class="card" style="margin:8px 0"><b>'+(ev.pass?T('passTitle'):T('failTitle'))+'</b>'+
+'<div class="scoreline"><span>'+T('completion')+' <b>'+ev.score+'</b> / 100'+(ev.score>100?'<span class="chaoshen"> '+T('chaoshen')+'</span>':'')+'</span><span>'+ev.tokens+' token'+(ev.overBudget?T('overShort'):'')+'</span></div>'+
+'<div class="bar"><i style="width:'+Math.min(100,ev.score)+'%"></i></div>'+
+'<div class="scoreline"><span>'+T('tokEff')+'</span><span>'+T('effLbl')+' <b>'+ev.ratio+'</b></span></div>'+
+'<div class="bar"><i style="width:'+eff+'%"></i></div>'+
+'<div class="detail">';
+if(ev.matched.length) html+=''+T('hitKw')+'<b>'+ev.matched.join(LANG==='zh'?'、':', ')+'</b><br>';
+else html+=''+T('hitKw')+'<span class="minus">'+T('noKw')+'</span><br>';
+ev.techHit.forEach(t=>{ html+='<span class="'+(t.unlocked?'plus':'warn')+'">['+tcName(TECH(t.id))+' +'+t.bonus+(t.unlocked?'':T('unlockGo'))+']</span> ';});
+if(ev.techHit.length) html+='<br>';
+ev.comboHit.forEach(c=>{ html+='<span class="plus">✨ combo「'+comboName(c)+'」+15</span> ';});
+if(ev.comboHit.length) html+='<br>';
+if(ev.adapted) html+='<span class="warn">'+T('adaptWarn')+'</span><br>';
+if(ev.overBudget) html+='<span class="minus">'+T('overWarn')+'</span><br>';
+html+='</div></div>';
+box.innerHTML=html;
+},
+exportCard(){
+if(!this.lastEv||!this.lastEv.ev.pass){ UI.toast(T('needPass')); return;}
+AudioFX.click();
+const {ev, prompt}=this.lastEv, task=this.task, r=rankOf();
+const cv=document.createElement('canvas'); cv.width=1080; cv.height=1350;
+const g=cv.getContext('2d');
+const grad=g.createLinearGradient(0,0,0,1350);
+grad.addColorStop(0,'#1e1830'); grad.addColorStop(1,'#14101f');
+g.fillStyle=grad; g.fillRect(0,0,1080,1350);
+g.strokeStyle='#e8b34b'; g.lineWidth=6; g.strokeRect(24,24,1032,1302);
+g.fillStyle='#e8b34b'; g.font='bold 44px sans-serif'; g.textAlign='center';
+g.fillText(T('cardCanvasTitle'),540,120);
+g.fillStyle='#9a8fb5'; g.font='30px sans-serif';
+g.fillText(catName(task.cat)+(LANG==='zh'?'系 · ':' · ')+tTitle(task),540,175);
+g.fillStyle='#251d3d';
+roundRect(g,60,210,960,560,18); g.fill();
+g.fillStyle='#efe9dc'; g.font='30px sans-serif'; g.textAlign='left';
+wrapText(g, prompt, 95, 265, 890, 44);
+g.textAlign='center'; g.fillStyle='#e8b34b'; g.font='bold 40px sans-serif';
+g.fillText(T('completion')+' '+ev.score+T('pts')+(ev.score>100?T('chaoshen'):'')+' '+ev.tokens+' token '+T('effLbl')+' '+ev.ratio,540,860);
+g.fillStyle='#f5d67b'; g.font='34px sans-serif';
+g.fillText(T('rankLbl')+r.name,540,920);
+g.fillStyle='#9a8fb5'; g.font='26px sans-serif';
+g.fillText(T('cardCanvasFoot'),540,1280);
+const url=cv.toDataURL('image/png');
+document.getElementById('cardimg').src=url;
+this._cardUrl=url;
+const d=Store.data; d.exports++; Store.save();
+if(d.exports>=5) grantAch('collector');
+UI.show('card');
+},
+downloadCard(){
+if(!this._cardUrl) return;
+const a=document.createElement('a');
+a.href=this._cardUrl; a.download='提示词炼金术-神级卡片.png';
+document.body.appendChild(a); a.click(); a.remove();
+UI.toast(T('cardDownloaded'));
+}
+};
+function roundRect(g,x,y,w,h,r){
+g.beginPath(); g.moveTo(x+r,y); g.arcTo(x+w,y,x+w,y+h,r);
+g.arcTo(x+w,y+h,x,y+h,r); g.arcTo(x,y+h,x,y,r); g.arcTo(x,y,x+w,y,r); g.closePath();
+}
+function wrapText(g, text, x, y, maxW, lh){
+const chars=text.split(''); let line='', yy=y;
+chars.forEach(ch=>{
+const t=line+ch;
+if(g.measureText(t).width>maxW){ g.fillText(line,x,yy); line=ch; yy+=lh;}
+else line=t;
+});
+g.fillText(line,x,yy);
+}
+/* ================= 初始化 ================= */
+document.getElementById('prompt').addEventListener('input',()=>Game.updateTok());
+Store.load();
+document.documentElement.lang=(LANG==='zh'?'zh-CN':'en');
+applyI18n();
+UI.renderTop();
+updateLangBtns();
+</script>
+</body>
+</html>
